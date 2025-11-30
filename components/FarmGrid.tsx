@@ -1,21 +1,39 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { NETWORKS, MOCK_GRID_DATA } from '@/constants';
 import { Flame } from 'lucide-react';
 
 const FarmGrid = () => {
   // We'll create an array of days to display as columns.
-  // The mock data has 7 items, but the design shows a full month (28 days).
-  // We will repeat the mock data pattern to fill 28 days for visual fidelity,
-  // or just use the 7 items if strict adherence to "mock data" is preferred.
-  // Given "Replicate this exact design", I will aim for 28 columns.
-
   const days = Array.from({ length: 28 }, (_, i) => i + 1);
 
-  // Helper to get data for a day index (looping the mock data)
-  const getDataForDay = (networkId: string, dayIndex: number) => {
-    const data = MOCK_GRID_DATA[networkId];
-    if (!data) return 0;
-    return data[dayIndex % data.length];
+  // Initialize state with expanded data (28 days per network)
+  const [gridData, setGridData] = useState(() => {
+    const initialData: Record<string, number[]> = {};
+    NETWORKS.forEach((network) => {
+      const mock = MOCK_GRID_DATA[network.id] || [];
+      // Fill 28 items using the mock pattern
+      initialData[network.id] = Array.from({ length: 28 }, (_, i) => {
+        if (mock.length === 0) return 0;
+        return mock[i % mock.length];
+      });
+    });
+    return initialData;
+  });
+
+  const handleCellClick = (networkId: string, dayIndex: number) => {
+    setGridData((prev) => {
+      const newData = { ...prev };
+      const networkRow = [...(newData[networkId] || [])];
+
+      // Toggle logic: 0 -> 1 -> 2 -> 0
+      const currentValue = networkRow[dayIndex];
+      networkRow[dayIndex] = (currentValue + 1) % 3;
+
+      newData[networkId] = networkRow;
+      return newData;
+    });
   };
 
   return (
@@ -59,12 +77,15 @@ const FarmGrid = () => {
 
                 {/* Grid Cells */}
                 <div className="flex-1 flex justify-between px-1 relative">
-                    {/* Background grid lines could go here */}
                   {days.map((day, index) => {
-                    const status = getDataForDay(network.id, index);
+                    const status = gridData[network.id]?.[index] ?? 0;
 
                     return (
-                      <div key={day} className="w-6 h-6 flex items-center justify-center">
+                      <div
+                        key={day}
+                        onClick={() => handleCellClick(network.id, index)}
+                        className="w-6 h-6 flex items-center justify-center cursor-pointer hover:bg-white/10 rounded transition-colors"
+                      >
                         {status === 1 && (
                           <div className="w-3 h-3 bg-green-500 rounded-sm shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse-slow" />
                         )}
