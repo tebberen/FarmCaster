@@ -14,11 +14,7 @@ export default function Home() {
   const { user } = useFarcaster();
   const { address: connectedAddress } = useAccount();
 
-  // Use the connected address or fallback to a hardcoded one for testing if not connected?
-  // Actually, for reading stats, we can use the user's address if known, or the connected wallet.
-  // In a real Farcaster frame/miniapp, we might get the address from the context.
-  // For now, let's prioritize the connected wallet address, then maybe user's custody address if available in user object (it's not in the simple type usually).
-  // The user instruction implies we use wagmi to connect.
+  // Prioritize connected wallet address
   const targetAddress = connectedAddress;
 
   const { userXP, userStreak, lastActionTimestamp, isLoading: statsLoading, refetch: refetchStats } = useFarmStats(targetAddress);
@@ -27,50 +23,10 @@ export default function Home() {
   // State to track if we've shown the success alert/toast
   const [hasShownSuccess, setHasShownSuccess] = useState(false);
 
-  // Initialize state with empty data (28 days per network)
-  // We will update this based on streak data
-  const [gridData, setGridData] = useState<Record<string, number[]>>(() => {
-    const initialData: Record<string, number[]> = {};
-    NETWORKS.forEach((network) => {
-      initialData[network.id] = Array(28).fill(0);
-    });
-    return initialData;
-  });
-
   const [selectedCell, setSelectedCell] = useState<{ networkId: string; dayIndex: number }>({
     networkId: NETWORKS[0].id, // Base
-    dayIndex: 13, // Day 14 (0-indexed) - or maybe default to today?
+    dayIndex: new Date().getDate() - 1, // Default to today
   });
-
-  // Effect to update grid based on streak
-  useEffect(() => {
-    if (userStreak !== undefined) {
-      const streak = Number(userStreak);
-      setGridData(prev => {
-        const newData: Record<string, number[]> = {};
-
-        // For MVP: Apply streak logic only to the current network (or all? Instruction says "simply assume 'Streak' number represents the last N days")
-        // The instruction says: "If userStreak is 5, highlight the current day and the 4 days before it as 'Fire/Green'."
-        // We don't have "current day" index explicit in the contract data (only lastActionTimestamp).
-        // But let's assume the grid ends at "today".
-        // Let's assume the 28th day (index 27) is today.
-
-        NETWORKS.forEach((network) => {
-           // Reset to 0
-           const days = Array(28).fill(0);
-
-           // Highlight last N days based on streak
-           // We will use '2' for Fire (Streak Active) for the streak days
-           for (let i = 0; i < streak && i < 28; i++) {
-             days[27 - i] = 2; // Set to Fire
-           }
-
-           newData[network.id] = days;
-        });
-        return newData;
-      });
-    }
-  }, [userStreak]);
 
   // Effect to handle success state
   useEffect(() => {
@@ -90,20 +46,61 @@ export default function Home() {
 
 
   const currentNetwork = NETWORKS.find(n => n.id === selectedCell.networkId);
-  const cellValue = gridData[selectedCell.networkId]?.[selectedCell.dayIndex] ?? 0;
+
+  // Calculate cell value locally for the button logic
+  // This mirrors the logic in FarmGrid, but applied to the single selected cell
+  const getSelectedCellValue = () => {
+    // Only 'base' is dynamic for now
+    if (selectedCell.networkId !== 'base') return 0;
+
+    const todayIndex = new Date().getDate() - 1;
+
+    // If future, return 0 (or handle as disabled)
+    if (selectedCell.dayIndex > todayIndex) return 0;
+
+    const streak = Number(userStreak || 0);
+    const lastActionTime = Number(lastActionTimestamp || 0);
+
+    const now = new Date();
+    const lastActionDate = new Date(lastActionTime * 1000);
+    const isActionToday = lastActionTime > 0 &&
+      lastActionDate.getDate() === now.getDate() &&
+      lastActionDate.getMonth() === now.getMonth() &&
+      lastActionDate.getFullYear() === now.getFullYear();
+
+    // If selected today
+    if (selectedCell.dayIndex === todayIndex) {
+       return (isActionToday && streak > 0) ? 2 : 0;
+    }
+
+    // If selected past day
+    let daysToHighlight = streak;
+    if (isActionToday) daysToHighlight = streak - 1;
+
+    const rangeEnd = todayIndex - 1;
+    const rangeStart = rangeEnd - daysToHighlight + 1;
+
+    if (selectedCell.dayIndex >= rangeStart && selectedCell.dayIndex <= rangeEnd) {
+      return 1;
+    }
+
+    return 0;
+  };
+
+  const cellValue = getSelectedCellValue();
 
   const handleWaterPlant = () => {
-    if (cellValue !== 0) return; // Only water empty cells
-    waterPlant();
+    // Check if we are trying to water today's cell on Base network
+    const todayIndex = new Date().getDate() - 1;
+    if (selectedCell.networkId === 'base' && selectedCell.dayIndex === todayIndex && cellValue === 0) {
+      waterPlant();
+    }
   };
 
   // Button Logic
   let buttonText = "WATER PLANT";
   let buttonDisabled = false;
   let buttonColorClass = "bg-[#1a1d2d] hover:bg-[#23273a] text-gray-400 hover:text-white border-gray-700";
-
-  // If loading stats, disable button?
-  // Maybe just show generic state.
 
   if (cellValue === 1) {
     buttonText = "HARVESTED";
@@ -118,7 +115,18 @@ export default function Home() {
     buttonDisabled = true;
   } else {
     // Enabled state (Empty cell)
-    buttonColorClass = "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-900/20";
+    // Only enable if it's today and empty? Or can we water past days?
+    // Usually only today.
+    const todayIndex = new Date().getDate() - 1;
+    const isToday = selectedCell.dayIndex === todayIndex;
+
+    if (isToday) {
+      buttonColorClass = "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-900/20";
+    } else {
+      buttonText = "MISSED"; // Or just keep "WATER PLANT" but disabled?
+      buttonDisabled = true;
+      buttonColorClass = "cursor-not-allowed opacity-50";
+    }
   }
 
   // Display values
@@ -216,9 +224,10 @@ export default function Home() {
 
         {/* Main Grid */}
         <FarmGrid
-          gridData={gridData}
           selectedCell={selectedCell}
           onSelect={setSelectedCell}
+          userStreak={Number(userStreak)}
+          lastActionTimestamp={Number(lastActionTimestamp)}
         />
 
         {/* Action Area & Daily Task */}
@@ -237,7 +246,7 @@ export default function Home() {
                     </div>
                     <div>
                        <h2 className="text-3xl font-bold">{currentNetwork?.name || 'Unknown'} <span className="text-lg text-gray-500 font-normal">Ağı</span></h2>
-                       <p className="text-green-500 font-mono text-sm">Gün {selectedCell.dayIndex + 1} — Kasım</p>
+                       <p className="text-green-500 font-mono text-sm">Gün {selectedCell.dayIndex + 1} — {new Date().toLocaleString('tr-TR', { month: 'long' })}</p>
                     </div>
                  </div>
 
