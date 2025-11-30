@@ -1,12 +1,76 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import FarmGrid from '@/components/FarmGrid';
-import { Tractor, Info, RefreshCw, Share2, Wallet, User } from 'lucide-react';
+import { Tractor, Info, RefreshCw, Share2, Wallet, User, Loader2 } from 'lucide-react';
 import { useFarcaster } from '@/hooks/useFarcaster';
+import { NETWORKS, MOCK_GRID_DATA } from '@/constants';
 
 export default function Home() {
   const { user } = useFarcaster();
+
+  // Initialize state with expanded data (28 days per network)
+  const [gridData, setGridData] = useState<Record<string, number[]>>(() => {
+    const initialData: Record<string, number[]> = {};
+    NETWORKS.forEach((network) => {
+      const mock = MOCK_GRID_DATA[network.id] || [];
+      // Fill 28 items using the mock pattern
+      initialData[network.id] = Array.from({ length: 28 }, (_, i) => {
+        if (mock.length === 0) return 0;
+        return mock[i % mock.length];
+      });
+    });
+    return initialData;
+  });
+
+  const [selectedCell, setSelectedCell] = useState<{ networkId: string; dayIndex: number }>({
+    networkId: NETWORKS[0].id, // Base
+    dayIndex: 13, // Day 14 (0-indexed)
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const currentNetwork = NETWORKS.find(n => n.id === selectedCell.networkId);
+  const cellValue = gridData[selectedCell.networkId]?.[selectedCell.dayIndex] ?? 0;
+
+  const handleWaterPlant = () => {
+    if (cellValue !== 0) return; // Only water empty cells
+
+    setLoading(true);
+
+    setTimeout(() => {
+      setGridData(prev => {
+        const newData = { ...prev };
+        const networkRow = [...(newData[selectedCell.networkId] || [])];
+        networkRow[selectedCell.dayIndex] = 1; // Set to Green (1)
+        newData[selectedCell.networkId] = networkRow;
+        return newData;
+      });
+      setLoading(false);
+      alert("Watered successfully!"); // In a real app, use a toast
+    }, 1000);
+  };
+
+  // Button Logic
+  let buttonText = "WATER PLANT";
+  let buttonDisabled = false;
+  let buttonColorClass = "bg-[#1a1d2d] hover:bg-[#23273a] text-gray-400 hover:text-white border-gray-700";
+
+  if (cellValue === 1) {
+    buttonText = "HARVESTED";
+    buttonDisabled = true;
+    buttonColorClass = "bg-green-900/20 text-green-500 border-green-900/50 cursor-not-allowed";
+  } else if (cellValue === 2) {
+    buttonText = "STREAK ACTIVE";
+    buttonDisabled = true;
+    buttonColorClass = "bg-orange-900/20 text-orange-500 border-orange-900/50 cursor-not-allowed";
+  } else if (loading) {
+    buttonText = "WATERING...";
+    buttonDisabled = true;
+  } else {
+    // Enabled state (Empty cell)
+    buttonColorClass = "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-900/20";
+  }
 
   return (
     <main className="min-h-screen bg-[#09090b] text-white p-4 md:p-6 lg:p-8 font-sans">
@@ -96,7 +160,11 @@ export default function Home() {
         </div>
 
         {/* Main Grid */}
-        <FarmGrid />
+        <FarmGrid
+          gridData={gridData}
+          selectedCell={selectedCell}
+          onSelect={setSelectedCell}
+        />
 
         {/* Action Area & Daily Task */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -109,18 +177,30 @@ export default function Home() {
 
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50">
-                       <div className="w-8 h-8 rounded-full bg-white/20" />
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${currentNetwork?.color || 'bg-gray-600'}`}>
+                       {currentNetwork && <currentNetwork.icon size={32} className={currentNetwork.text || 'text-white'} />}
                     </div>
                     <div>
-                       <h2 className="text-3xl font-bold">BASE <span className="text-lg text-gray-500 font-normal">Ağı</span></h2>
-                       <p className="text-green-500 font-mono text-sm">Gün 14 — Kasım</p>
+                       <h2 className="text-3xl font-bold">{currentNetwork?.name || 'Unknown'} <span className="text-lg text-gray-500 font-normal">Ağı</span></h2>
+                       <p className="text-green-500 font-mono text-sm">Gün {selectedCell.dayIndex + 1} — Kasım</p>
                     </div>
                  </div>
 
-                 <button className="w-full md:w-auto bg-[#1a1d2d] hover:bg-[#23273a] text-gray-400 hover:text-white border border-gray-700 px-8 py-4 rounded-xl flex items-center justify-center gap-3 transition-all group">
-                    <span className="group-hover:rotate-12 transition-transform duration-300">💧</span>
-                    <span className="font-bold tracking-wide">SULANDI</span>
+                 <button
+                    onClick={handleWaterPlant}
+                    disabled={buttonDisabled}
+                    className={`w-full md:w-auto px-8 py-4 rounded-xl flex items-center justify-center gap-3 transition-all border ${buttonColorClass}`}
+                 >
+                    {loading ? (
+                        <Loader2 className="animate-spin" />
+                    ) : (
+                        <>
+                           {cellValue === 1 && <span>✅</span>}
+                           {cellValue === 2 && <span>🔥</span>}
+                           {cellValue === 0 && <span className="group-hover:rotate-12 transition-transform duration-300">💧</span>}
+                        </>
+                    )}
+                    <span className="font-bold tracking-wide">{buttonText}</span>
                  </button>
               </div>
 

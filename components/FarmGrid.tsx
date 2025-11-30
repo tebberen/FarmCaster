@@ -1,40 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
-import { NETWORKS, MOCK_GRID_DATA } from '@/constants';
+import React from 'react';
+import { NETWORKS } from '@/constants';
 import { Flame } from 'lucide-react';
 
-const FarmGrid = () => {
+interface FarmGridProps {
+  gridData: Record<string, number[]>;
+  selectedCell: { networkId: string; dayIndex: number };
+  onSelect: (cell: { networkId: string; dayIndex: number }) => void;
+}
+
+const FarmGrid = ({ gridData, selectedCell, onSelect }: FarmGridProps) => {
   // We'll create an array of days to display as columns.
   const days = Array.from({ length: 28 }, (_, i) => i + 1);
-
-  // Initialize state with expanded data (28 days per network)
-  const [gridData, setGridData] = useState(() => {
-    const initialData: Record<string, number[]> = {};
-    NETWORKS.forEach((network) => {
-      const mock = MOCK_GRID_DATA[network.id] || [];
-      // Fill 28 items using the mock pattern
-      initialData[network.id] = Array.from({ length: 28 }, (_, i) => {
-        if (mock.length === 0) return 0;
-        return mock[i % mock.length];
-      });
-    });
-    return initialData;
-  });
-
-  const handleCellClick = (networkId: string, dayIndex: number) => {
-    setGridData((prev) => {
-      const newData = { ...prev };
-      const networkRow = [...(newData[networkId] || [])];
-
-      // Toggle logic: 0 -> 1 -> 2 -> 0
-      const currentValue = networkRow[dayIndex];
-      networkRow[dayIndex] = (currentValue + 1) % 3;
-
-      newData[networkId] = networkRow;
-      return newData;
-    });
-  };
 
   return (
     <div className="w-full bg-[#11131F] rounded-xl border border-gray-800 p-4 md:p-6 shadow-lg">
@@ -79,12 +57,15 @@ const FarmGrid = () => {
                 <div className="flex-1 flex justify-between px-1 relative">
                   {days.map((day, index) => {
                     const status = gridData[network.id]?.[index] ?? 0;
+                    const isSelected = selectedCell.networkId === network.id && selectedCell.dayIndex === index;
 
                     return (
                       <div
                         key={day}
-                        onClick={() => handleCellClick(network.id, index)}
-                        className="w-6 h-6 flex items-center justify-center cursor-pointer hover:bg-white/10 rounded transition-colors"
+                        onClick={() => onSelect({ networkId: network.id, dayIndex: index })}
+                        className={`w-6 h-6 flex items-center justify-center cursor-pointer rounded transition-colors relative
+                          ${isSelected ? 'ring-2 ring-white z-10' : 'hover:bg-white/10'}
+                        `}
                       >
                         {status === 1 && (
                           <div className="w-3 h-3 bg-green-500 rounded-sm shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse-slow" />
