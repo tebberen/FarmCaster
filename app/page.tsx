@@ -1,60 +1,109 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FarmGrid from '@/components/FarmGrid';
 import { Tractor, Info, RefreshCw, Share2, Wallet, User, Loader2 } from 'lucide-react';
 import { useFarcaster } from '@/hooks/useFarcaster';
-import { NETWORKS, MOCK_GRID_DATA } from '@/constants';
+import { NETWORKS } from '@/constants';
+import { useFarmStats } from '@/hooks/useFarmStats';
+import { useWaterPlant } from '@/hooks/useWaterPlant';
+import { useAccount } from 'wagmi';
+import { Address } from 'viem';
 
 export default function Home() {
   const { user } = useFarcaster();
+  const { address: connectedAddress } = useAccount();
 
-  // Initialize state with expanded data (28 days per network)
+  // Use the connected address or fallback to a hardcoded one for testing if not connected?
+  // Actually, for reading stats, we can use the user's address if known, or the connected wallet.
+  // In a real Farcaster frame/miniapp, we might get the address from the context.
+  // For now, let's prioritize the connected wallet address, then maybe user's custody address if available in user object (it's not in the simple type usually).
+  // The user instruction implies we use wagmi to connect.
+  const targetAddress = connectedAddress;
+
+  const { userXP, userStreak, lastActionTimestamp, isLoading: statsLoading, refetch: refetchStats } = useFarmStats(targetAddress);
+  const { waterPlant, isPending: isWatering, isSuccess: isWatered } = useWaterPlant();
+
+  // State to track if we've shown the success alert/toast
+  const [hasShownSuccess, setHasShownSuccess] = useState(false);
+
+  // Initialize state with empty data (28 days per network)
+  // We will update this based on streak data
   const [gridData, setGridData] = useState<Record<string, number[]>>(() => {
     const initialData: Record<string, number[]> = {};
     NETWORKS.forEach((network) => {
-      const mock = MOCK_GRID_DATA[network.id] || [];
-      // Fill 28 items using the mock pattern
-      initialData[network.id] = Array.from({ length: 28 }, (_, i) => {
-        if (mock.length === 0) return 0;
-        return mock[i % mock.length];
-      });
+      initialData[network.id] = Array(28).fill(0);
     });
     return initialData;
   });
 
   const [selectedCell, setSelectedCell] = useState<{ networkId: string; dayIndex: number }>({
     networkId: NETWORKS[0].id, // Base
-    dayIndex: 13, // Day 14 (0-indexed)
+    dayIndex: 13, // Day 14 (0-indexed) - or maybe default to today?
   });
 
-  const [loading, setLoading] = useState(false);
+  // Effect to update grid based on streak
+  useEffect(() => {
+    if (userStreak !== undefined) {
+      const streak = Number(userStreak);
+      setGridData(prev => {
+        const newData: Record<string, number[]> = {};
+
+        // For MVP: Apply streak logic only to the current network (or all? Instruction says "simply assume 'Streak' number represents the last N days")
+        // The instruction says: "If userStreak is 5, highlight the current day and the 4 days before it as 'Fire/Green'."
+        // We don't have "current day" index explicit in the contract data (only lastActionTimestamp).
+        // But let's assume the grid ends at "today".
+        // Let's assume the 28th day (index 27) is today.
+
+        NETWORKS.forEach((network) => {
+           // Reset to 0
+           const days = Array(28).fill(0);
+
+           // Highlight last N days based on streak
+           // We will use '2' for Fire (Streak Active) for the streak days
+           for (let i = 0; i < streak && i < 28; i++) {
+             days[27 - i] = 2; // Set to Fire
+           }
+
+           newData[network.id] = days;
+        });
+        return newData;
+      });
+    }
+  }, [userStreak]);
+
+  // Effect to handle success state
+  useEffect(() => {
+    if (isWatered && !hasShownSuccess) {
+      alert("Harvested! 🌿");
+      setHasShownSuccess(true);
+      refetchStats(); // Refresh stats after watering
+    }
+  }, [isWatered, hasShownSuccess, refetchStats]);
+
+  // Reset success state when watering starts again
+  useEffect(() => {
+    if (isWatering) {
+      setHasShownSuccess(false);
+    }
+  }, [isWatering]);
+
 
   const currentNetwork = NETWORKS.find(n => n.id === selectedCell.networkId);
   const cellValue = gridData[selectedCell.networkId]?.[selectedCell.dayIndex] ?? 0;
 
   const handleWaterPlant = () => {
     if (cellValue !== 0) return; // Only water empty cells
-
-    setLoading(true);
-
-    setTimeout(() => {
-      setGridData(prev => {
-        const newData = { ...prev };
-        const networkRow = [...(newData[selectedCell.networkId] || [])];
-        networkRow[selectedCell.dayIndex] = 1; // Set to Green (1)
-        newData[selectedCell.networkId] = networkRow;
-        return newData;
-      });
-      setLoading(false);
-      alert("Watered successfully!"); // In a real app, use a toast
-    }, 1000);
+    waterPlant();
   };
 
   // Button Logic
   let buttonText = "WATER PLANT";
   let buttonDisabled = false;
   let buttonColorClass = "bg-[#1a1d2d] hover:bg-[#23273a] text-gray-400 hover:text-white border-gray-700";
+
+  // If loading stats, disable button?
+  // Maybe just show generic state.
 
   if (cellValue === 1) {
     buttonText = "HARVESTED";
@@ -64,13 +113,17 @@ export default function Home() {
     buttonText = "STREAK ACTIVE";
     buttonDisabled = true;
     buttonColorClass = "bg-orange-900/20 text-orange-500 border-orange-900/50 cursor-not-allowed";
-  } else if (loading) {
+  } else if (isWatering) {
     buttonText = "WATERING...";
     buttonDisabled = true;
   } else {
     // Enabled state (Empty cell)
     buttonColorClass = "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-900/20";
   }
+
+  // Display values
+  const displayXP = userXP ? userXP.toString() : '0';
+  const displayStreak = userStreak ? userStreak.toString() : '0';
 
   return (
     <main className="min-h-screen bg-[#09090b] text-white p-4 md:p-6 lg:p-8 font-sans">
@@ -88,14 +141,14 @@ export default function Home() {
           <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
              <div className="hidden md:flex items-center gap-4 text-gray-400">
                 <Info size={20} className="hover:text-white cursor-pointer" />
-                <RefreshCw size={20} className="hover:text-white cursor-pointer" />
+                <RefreshCw size={20} className="hover:text-white cursor-pointer" onClick={() => refetchStats()} />
                 <Share2 size={20} className="hover:text-white cursor-pointer" />
              </div>
 
              <button className="flex items-center gap-2 bg-[#11131F] border border-green-900/50 hover:border-green-500/50 text-green-500 px-4 py-2 rounded-lg transition-all">
                 <Wallet size={18} />
                 <span className="font-mono font-bold">
-                  {user?.username ? `@${user.username}` : '...'}
+                  {targetAddress ? `${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)}` : (user?.username ? `@${user.username}` : 'Connect Wallet')}
                 </span>
              </button>
           </div>
@@ -120,14 +173,14 @@ export default function Home() {
                 <div>
                    <p className="text-gray-400 text-xs uppercase font-bold mb-1">Çiftçi Profili</p>
                    <h3 className="text-xl font-bold">
-                     {user?.username ? `@${user.username}` : '@...'}
+                     {user?.username ? `@${user.username}` : (targetAddress ? 'Connected' : '@...')}
                    </h3>
                 </div>
              </div>
 
              <div className="text-right relative z-10">
                  <div className="text-yellow-400 font-bold text-2xl flex items-center gap-1 justify-end">
-                    🏆 1,470 XP
+                    🏆 {statsLoading ? '...' : displayXP} XP
                  </div>
                  <p className="text-gray-500 text-xs">Hasat Puanı</p>
              </div>
@@ -144,7 +197,9 @@ export default function Home() {
                 </div>
                 <div>
                    <p className="text-gray-400 text-xs uppercase font-bold mb-1">Global Streak</p>
-                   <h3 className="text-orange-500 font-bold text-2xl">15 Gün 🔥</h3>
+                   <h3 className="text-orange-500 font-bold text-2xl">
+                     {statsLoading ? '...' : displayStreak} Gün 🔥
+                   </h3>
                 </div>
              </div>
 
@@ -191,7 +246,7 @@ export default function Home() {
                     disabled={buttonDisabled}
                     className={`w-full md:w-auto px-8 py-4 rounded-xl flex items-center justify-center gap-3 transition-all border ${buttonColorClass}`}
                  >
-                    {loading ? (
+                    {isWatering ? (
                         <Loader2 className="animate-spin" />
                     ) : (
                         <>
