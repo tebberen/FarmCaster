@@ -1,8 +1,13 @@
+"use client";
+
 import React from 'react';
 import FarmGrid from '@/components/FarmGrid';
 import { Tractor, Info, RefreshCw, Share2, Wallet, User } from 'lucide-react';
+import { useFarcaster } from '@/hooks/useFarcaster';
 
 export default function Home() {
+  const { user } = useFarcaster();
+
   return (
     <main className="min-h-screen bg-[#09090b] text-white p-4 md:p-6 lg:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -25,7 +30,9 @@ export default function Home() {
 
              <button className="flex items-center gap-2 bg-[#11131F] border border-green-900/50 hover:border-green-500/50 text-green-500 px-4 py-2 rounded-lg transition-all">
                 <Wallet size={18} />
-                <span className="font-mono font-bold">0x12...F4A2</span>
+                <span className="font-mono font-bold">
+                  {user?.username ? `@${user.username}` : '...'}
+                </span>
              </button>
           </div>
         </header>
@@ -35,12 +42,22 @@ export default function Home() {
           {/* Profile Card */}
           <div className="bg-[#11131F] border border-gray-800 p-6 rounded-xl flex items-center justify-between relative overflow-hidden group">
              <div className="flex items-center gap-4 relative z-10">
-                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/50">
-                   <User className="text-purple-400" size={24} />
+                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/50 overflow-hidden">
+                   {user?.pfpUrl ? (
+                     <img
+                       src={user.pfpUrl}
+                       alt={user.username || 'User'}
+                       className="w-full h-full object-cover"
+                     />
+                   ) : (
+                     <User className="text-purple-400" size={24} />
+                   )}
                 </div>
                 <div>
                    <p className="text-gray-400 text-xs uppercase font-bold mb-1">Çiftçi Profili</p>
-                   <h3 className="text-xl font-bold">@kullanici</h3>
+                   <h3 className="text-xl font-bold">
+                     {user?.username ? `@${user.username}` : '@...'}
+                   </h3>
                 </div>
              </div>
 
