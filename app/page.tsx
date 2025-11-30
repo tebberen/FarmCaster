@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import FarmGrid from '@/components/FarmGrid';
-import { Tractor, Info, RefreshCw, Share2, Wallet, User, Loader2 } from 'lucide-react';
+import { Tractor, Info, RefreshCw, Share2, Wallet, User, Loader2, Trophy } from 'lucide-react';
 import { useFarcaster } from '@/hooks/useFarcaster';
 import { NETWORKS } from '@/constants';
 import { useFarmStats } from '@/hooks/useFarmStats';
@@ -130,8 +130,14 @@ export default function Home() {
   }
 
   // Display values
-  const displayXP = userXP ? userXP.toString() : '0';
-  const displayStreak = userStreak ? userStreak.toString() : '0';
+  // XP Adjustment: The contract returns 100 XP per action. The user wants to see "1 XP".
+  const rawXP = userXP ? Number(userXP) : 0;
+  const displayXP = Math.floor(rawXP / 100).toString();
+
+  // Streak Display Logic
+  const isBase = selectedCell.networkId === 'base';
+  const streakTitle = isBase ? "Base Streak" : `${currentNetwork?.name || 'Network'} Streak`;
+  const streakValue = isBase ? (userStreak ? userStreak.toString() : '0') : '0';
 
   return (
     <main className="min-h-screen bg-[#09090b] text-white p-4 md:p-6 lg:p-8 font-sans">
@@ -152,6 +158,11 @@ export default function Home() {
                 <RefreshCw size={20} className="hover:text-white cursor-pointer" onClick={() => refetchStats()} />
                 <Share2 size={20} className="hover:text-white cursor-pointer" />
              </div>
+
+             <button className="flex items-center gap-2 bg-transparent border border-gray-700 hover:border-white/50 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-all">
+                <Trophy size={18} />
+                <span className="font-bold">Leaderboard</span>
+             </button>
 
              <button className="flex items-center gap-2 bg-[#11131F] border border-green-900/50 hover:border-green-500/50 text-green-500 px-4 py-2 rounded-lg transition-all">
                 <Wallet size={18} />
@@ -179,7 +190,7 @@ export default function Home() {
                    )}
                 </div>
                 <div>
-                   <p className="text-gray-400 text-xs uppercase font-bold mb-1">Çiftçi Profili</p>
+                   <p className="text-gray-400 text-xs uppercase font-bold mb-1">Farmer Profile</p>
                    <h3 className="text-xl font-bold">
                      {user?.username ? `@${user.username}` : (targetAddress ? 'Connected' : '@...')}
                    </h3>
@@ -190,7 +201,7 @@ export default function Home() {
                  <div className="text-yellow-400 font-bold text-2xl flex items-center gap-1 justify-end">
                     🏆 {statsLoading ? '...' : displayXP} XP
                  </div>
-                 <p className="text-gray-500 text-xs">Hasat Puanı</p>
+                 <p className="text-gray-500 text-xs">Harvest Points</p>
              </div>
 
              {/* Decorative background glow */}
@@ -204,16 +215,16 @@ export default function Home() {
                    <div className="text-2xl">🔥</div>
                 </div>
                 <div>
-                   <p className="text-gray-400 text-xs uppercase font-bold mb-1">Global Streak</p>
+                   <p className="text-gray-400 text-xs uppercase font-bold mb-1">{streakTitle}</p>
                    <h3 className="text-orange-500 font-bold text-2xl">
-                     {statsLoading ? '...' : displayStreak} Gün 🔥
+                     {statsLoading ? '...' : streakValue} Days 🔥
                    </h3>
                 </div>
              </div>
 
              <div className="text-right max-w-[150px] relative z-10">
                  <p className="text-gray-500 text-xs leading-relaxed">
-                   Zinciri kırmamak için her gün en az 1 işlem yap!
+                   Keep the streak alive! Harvest daily.
                  </p>
              </div>
 
@@ -236,7 +247,7 @@ export default function Home() {
            <div className="md:col-span-2 bg-[#11131F] border border-gray-800 p-6 rounded-xl relative overflow-hidden">
               <div className="flex items-center gap-2 mb-4">
                  <span className="text-yellow-500">⚡</span>
-                 <h3 className="font-bold text-gray-300 text-sm tracking-wide uppercase">Aksiyon Alanı</h3>
+                 <h3 className="font-bold text-gray-300 text-sm tracking-wide uppercase">ACTION AREA</h3>
               </div>
 
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -245,8 +256,8 @@ export default function Home() {
                        {currentNetwork && <currentNetwork.icon size={32} className={currentNetwork.text || 'text-white'} />}
                     </div>
                     <div>
-                       <h2 className="text-3xl font-bold">{currentNetwork?.name || 'Unknown'} <span className="text-lg text-gray-500 font-normal">Ağı</span></h2>
-                       <p className="text-green-500 font-mono text-sm">Gün {selectedCell.dayIndex + 1} — {new Date().toLocaleString('tr-TR', { month: 'long' })}</p>
+                       <h2 className="text-3xl font-bold">{currentNetwork?.name || 'Unknown'} <span className="text-lg text-gray-500 font-normal">Network</span></h2>
+                       <p className="text-green-500 font-mono text-sm">Day {selectedCell.dayIndex + 1} — {new Date().toLocaleString('en-US', { month: 'long' })}</p>
                     </div>
                  </div>
 
@@ -276,11 +287,11 @@ export default function Home() {
            <div className="bg-[#11131F] border border-gray-800 p-6 rounded-xl relative overflow-hidden">
                <div className="flex items-center gap-2 mb-4">
                  <span className="text-blue-400">🗳️</span>
-                 <h3 className="font-bold text-gray-300 text-sm tracking-wide uppercase">Günlük Görev</h3>
+                 <h3 className="font-bold text-gray-300 text-sm tracking-wide uppercase">DAILY QUEST</h3>
               </div>
 
               <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                 Farcaster üzerinde günlük aktiviteni paylaş ve ekstra XP kazan.
+                 Share your daily activity on Farcaster and earn extra XP.
               </p>
 
                {/* Decorative background glow */}

@@ -14,8 +14,8 @@ interface FarmGridProps {
 }
 
 const MONTH_NAMES = [
-  'OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN',
-  'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'
+  'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
 ];
 
 const FarmGrid = ({ gridData, selectedCell, onSelect, userStreak = 0, lastActionTimestamp = 0 }: FarmGridProps) => {
@@ -102,10 +102,10 @@ const FarmGrid = ({ gridData, selectedCell, onSelect, userStreak = 0, lastAction
     <div className="w-full bg-[#11131F] rounded-xl border border-gray-800 p-4 md:p-6 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-white font-bold flex items-center gap-2">
-          <span className="text-green-500">📅</span> {currentMonthName} AYI TARLASI <span className="text-gray-500 text-sm font-normal">{currentYear}</span>
+          <span className="text-green-500">📅</span> {currentMonthName} FARMING GRID <span className="text-gray-500 text-sm font-normal">{currentYear}</span>
         </h2>
         <div className="text-xs text-gray-400 border border-gray-700 rounded px-2 py-1">
-          ← Sağa/Sola Kaydırılabilir →
+          ← Scrollable →
         </div>
       </div>
 
@@ -114,7 +114,7 @@ const FarmGrid = ({ gridData, selectedCell, onSelect, userStreak = 0, lastAction
           {/* Header Row */}
           <div className="flex items-center mb-2">
             <div className="w-24 md:w-32 shrink-0 text-gray-400 text-xs font-bold uppercase tracking-wider pl-2">
-              Ağlar
+              Networks
             </div>
             <div className="flex-1 flex justify-between px-1">
               {days.map((day) => (
