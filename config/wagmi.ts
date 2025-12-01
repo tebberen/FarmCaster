@@ -1,7 +1,7 @@
 import { http, createConfig } from 'wagmi';
 import { base, bsc, arbitrum, celo, mainnet } from 'wagmi/chains';
 import { defineChain } from 'viem';
-import { farcasterFrame } from '@farcaster/frame-wagmi-connector';
+import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
 // 1. Define Monad Mainnet
 export const monad = defineChain({
@@ -32,7 +32,7 @@ export const hyperEvm = defineChain({
 // 3. Create Config with ROBUST RPCs (LlamaNodes / Public High-Perf)
 export const config = createConfig({
   chains: [base, bsc, arbitrum, celo, mainnet, monad, hyperEvm],
-  connectors: [farcasterFrame()],
+  connectors: [farcasterMiniApp()],
   transports: {
     // Base: LlamaNodes (High limit for logs)
     [base.id]: http('https://base.llamarpc.com'),
