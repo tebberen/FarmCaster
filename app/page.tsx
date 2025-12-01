@@ -59,7 +59,7 @@ export default function Home() {
     const NETWORK_TO_CHAIN_ID: Record<string, number> = {
       'base': 8453,
       'bsc': 56,
-      'arb': 42161,
+      'arb': 42161, // Arbitrum One
       'celo': 42220,
       'eth': 1
     };

@@ -20,5 +20,9 @@ export const CONTRACT_ADDRESSES: Record<number, { hub: Address; logic: Address }
   56: { // BSC
     hub: "0x69a9632Bd2385F5863CCD464f195aaeC8bC18c76",
     logic: "0x129bF887BDA3D21f6f1E19f329829e0ba2DF3CF8"
+  },
+  42161: { // ARBITRUM
+    hub: "0xe81e5ad7a49b3Ff0F9468d52f0D60fb5ab92C69d",
+    logic: "0x9a35251a2e461Fc2c0473Bde6252d95945771428"
   }
 };
