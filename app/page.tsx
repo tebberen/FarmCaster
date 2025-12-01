@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import FarmGrid from '@/components/FarmGrid';
 import LeaderboardModal from '@/components/LeaderboardModal';
+import WeatherOverlay from '@/components/WeatherOverlay';
+import BarnModal from '@/components/BarnModal';
 import { useFarmStats } from '@/hooks/useFarmStats';
 import { useWaterPlant } from '@/hooks/useWaterPlant';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Tractor, Flame, Trophy, Wallet, Droplets, Loader2 } from 'lucide-react';
+import { Tractor, Flame, Trophy, Wallet, Droplets, Loader2, Warehouse } from 'lucide-react';
 import { NETWORKS } from '@/constants';
 
 export default function Home() {
@@ -17,9 +19,10 @@ export default function Home() {
   const { waterPlant, isPending, isSuccess } = useWaterPlant();
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isBarnOpen, setIsBarnOpen] = useState(false);
 
   // Determine Active Network Name
-  const activeNetworkName = NETWORKS.find(n =>
+  const activeNetwork = NETWORKS.find(n =>
     (n.id === 'base' && chainId === 8453) ||
     (n.id === 'bsc' && chainId === 56) ||
     (n.id === 'arb' && chainId === 42161) ||
@@ -27,7 +30,10 @@ export default function Home() {
     (n.id === 'eth' && chainId === 1) ||
     (n.id === 'monad' && chainId === 143) ||
     (n.id === 'hyperevm' && chainId === 999)
-  )?.name || "Unknown Network";
+  );
+
+  const activeNetworkName = activeNetwork?.name || "Unknown Network";
+  const activeNetworkId = activeNetwork?.id || "base"; // Default to base for Barn logic if unknown
 
   // Handle User Clicking a Row
   const handleNetworkSelect = (networkId: string) => {
@@ -60,7 +66,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-green-500/30 font-sans">
+    <main className="min-h-screen bg-[#050505] text-white selection:bg-green-500/30 font-sans relative">
+      <WeatherOverlay />
+
       <nav className="border-b border-white/10 bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -72,6 +80,13 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+             <button
+                onClick={() => setIsBarnOpen(true)}
+                className="flex items-center gap-2 border border-white/20 hover:border-blue-500 text-gray-300 hover:text-blue-400 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
+             >
+                <Warehouse size={16} />
+                Barn
+             </button>
              <button
                 onClick={() => setIsLeaderboardOpen(true)}
                 className="flex items-center gap-2 border border-white/20 hover:border-yellow-500 text-gray-300 hover:text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
@@ -87,7 +102,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden">
@@ -129,6 +144,7 @@ export default function Home() {
           userStreak={streak}
           lastActionTimestamp={lastAction}
           onNetworkSelect={handleNetworkSelect}
+          activeNetworkId={activeNetworkId}
         />
 
         {/* Action Area */}
@@ -176,6 +192,13 @@ export default function Home() {
       <LeaderboardModal
         isOpen={isLeaderboardOpen}
         onClose={() => setIsLeaderboardOpen(false)}
+      />
+
+      <BarnModal
+        isOpen={isBarnOpen}
+        onClose={() => setIsBarnOpen(false)}
+        currentNetworkId={activeNetworkId}
+        userXP={Number(xp)}
       />
     </main>
   );

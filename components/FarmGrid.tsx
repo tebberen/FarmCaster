@@ -87,7 +87,7 @@ const FarmGrid = ({
     //   - Previous (streak) days are GREEN (1) (assuming streak is unbroken from yesterday)
 
     if (dayIndex === todayIndex) {
-      if (isActionToday && streak > 0) return 2; // Fire
+      if (isActionToday && streak > 0) return 2; // Fire/Active
       return 0; // Empty
     }
 
@@ -107,7 +107,7 @@ const FarmGrid = ({
     const rangeStart = rangeEnd - daysToHighlight + 1;
 
     if (dayIndex >= rangeStart && dayIndex <= rangeEnd) {
-      return 1; // Green
+      return 1; // Green/History
     }
 
     return 0;
@@ -179,12 +179,21 @@ const FarmGrid = ({
                         `}
                       >
                         {status === 1 && (
-                          <div className="w-3 h-3 bg-green-500 rounded-sm shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse-slow" />
+                          // Render Network Specific Crop Emoji
+                           <div className="text-sm select-none animate-pulse-slow filter drop-shadow-[0_0_5px_rgba(255,255,255,0.4)]">
+                              {network.cropEmoji}
+                           </div>
                         )}
                         {status === 2 && (
-                          <div className="relative">
+                          <div className="relative flex items-center justify-center">
+                              {/* Glowing effect background */}
                               <div className="absolute inset-0 bg-orange-500 blur-sm opacity-50 rounded-full" />
-                              <Flame size={14} className="text-orange-500 fill-orange-500 relative z-10" />
+                              {/* Crop Emoji with Fire Overlay or just the crop itself but glowing?
+                                  The prompt says: "If Base streak is active, show 🫐 instead of a generic dot."
+                                  So let's show the emoji, maybe with a small fire icon badge or just intense glow.
+                              */}
+                              <div className="relative z-10 text-sm">{network.cropEmoji}</div>
+                              <Flame size={10} className="absolute -top-1 -right-1 text-orange-500 fill-orange-500 z-20 animate-bounce" />
                           </div>
                         )}
                         {status === 0 && (
