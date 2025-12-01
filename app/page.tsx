@@ -10,31 +10,68 @@ import { NETWORKS } from '@/constants';
 
 export default function Home() {
   const { address, chainId } = useAccount();
-  const { switchChain } = useSwitchChain(); // Ağ değiştirme fonksiyonu
+  const { switchChain, error: switchError } = useSwitchChain();
+
+  // Optimistic UI state for immediate feedback
+  const [optimisticNetworkId, setOptimisticNetworkId] = useState<string | null>(null);
 
   // Verileri çek (Otomatik olarak şu anki ağdan gelir)
   const { xp, streak, lastAction, isLoading } = useFarmStats();
   const { waterPlant, isPending, isSuccess } = useWaterPlant();
 
-  // Seçili hücre (Görsel amaçlı)
-  const [selectedCell, setSelectedCell] = useState<{ networkId: string; day: number } | null>(null);
+  // Reset optimistic state when chainId actually changes or if there is an error
+  useEffect(() => {
+    if (chainId) {
+      setOptimisticNetworkId(null);
+    }
+  }, [chainId]);
 
-  // Aktif Ağ İsmi (UI için)
-  const activeNetworkName = NETWORKS.find(n =>
-    (n.id === 'base' && chainId === 8453) ||
-    (n.id === 'bsc' && chainId === 56)
-  )?.name || "Unknown Network";
+  useEffect(() => {
+      if (switchError) {
+          setOptimisticNetworkId(null);
+      }
+  }, [switchError]);
 
-  const activeNetworkId = NETWORKS.find(n =>
-    (n.id === 'base' && chainId === 8453) ||
-    (n.id === 'bsc' && chainId === 56)
-  )?.id;
+
+  // Map Chain IDs to Network IDs
+  const CHAIN_IDS: Record<number, string> = {
+    8453: 'base',
+    56: 'bsc',
+    42161: 'arb',
+    42220: 'celo',
+    1: 'eth'
+  };
+
+  // Determine Active Network ID (Priority: Optimistic -> Chain ID -> Default Base)
+  const currentChainId = chainId || 8453;
+  const derivedNetworkId = CHAIN_IDS[currentChainId];
+
+  const activeNetworkId = optimisticNetworkId || derivedNetworkId || 'base';
+
+  // Find Network Object
+  const activeNetwork = NETWORKS.find(n => n.id === activeNetworkId);
+  const activeNetworkName = activeNetwork?.name || "Unknown Network";
+
 
   // Grid'de bir ağa tıklandığında (örn: sol sütun) ağ değiştir
-  const handleNetworkSelect = (networkId: string) => {
-    if (networkId === 'base') switchChain({ chainId: 8453 });
-    if (networkId === 'bsc') switchChain({ chainId: 56 });
-    // Diğer ağlar eklendikçe buraya yazacağız
+  const handleNetworkSwitch = (networkId: string) => {
+    // Map Network IDs to Chain IDs
+    const NETWORK_TO_CHAIN_ID: Record<string, number> = {
+      'base': 8453,
+      'bsc': 56,
+      'arb': 42161,
+      'celo': 42220,
+      'eth': 1
+    };
+
+    const targetChainId = NETWORK_TO_CHAIN_ID[networkId];
+
+    if (targetChainId) {
+      setOptimisticNetworkId(networkId); // Immediate feedback
+      switchChain({ chainId: targetChainId });
+    } else {
+      console.warn(`Network ${networkId} is not supported for switching.`);
+    }
   };
 
   // Buton Metni Mantığı
@@ -136,7 +173,7 @@ export default function Home() {
         <FarmGrid
           userStreak={streak}
           lastActionTimestamp={lastAction}
-          onNetworkSelect={handleNetworkSelect} // Pass the switcher function
+          onNetworkSelect={handleNetworkSwitch} // Pass the switcher function
           activeNetworkId={activeNetworkId}
         />
 
