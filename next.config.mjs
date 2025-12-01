@@ -13,6 +13,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    webpackBuildWorker: false,
+  },
   // Fix for wagmi dependencies
   webpack: (config) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
