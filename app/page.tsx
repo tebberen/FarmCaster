@@ -17,6 +17,7 @@ export default function Home() {
 
   // Active Network Logic
   const activeNetworkName = NETWORKS.find(n =>
+    (n.id === 'eth' && chainId === 1) ||
     (n.id === 'base' && chainId === 8453) ||
     (n.id === 'bsc' && chainId === 56) ||
     (n.id === 'arb' && chainId === 42161) ||
@@ -25,6 +26,7 @@ export default function Home() {
 
   // Network Switch Handler
   const handleNetworkSelect = (networkId: string) => {
+    if (networkId === 'eth') switchChain({ chainId: 1 });
     if (networkId === 'base') switchChain({ chainId: 8453 });
     if (networkId === 'bsc') switchChain({ chainId: 56 });
     if (networkId === 'arb') switchChain({ chainId: 42161 });
