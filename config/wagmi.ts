@@ -4,7 +4,7 @@ import { defineChain } from 'viem';
 import { farcasterFrame } from '@farcaster/frame-wagmi-connector';
 
 // Custom Chain: Monad Mainnet
-const monad = defineChain({
+export const monad = defineChain({
   id: 143,
   name: 'Monad Mainnet',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
@@ -17,7 +17,7 @@ const monad = defineChain({
 });
 
 // Custom Chain: HyperEVM Mainnet
-const hyperEvm = defineChain({
+export const hyperEvm = defineChain({
   id: 999,
   name: 'Hyperliquid EVM',
   nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
