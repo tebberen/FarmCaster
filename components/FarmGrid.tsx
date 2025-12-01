@@ -7,10 +7,12 @@ import { Flame } from 'lucide-react';
 interface FarmGridProps {
   // We keep gridData for other networks if needed, but primarily use streak/action for visualization
   gridData?: Record<string, number[]>;
-  selectedCell: { networkId: string; dayIndex: number };
-  onSelect: (cell: { networkId: string; dayIndex: number }) => void;
+  selectedCell?: { networkId: string; dayIndex: number };
+  onSelect?: (cell: { networkId: string; dayIndex: number }) => void;
+  onNetworkSelect?: (networkId: string) => void;
   userStreak?: number;
   lastActionTimestamp?: number;
+  activeNetworkId?: string;
 }
 
 const MONTH_NAMES = [
@@ -18,7 +20,15 @@ const MONTH_NAMES = [
   'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
 ];
 
-const FarmGrid = ({ gridData, selectedCell, onSelect, userStreak = 0, lastActionTimestamp = 0 }: FarmGridProps) => {
+const FarmGrid = ({
+  gridData,
+  selectedCell,
+  onSelect,
+  onNetworkSelect,
+  userStreak = 0,
+  lastActionTimestamp = 0,
+  activeNetworkId
+}: FarmGridProps) => {
 
   // 1. Dynamic Date Logic
   const { currentMonthName, daysInMonth, days, todayIndex, currentYear } = useMemo(() => {
@@ -40,10 +50,15 @@ const FarmGrid = ({ gridData, selectedCell, onSelect, userStreak = 0, lastAction
   }, []);
 
   // 2. Visualization Logic (Lazy Indexer)
-  // We calculate the status of each day for the 'base' network based on streak and last action.
+  // We calculate the status of each day for the ACTIVE network based on streak and last action.
   const getCellStatus = (networkId: string, dayIndex: number) => {
-    // Only apply dynamic logic to Base network for now
-    if (networkId !== 'base') {
+    // Determine which network logic to use.
+    // If activeNetworkId is provided, use it to check match.
+    // If not provided (legacy), default to 'base'.
+    const targetNetworkId = activeNetworkId || 'base';
+
+    // Only apply dynamic logic to the target (active) network
+    if (networkId !== targetNetworkId) {
       // Fallback to static gridData if available, or 0
       return gridData?.[networkId]?.[dayIndex] ?? 0;
     }
@@ -129,19 +144,24 @@ const FarmGrid = ({ gridData, selectedCell, onSelect, userStreak = 0, lastAction
           <div className="space-y-3">
             {NETWORKS.map((network) => (
               <div key={network.id} className="flex items-center group hover:bg-white/5 rounded-lg transition-colors py-1">
-                {/* Network Label */}
-                <div className="w-24 md:w-32 shrink-0 flex items-center gap-2 pl-2">
+                {/* Network Label - Clickable for Switching */}
+                <div
+                  className={`w-24 md:w-32 shrink-0 flex items-center gap-2 pl-2 ${onNetworkSelect ? 'cursor-pointer hover:bg-white/10 rounded-md py-1' : ''}`}
+                  onClick={() => onNetworkSelect && onNetworkSelect(network.id)}
+                >
                   <div className={`p-1.5 rounded-full ${network.color} ${network.text || 'text-white'}`}>
                      <network.icon size={12} strokeWidth={3} />
                   </div>
-                  <span className="text-xs font-bold text-gray-300 uppercase">{network.name}</span>
+                  <span className={`text-xs font-bold uppercase ${activeNetworkId === network.id ? 'text-white' : 'text-gray-500'}`}>
+                    {network.name}
+                  </span>
                 </div>
 
                 {/* Grid Cells */}
                 <div className="flex-1 flex justify-between px-1 relative">
                   {days.map((day, index) => {
                     const status = getCellStatus(network.id, index);
-                    const isSelected = selectedCell.networkId === network.id && selectedCell.dayIndex === index;
+                    const isSelected = selectedCell?.networkId === network.id && selectedCell?.dayIndex === index;
                     const isFuture = index > todayIndex;
                     const isToday = index === todayIndex;
 
@@ -149,13 +169,13 @@ const FarmGrid = ({ gridData, selectedCell, onSelect, userStreak = 0, lastAction
                       <div
                         key={day}
                         onClick={() => {
-                          if (!isFuture) {
+                          if (!isFuture && onSelect) {
                             onSelect({ networkId: network.id, dayIndex: index });
                           }
                         }}
                         className={`w-6 h-6 flex items-center justify-center rounded transition-colors relative
-                          ${isFuture ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'}
-                          ${isSelected ? 'ring-2 ring-white z-10' : (!isFuture && 'hover:bg-white/10')}
+                          ${isFuture ? 'cursor-not-allowed opacity-30' : (onSelect ? 'cursor-pointer' : '')}
+                          ${isSelected ? 'ring-2 ring-white z-10' : (!isFuture && onSelect && 'hover:bg-white/10')}
                         `}
                       >
                         {status === 1 && (
