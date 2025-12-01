@@ -11,6 +11,10 @@ export const LOGIC_ABI = [
 ] as const;
 
 export const CONTRACT_ADDRESSES: Record<number, { hub: Address; logic: Address }> = {
+  1: { // ETHEREUM
+    hub: "0x706778CdAAA8CfbaA49E0A931266E71C87Ea30Ef",
+    logic: "0x09F7753A1E2c80617b694C14bEe70F7e8D43704D"
+  },
   8453: { // BASE
     hub: "0xdC0AB65C6de75D0A14bE498C21b7DAa5fc7a2548",
     logic: "0xb63Aef71344DFCe564A114d3C3971F954A4EB2F6"
