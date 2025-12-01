@@ -11,10 +11,6 @@ export const LOGIC_ABI = [
 ] as const;
 
 export const CONTRACT_ADDRESSES: Record<number, { hub: Address; logic: Address }> = {
-  1: { // ETHEREUM
-    hub: "0x706778CdAAA8CfbaA49E0A931266E71C87Ea30Ef",
-    logic: "0x09F7753A1E2c80617b694C14bEe70F7e8D43704D"
-  },
   8453: { // BASE
     hub: "0xdC0AB65C6de75D0A14bE498C21b7DAa5fc7a2548",
     logic: "0xb63Aef71344DFCe564A114d3C3971F954A4EB2F6"
@@ -30,5 +26,17 @@ export const CONTRACT_ADDRESSES: Record<number, { hub: Address; logic: Address }
   42220: { // CELO
     hub: "0x50bC8ed78A79CF9e41DA82919F828CBd45765Fc7",
     logic: "0x23ECADe28DE0f98c72E436a7BF4284b4388585A8"
+  },
+  1: { // ETHEREUM
+    hub: "0x706778CdAAA8CfbaA49E0A931266E71C87Ea30Ef",
+    logic: "0x09F7753A1E2c80617b694C14bEe70F7e8D43704D"
+  },
+  143: { // MONAD
+    hub: "0x9002634d00c91f7773e95a10d9D20a5e94263F61",
+    logic: "0xE6c2a52d08B1E31f3Dea6ed9aDcD811EE4F8F3D4"
+  },
+  999: { // HYPEREVM
+    hub: "0xbab962Cd818FC1f6246e2dA406DB2B3c324c608B",
+    logic: "0xb93ca9608bd6DeF7010c6369Ddfbd2FFe6bDeE8F"
   }
 };
