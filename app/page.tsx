@@ -15,22 +15,26 @@ export default function Home() {
   const { xp, streak, lastAction, isLoading } = useFarmStats();
   const { waterPlant, isPending, isSuccess } = useWaterPlant();
 
-  // Active Network Logic
+  // Determine Active Network Name
   const activeNetworkName = NETWORKS.find(n =>
-    (n.id === 'eth' && chainId === 1) ||
     (n.id === 'base' && chainId === 8453) ||
     (n.id === 'bsc' && chainId === 56) ||
     (n.id === 'arb' && chainId === 42161) ||
-    (n.id === 'celo' && chainId === 42220)
+    (n.id === 'celo' && chainId === 42220) ||
+    (n.id === 'eth' && chainId === 1) ||
+    (n.id === 'monad' && chainId === 143) ||
+    (n.id === 'hyperevm' && chainId === 999)
   )?.name || "Unknown Network";
 
-  // Network Switch Handler
+  // Handle User Clicking a Row
   const handleNetworkSelect = (networkId: string) => {
-    if (networkId === 'eth') switchChain({ chainId: 1 });
     if (networkId === 'base') switchChain({ chainId: 8453 });
     if (networkId === 'bsc') switchChain({ chainId: 56 });
     if (networkId === 'arb') switchChain({ chainId: 42161 });
     if (networkId === 'celo') switchChain({ chainId: 42220 });
+    if (networkId === 'eth') switchChain({ chainId: 1 });
+    if (networkId === 'monad') switchChain({ chainId: 143 });
+    if (networkId === 'hyperevm') switchChain({ chainId: 999 });
   };
 
   const isTodayDone = lastAction > 0 && new Date(lastAction * 1000).toDateString() === new Date().toDateString();
@@ -78,6 +82,7 @@ export default function Home() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden">
              <div className="flex items-center gap-4 z-10">
@@ -113,12 +118,14 @@ export default function Home() {
           </div>
         </div>
 
+        {/* The Grid */}
         <FarmGrid
           userStreak={streak}
           lastActionTimestamp={lastAction}
           onNetworkSelect={handleNetworkSelect}
         />
 
+        {/* Action Area */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-[#0f1218] rounded-xl border border-white/10 p-6 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
              <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
