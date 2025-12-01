@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import FarmGrid from '@/components/FarmGrid';
+import LeaderboardModal from '@/components/LeaderboardModal';
 import { useFarmStats } from '@/hooks/useFarmStats';
 import { useWaterPlant } from '@/hooks/useWaterPlant';
 import { useAccount, useSwitchChain } from 'wagmi';
@@ -14,6 +15,8 @@ export default function Home() {
 
   const { xp, streak, lastAction, isLoading } = useFarmStats();
   const { waterPlant, isPending, isSuccess } = useWaterPlant();
+
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
   // Determine Active Network Name
   const activeNetworkName = NETWORKS.find(n =>
@@ -69,7 +72,10 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-             <button className="flex items-center gap-2 border border-white/20 hover:border-yellow-500 text-gray-300 hover:text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-bold transition-all">
+             <button
+                onClick={() => setIsLeaderboardOpen(true)}
+                className="flex items-center gap-2 border border-white/20 hover:border-yellow-500 text-gray-300 hover:text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
+             >
                 <Trophy size={16} />
                 Leaderboard
              </button>
@@ -166,6 +172,11 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <LeaderboardModal
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+      />
     </main>
   );
 }
