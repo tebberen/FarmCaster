@@ -22,5 +22,9 @@ export const CONTRACT_ADDRESSES: Record<number, { hub: Address; logic: Address }
   42161: { // ARBITRUM
     hub: "0xe81e5ad7a49b3Ff0F9468d52f0D60fb5ab92C69d",
     logic: "0x9a35251a2e461Fc2c0473Bde6252d95945771428"
+  },
+  42220: { // CELO
+    hub: "0x50bC8ed78A79CF9e41DA82919F828CBd45765Fc7",
+    logic: "0x23ECADe28DE0f98c72E436a7BF4284b4388585A8"
   }
 };
