@@ -8,7 +8,7 @@ export const config = createConfig({
   transports: {
     [base.id]: http(),
     [bsc.id]: http(),
-    [arbitrum.id]: http(),
+    [arbitrum.id]: http(), // Arbitrum One
     [celo.id]: http(),
     [mainnet.id]: http(),
   },
