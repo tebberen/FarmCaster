@@ -1,9 +1,9 @@
 import { http, createConfig } from 'wagmi';
 import { base, bsc, arbitrum, celo, mainnet } from 'wagmi/chains';
 import { defineChain } from 'viem';
-import { farcasterFrame } from '@farcaster/frame-wagmi-connector';
+import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
-// Custom Chain: Monad Mainnet
+// 1. Define Monad Mainnet
 export const monad = defineChain({
   id: 143,
   name: 'Monad Mainnet',
@@ -16,7 +16,7 @@ export const monad = defineChain({
   },
 });
 
-// Custom Chain: HyperEVM Mainnet
+// 2. Define HyperEVM Mainnet
 export const hyperEvm = defineChain({
   id: 999,
   name: 'Hyperliquid EVM',
@@ -29,16 +29,28 @@ export const hyperEvm = defineChain({
   },
 });
 
+// 3. Create Config with ROBUST RPCs (LlamaNodes / Public High-Perf)
 export const config = createConfig({
   chains: [base, bsc, arbitrum, celo, mainnet, monad, hyperEvm],
-  connectors: [farcasterFrame()],
+  connectors: [farcasterMiniApp()],
   transports: {
-    [base.id]: http(),
-    [bsc.id]: http(),
-    [arbitrum.id]: http(),
-    [celo.id]: http(),
-    [mainnet.id]: http(),
-    [monad.id]: http(),
-    [hyperEvm.id]: http(),
+    // Base: LlamaNodes (High limit for logs)
+    [base.id]: http('https://base.llamarpc.com'),
+
+    // BSC: LlamaNodes
+    [bsc.id]: http('https://binance.llamarpc.com'),
+
+    // Arbitrum: LlamaNodes
+    [arbitrum.id]: http('https://arbitrum.llamarpc.com'),
+
+    // Celo: Official Public Node (Usually robust)
+    [celo.id]: http('https://forno.celo.org'),
+
+    // Ethereum: LlamaNodes
+    [mainnet.id]: http('https://eth.llamarpc.com'),
+
+    // Custom Chains (Official RPCs are usually performant for new chains)
+    [monad.id]: http('https://rpc.monad.xyz'),
+    [hyperEvm.id]: http('https://rpc.hyperliquid.xyz/evm'),
   },
 });
