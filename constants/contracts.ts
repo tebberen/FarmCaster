@@ -1,6 +1,5 @@
 import { Address } from "viem";
 
-// ABI Tanımları (İki ağda da aynı)
 export const HUB_ABI = [
   { type: 'function', name: 'userXP', inputs: [{ name: 'user', type: 'address' }], outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view' },
   { type: 'function', name: 'userStreak', inputs: [{ name: 'user', type: 'address' }], outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view' },
@@ -11,7 +10,6 @@ export const LOGIC_ABI = [
   { type: 'function', name: 'waterPlant', inputs: [], outputs: [], stateMutability: 'nonpayable' }
 ] as const;
 
-// Ağ ID'sine göre Adres Haritası
 export const CONTRACT_ADDRESSES: Record<number, { hub: Address; logic: Address }> = {
   8453: { // BASE
     hub: "0xdC0AB65C6de75D0A14bE498C21b7DAa5fc7a2548",
