@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import FarmGrid from '@/components/FarmGrid';
 import { useFarmStats } from '@/hooks/useFarmStats';
 import { useWaterPlant } from '@/hooks/useWaterPlant';
@@ -10,71 +10,26 @@ import { NETWORKS } from '@/constants';
 
 export default function Home() {
   const { address, chainId } = useAccount();
-  const { switchChain, error: switchError } = useSwitchChain();
+  const { switchChain } = useSwitchChain();
 
-  // Optimistic UI state for immediate feedback
-  const [optimisticNetworkId, setOptimisticNetworkId] = useState<string | null>(null);
-
-  // Verileri çek (Otomatik olarak şu anki ağdan gelir)
   const { xp, streak, lastAction, isLoading } = useFarmStats();
   const { waterPlant, isPending, isSuccess } = useWaterPlant();
 
-  // Reset optimistic state when chainId actually changes or if there is an error
-  useEffect(() => {
-    if (chainId) {
-      setOptimisticNetworkId(null);
-    }
-  }, [chainId]);
+  // Active Network Logic
+  const activeNetworkName = NETWORKS.find(n =>
+    (n.id === 'base' && chainId === 8453) ||
+    (n.id === 'bsc' && chainId === 56) ||
+    (n.id === 'arb' && chainId === 42161)
+  )?.name || "Unknown Network";
 
-  useEffect(() => {
-      if (switchError) {
-          setOptimisticNetworkId(null);
-      }
-  }, [switchError]);
-
-
-  // Map Chain IDs to Network IDs
-  const CHAIN_IDS: Record<number, string> = {
-    8453: 'base',
-    56: 'bsc',
-    42161: 'arb',
-    42220: 'celo',
-    1: 'eth'
+  // Network Switch Handler
+  const handleNetworkSelect = (networkId: string) => {
+    if (networkId === 'base') switchChain({ chainId: 8453 });
+    if (networkId === 'bsc') switchChain({ chainId: 56 });
+    if (networkId === 'arb') switchChain({ chainId: 42161 });
+    // Add Celo later
   };
 
-  // Determine Active Network ID (Priority: Optimistic -> Chain ID -> Default Base)
-  const currentChainId = chainId || 8453;
-  const derivedNetworkId = CHAIN_IDS[currentChainId];
-
-  const activeNetworkId = optimisticNetworkId || derivedNetworkId || 'base';
-
-  // Find Network Object
-  const activeNetwork = NETWORKS.find(n => n.id === activeNetworkId);
-  const activeNetworkName = activeNetwork?.name || "Unknown Network";
-
-
-  // Grid'de bir ağa tıklandığında (örn: sol sütun) ağ değiştir
-  const handleNetworkSwitch = (networkId: string) => {
-    // Map Network IDs to Chain IDs
-    const NETWORK_TO_CHAIN_ID: Record<string, number> = {
-      'base': 8453,
-      'bsc': 56,
-      'arb': 42161, // Arbitrum One
-      'celo': 42220,
-      'eth': 1
-    };
-
-    const targetChainId = NETWORK_TO_CHAIN_ID[networkId];
-
-    if (targetChainId) {
-      setOptimisticNetworkId(networkId); // Immediate feedback
-      switchChain({ chainId: targetChainId });
-    } else {
-      console.warn(`Network ${networkId} is not supported for switching.`);
-    }
-  };
-
-  // Buton Metni Mantığı
   const isTodayDone = lastAction > 0 && new Date(lastAction * 1000).toDateString() === new Date().toDateString();
 
   let buttonText = "WATER PLANT";
@@ -96,8 +51,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-green-500/30 font-sans">
-
-      {/* Navbar */}
       <nav className="border-b border-white/10 bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -108,13 +61,11 @@ export default function Home() {
               FARM<span className="text-gray-400">CASTER</span>
             </h1>
           </div>
-
           <div className="flex items-center gap-3">
              <button className="flex items-center gap-2 border border-white/20 hover:border-yellow-500 text-gray-300 hover:text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-bold transition-all">
                 <Trophy size={16} />
                 Leaderboard
              </button>
-
              <div className="flex items-center gap-2 bg-[#1a1f2e] border border-green-900/50 text-green-400 px-3 py-1.5 rounded-lg text-sm font-bold">
                <Wallet size={16} />
                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not Connected"}
@@ -124,15 +75,10 @@ export default function Home() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* XP Card */}
-          <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden group">
+          <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden">
              <div className="flex items-center gap-4 z-10">
-               <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl border border-indigo-500/30">
-                 🧑‍🌾
-               </div>
+               <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl border border-indigo-500/30">🧑‍🌾</div>
                <div>
                  <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">Farmer Profile</p>
                  <h2 className="text-lg font-bold text-white">Connected</h2>
@@ -141,48 +87,38 @@ export default function Home() {
              <div className="text-right z-10">
                <h3 className="text-2xl font-black text-yellow-400 flex items-center justify-end gap-2">
                  <Trophy size={20} />
-                 {/* 100 XP'yi 1 XP olarak göster */}
                  {Math.floor(xp / 100)} XP
                </h3>
                <p className="text-xs text-gray-500">Harvest Points</p>
              </div>
           </div>
 
-          {/* Dynamic Streak Card */}
-          <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden group">
+          <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-orange-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center gap-4 z-10">
               <div className="w-12 h-12 rounded-full bg-orange-900/20 flex items-center justify-center border border-orange-500/30">
                 <Flame className="text-orange-500" size={24} fill="currentColor" />
               </div>
               <div>
-                {/* Dynamically show the Network Name */}
                 <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">{activeNetworkName} Streak</p>
                 <h2 className="text-2xl font-bold text-white">{streak} Days 🔥</h2>
               </div>
             </div>
             <div className="text-right max-w-[150px] z-10 hidden md:block">
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Keep the streak alive! Harvest daily on {activeNetworkName}.
-              </p>
+              <p className="text-xs text-gray-500 leading-relaxed">Keep the streak alive! Harvest daily.</p>
             </div>
           </div>
         </div>
 
-        {/* The Grid - Clicking a row switches network */}
         <FarmGrid
           userStreak={streak}
           lastActionTimestamp={lastAction}
-          onNetworkSelect={handleNetworkSwitch} // Pass the switcher function
-          activeNetworkId={activeNetworkId}
+          onNetworkSelect={handleNetworkSelect}
         />
 
-        {/* Action Area */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-[#0f1218] rounded-xl border border-white/10 p-6 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-             {/* Background Glow */}
              <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-
             <div className="mb-4 md:mb-0 z-10">
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-2 h-2 rounded-full ${isTodayDone ? 'bg-green-500' : 'bg-orange-500 animate-pulse'}`}></div>
@@ -219,7 +155,6 @@ export default function Home() {
             </p>
           </div>
         </div>
-
       </div>
     </main>
   );
