@@ -1,20 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  // Disable source maps to save huge amounts of memory
+  productionBrowserSourceMaps: false,
   images: {
     unoptimized: true,
   },
-  // Fix for wagmi/viem dependencies
-  webpack: (config) => {
-    config.externals.push('pino-pretty', 'lokijs', 'encoding');
-    return config;
-  },
-  // Disable checks to prevent "WorkerError" (OOM) on CI
+  // CRITICAL: Ignore all errors during build to prevent OOM
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Fix for wagmi dependencies
+  webpack: (config) => {
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
+    return config;
   },
 };
 
