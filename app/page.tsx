@@ -19,7 +19,8 @@ export default function Home() {
   const activeNetworkName = NETWORKS.find(n =>
     (n.id === 'base' && chainId === 8453) ||
     (n.id === 'bsc' && chainId === 56) ||
-    (n.id === 'arb' && chainId === 42161)
+    (n.id === 'arb' && chainId === 42161) ||
+    (n.id === 'celo' && chainId === 42220)
   )?.name || "Unknown Network";
 
   // Network Switch Handler
@@ -27,7 +28,7 @@ export default function Home() {
     if (networkId === 'base') switchChain({ chainId: 8453 });
     if (networkId === 'bsc') switchChain({ chainId: 56 });
     if (networkId === 'arb') switchChain({ chainId: 42161 });
-    // Add Celo later
+    if (networkId === 'celo') switchChain({ chainId: 42220 });
   };
 
   const isTodayDone = lastAction > 0 && new Date(lastAction * 1000).toDateString() === new Date().toDateString();
