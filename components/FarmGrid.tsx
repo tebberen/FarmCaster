@@ -2,11 +2,10 @@
 
 import React, { useMemo } from 'react';
 import { NETWORKS } from '@/constants';
-import { Flame } from 'lucide-react';
+import { Flame, Sprout } from 'lucide-react';
 
 interface FarmGridProps {
-  // We keep gridData for other networks if needed, but primarily use streak/action for visualization
-  gridData?: Record<string, number[]>;
+  gridData?: Record<string, number[]>; // Kept for legacy compatibility if needed
   selectedCell?: { networkId: string; dayIndex: number };
   onSelect?: (cell: { networkId: string; dayIndex: number }) => void;
   onNetworkSelect?: (networkId: string) => void;
@@ -49,164 +48,202 @@ const FarmGrid = ({
     };
   }, []);
 
-  // 2. Visualization Logic (Lazy Indexer)
+  // 2. Visualization Logic (Backtrace Streak)
   // We calculate the status of each day for the ACTIVE network based on streak and last action.
   const getCellStatus = (networkId: string, dayIndex: number) => {
-    // Determine which network logic to use.
-    // If activeNetworkId is provided, use it to check match.
-    // If not provided (legacy), default to 'base'.
+    // If this row is NOT the active network, we don't show the dynamic streak (unless we had data for all networks).
+    // The prompt implies we primarily track the active network's streak from the contract.
+    // However, to keep the UI looking "alive", if we have gridData (legacy) or just want to show empty plots, we can.
+    // But for the specific "Realistic" request, we should focus on the Active Network's data if provided.
+
+    // Default to 'base' if undefined, but ideally we match `activeNetworkId`.
     const targetNetworkId = activeNetworkId || 'base';
 
-    // Only apply dynamic logic to the target (active) network
     if (networkId !== targetNetworkId) {
-      // Fallback to static gridData if available, or 0
-      return gridData?.[networkId]?.[dayIndex] ?? 0;
+       // If we aren't the active network, we just return 0 (Empty Plot)
+       // This prevents showing misleading streaks for networks we haven't fetched data for.
+       return 0;
     }
 
-    // If future day, it's empty (or disabled)
-    if (dayIndex > todayIndex) return 0;
+    // Future days are disabled/foggy
+    if (dayIndex > todayIndex) return -1; // -1 for Future
 
     const streak = Number(userStreak);
     const lastActionTime = Number(lastActionTimestamp);
 
-    // Check if last action was today
+    if (streak === 0 || lastActionTime === 0) return 0; // Empty Soil
+
     const now = new Date();
     const lastActionDate = new Date(lastActionTime * 1000);
 
-    const isActionToday = lastActionTime > 0 &&
-      lastActionDate.getDate() === now.getDate() &&
-      lastActionDate.getMonth() === now.getMonth() &&
-      lastActionDate.getFullYear() === now.getFullYear();
-
-    // Logic:
-    // If Action Today:
-    //   - Today (todayIndex) is FIRE (2)
-    //   - Previous (streak - 1) days are GREEN (1)
-    // If Action NOT Today:
-    //   - Today is EMPTY (0)
-    //   - Previous (streak) days are GREEN (1) (assuming streak is unbroken from yesterday)
-
-    if (dayIndex === todayIndex) {
-      if (isActionToday && streak > 0) return 2; // Fire/Active
-      return 0; // Empty
+    // If the last action was not in this month/year, we don't show it on this calendar
+    // (unless we wanted to handle spillover, but for "Calendar Month" scope, strict match is safer).
+    if (lastActionDate.getMonth() !== now.getMonth() || lastActionDate.getFullYear() !== now.getFullYear()) {
+      return 0;
     }
 
-    // Past days logic
-    let daysToHighlight = streak;
-    if (isActionToday) {
-      daysToHighlight = streak - 1; // Since today is already counted as Fire
+    const lastActionDayIndex = lastActionDate.getDate() - 1;
+
+    // Calculate the range of days covered by the streak
+    // The streak includes the lastActionDay and (streak - 1) days before it.
+    const startDayIndex = lastActionDayIndex - streak + 1;
+    const endDayIndex = lastActionDayIndex;
+
+    if (dayIndex >= startDayIndex && dayIndex <= endDayIndex) {
+      return 1; // Filled / Crop
     }
 
-    // Calculate the start index for the green streak
-    // The streak ends at:
-    // - If action today: todayIndex - 1
-    // - If action not today: todayIndex - 1 (since today is missed/pending)
-    // So the range is [todayIndex - daysToHighlight, todayIndex - 1]
-
-    const rangeEnd = todayIndex - 1;
-    const rangeStart = rangeEnd - daysToHighlight + 1;
-
-    if (dayIndex >= rangeStart && dayIndex <= rangeEnd) {
-      return 1; // Green/History
-    }
-
-    return 0;
+    return 0; // Empty Soil
   };
 
   return (
-    <div className="w-full bg-[#11131F] rounded-xl border border-gray-800 p-4 md:p-6 shadow-lg">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-white font-bold flex items-center gap-2">
-          <span className="text-green-500">📅</span> {currentMonthName} FARMING GRID <span className="text-gray-500 text-sm font-normal">{currentYear}</span>
-        </h2>
-        <div className="text-xs text-gray-400 border border-gray-700 rounded px-2 py-1">
-          ← Scrollable →
+    <div className="w-full bg-[#1c1c1c] rounded-xl border border-[#333] shadow-2xl overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="bg-[#111] border-b border-[#333] p-4 flex items-center justify-between shadow-md z-10">
+        <div className="flex items-center gap-3">
+           <div className="bg-[#2a2a2a] p-2 rounded-lg border border-[#444]">
+             <span className="text-xl">📅</span>
+           </div>
+           <div>
+              <h2 className="text-white font-bold tracking-widest text-lg flex items-baseline gap-2">
+                {currentMonthName} <span className="text-[#666] text-sm font-normal">{currentYear}</span>
+              </h2>
+              <p className="text-[#666] text-xs uppercase font-bold tracking-widest">Farm Schedule</p>
+           </div>
+        </div>
+        <div className="hidden md:flex items-center gap-4 text-xs font-mono text-[#555]">
+           <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-[#2a2a2a] border border-[#444] rounded-sm"></div>
+              <span>FALLOW</span>
+           </div>
+           <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-[#3a3a3a] border border-[#555] rounded-sm flex items-center justify-center text-[8px]">🌱</div>
+              <span>PLANTED</span>
+           </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-2 custom-scrollbar">
-        <div className="min-w-[800px]"> {/* Ensure minimum width for scrolling on mobile */}
-          {/* Header Row */}
-          <div className="flex items-center mb-2">
-            <div className="w-24 md:w-32 shrink-0 text-gray-400 text-xs font-bold uppercase tracking-wider pl-2">
-              Networks
-            </div>
-            <div className="flex-1 flex justify-between px-1">
-              {days.map((day) => (
-                <div key={day} className={`w-6 text-center text-[10px] font-mono ${day - 1 === todayIndex ? 'text-green-500 font-bold' : 'text-gray-500'}`}>
-                  {day}
-                </div>
-              ))}
-            </div>
+      {/* Grid Container */}
+      <div className="overflow-x-auto custom-scrollbar bg-[#0f0f0f]">
+        <div className="min-w-[1000px] p-6">
+
+          {/* Calendar Header Row (Days) */}
+          <div className="flex mb-4">
+             {/* Sticky Column Spacer */}
+             <div className="w-36 shrink-0 mr-4"></div>
+
+             {/* Days */}
+             <div className="flex-1 grid grid-cols-[repeat(31,minmax(0,1fr))] gap-1">
+                {days.map((day) => (
+                  <div key={day} className={`text-center flex flex-col items-center gap-1 group`}>
+                    <span className={`text-[10px] font-bold font-mono ${day - 1 === todayIndex ? 'text-green-500' : 'text-[#444] group-hover:text-gray-400'}`}>
+                      {day}
+                    </span>
+                    {day - 1 === todayIndex && (
+                       <div className="w-1 h-1 rounded-full bg-green-500"></div>
+                    )}
+                  </div>
+                ))}
+             </div>
           </div>
 
           {/* Network Rows */}
-          <div className="space-y-3">
-            {NETWORKS.map((network) => (
-              <div key={network.id} className="flex items-center group hover:bg-white/5 rounded-lg transition-colors py-1">
-                {/* Network Label - Clickable for Switching */}
-                <div
-                  className={`w-24 md:w-32 shrink-0 flex items-center gap-2 pl-2 ${onNetworkSelect ? 'cursor-pointer hover:bg-white/10 rounded-md py-1' : ''}`}
-                  onClick={() => onNetworkSelect && onNetworkSelect(network.id)}
-                >
-                  <div className={`p-1.5 rounded-full ${network.color} ${network.text || 'text-white'}`}>
-                     <network.icon size={12} strokeWidth={3} />
-                  </div>
-                  <span className={`text-xs font-bold uppercase ${activeNetworkId === network.id ? 'text-white' : 'text-gray-500'}`}>
-                    {network.name}
-                  </span>
+          <div className="space-y-4">
+            {NETWORKS.map((network) => {
+               const isActive = activeNetworkId === network.id;
+
+               return (
+              <div key={network.id} className={`flex items-stretch group relative ${isActive ? 'bg-white/5 rounded-xl -mx-2 px-2 py-2 border border-white/5' : 'py-2'}`}>
+
+                {/* Network Label (Sticky-ish / Button) */}
+                <div className="w-36 shrink-0 mr-4 flex items-center">
+                   <button
+                     onClick={() => onNetworkSelect && onNetworkSelect(network.id)}
+                     className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-300
+                        ${isActive
+                           ? `bg-[#1a1a1a] ${network.borderColor} shadow-lg ${network.shadowColor ? network.shadowColor + '/20' : ''}`
+                           : 'bg-[#111] border-[#222] hover:border-[#444] hover:bg-[#161616] text-gray-500 grayscale hover:grayscale-0'
+                        }
+                     `}
+                   >
+                     <div className={`p-2 rounded-lg ${isActive ? network.color : 'bg-[#222]'} text-white transition-colors`}>
+                        <network.icon size={16} />
+                     </div>
+                     <div className="text-left">
+                        <div className={`text-xs font-bold uppercase tracking-wider ${isActive ? 'text-white' : 'text-[#666]'}`}>
+                          {network.name}
+                        </div>
+                        <div className="text-[10px] text-[#444] font-mono mt-0.5">
+                          {network.weather}
+                        </div>
+                     </div>
+                   </button>
                 </div>
 
-                {/* Grid Cells */}
-                <div className="flex-1 flex justify-between px-1 relative">
+                {/* The Soil Grid */}
+                <div className="flex-1 grid grid-cols-[repeat(31,minmax(0,1fr))] gap-1.5 items-center">
                   {days.map((day, index) => {
                     const status = getCellStatus(network.id, index);
-                    const isSelected = selectedCell?.networkId === network.id && selectedCell?.dayIndex === index;
-                    const isFuture = index > todayIndex;
+                    const isFuture = status === -1;
+                    const isFilled = status === 1;
                     const isToday = index === todayIndex;
+
+                    // Style determination
+                    let cellClasses = "relative w-full aspect-square rounded-[4px] border transition-all duration-300 flex items-center justify-center";
+
+                    if (isFuture) {
+                      cellClasses += " bg-[#0a0a0a] border-[#1a1a1a] opacity-50";
+                    } else if (isFilled) {
+                      // Active Crop Cell
+                      cellClasses += ` bg-[#1a1a1a] ${network.borderColor} border-opacity-50 shadow-[0_0_10px_-2px_rgba(0,0,0,0.5)] z-10 transform hover:scale-110`;
+                    } else {
+                      // Empty Soil
+                      cellClasses += " bg-[#161616] border-[#222] hover:border-[#333] group/cell";
+                    }
+
+                    if (isToday && !isFuture) {
+                       cellClasses += " ring-1 ring-white/20";
+                    }
 
                     return (
                       <div
                         key={day}
+                        className={cellClasses}
                         onClick={() => {
-                          if (!isFuture && onSelect) {
-                            onSelect({ networkId: network.id, dayIndex: index });
-                          }
+                           if (!isFuture && onSelect) {
+                              onSelect({ networkId: network.id, dayIndex: index });
+                           }
                         }}
-                        className={`w-6 h-6 flex items-center justify-center rounded transition-colors relative
-                          ${isFuture ? 'cursor-not-allowed opacity-30' : (onSelect ? 'cursor-pointer' : '')}
-                          ${isSelected ? 'ring-2 ring-white z-10' : (!isFuture && onSelect && 'hover:bg-white/10')}
-                        `}
                       >
-                        {status === 1 && (
-                          // Render Network Specific Crop Emoji
-                           <div className="text-sm select-none animate-pulse-slow filter drop-shadow-[0_0_5px_rgba(255,255,255,0.4)]">
+                        {isFilled && (
+                           <div className="text-sm md:text-base animate-in zoom-in duration-300 filter drop-shadow-md cursor-default">
                               {network.cropEmoji}
                            </div>
                         )}
-                        {status === 2 && (
-                          <div className="relative flex items-center justify-center">
-                              {/* Glowing effect background */}
-                              <div className="absolute inset-0 bg-orange-500 blur-sm opacity-50 rounded-full" />
-                              {/* Crop Emoji with Fire Overlay or just the crop itself but glowing?
-                                  The prompt says: "If Base streak is active, show 🫐 instead of a generic dot."
-                                  So let's show the emoji, maybe with a small fire icon badge or just intense glow.
-                              */}
-                              <div className="relative z-10 text-sm">{network.cropEmoji}</div>
-                              <Flame size={10} className="absolute -top-1 -right-1 text-orange-500 fill-orange-500 z-20 animate-bounce" />
-                          </div>
+
+                        {!isFilled && !isFuture && (
+                           <div className="opacity-0 group-hover/cell:opacity-100 text-[8px] text-[#333] transition-opacity">
+                              <Sprout size={8} />
+                           </div>
                         )}
-                        {status === 0 && (
-                           <div className={`w-0.5 h-0.5 rounded-full ${isToday ? 'bg-blue-500 w-1 h-1' : 'bg-gray-700'}`} />
+
+                        {/* Today Marker if empty */}
+                        {isToday && !isFilled && (
+                           <div className="absolute inset-0 bg-white/5 pointer-events-none animate-pulse" />
                         )}
                       </div>
                     );
                   })}
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
+      </div>
+
+      {/* Footer / Legend */}
+      <div className="bg-[#111] p-3 text-center border-t border-[#222] text-[10px] text-[#444] font-mono">
+         Use the <span className="text-[#666]">Action Area</span> below to water your crops daily.
       </div>
     </div>
   );
