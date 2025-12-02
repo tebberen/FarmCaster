@@ -51,35 +51,35 @@ export default function Home() {
   const isTodayDone = currentLastAction > 0 && new Date(currentLastAction * 1000).toDateString() === new Date().toDateString();
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-green-500/30 font-sans relative">
+    <main className="min-h-screen selection:bg-green-500/30 font-sans relative">
       <WeatherOverlay />
 
-      <nav className="border-b border-white/10 bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 wood-texture mx-4 mt-4 mb-8 !rounded-xl !p-2">
+        <div className="max-w-7xl mx-auto px-4 h-12 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-green-600 p-1.5 rounded-lg">
-              <Tractor className="text-white" size={24} />
+            <div className="bg-[#aed581] p-1.5 rounded-lg shadow-inner">
+              <Tractor className="text-[#5d4037]" size={24} />
             </div>
-            <h1 className="text-xl font-black tracking-tight text-white hidden md:block">
-              FARM<span className="text-gray-400">CASTER</span>
+            <h1 className="text-xl font-black tracking-tight text-[#ffecb3] drop-shadow-md hidden md:block">
+              FARM<span className="text-[#aed581]">CASTER</span>
             </h1>
           </div>
           <div className="flex items-center gap-3">
              <button
                 onClick={() => setIsBarnOpen(true)}
-                className="flex items-center gap-2 border border-white/20 hover:border-blue-500 text-gray-300 hover:text-blue-400 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
+                className="game-btn px-3 py-1.5 text-sm font-bold flex items-center gap-2"
              >
                 <Warehouse size={16} />
                 Barn
              </button>
              <button
                 onClick={() => setIsLeaderboardOpen(true)}
-                className="flex items-center gap-2 border border-white/20 hover:border-yellow-500 text-gray-300 hover:text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
+                className="game-btn px-3 py-1.5 text-sm font-bold flex items-center gap-2"
              >
                 <Trophy size={16} />
                 Leaderboard
              </button>
-             <div className="flex items-center gap-2 bg-[#1a1f2e] border border-green-900/50 text-green-400 px-3 py-1.5 rounded-lg text-sm font-bold">
+             <div className="flex items-center gap-2 bg-[#3e2723] border-2 border-[#5d4037] text-[#ffecb3] px-3 py-1.5 rounded-lg text-sm font-bold shadow-inner">
                <Wallet size={16} />
                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not Connected"}
              </div>
@@ -90,36 +90,35 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 relative z-10">
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden">
+          <div className="wood-texture p-6 flex items-center justify-between relative overflow-hidden">
              <div className="flex items-center gap-4 z-10">
-               <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl border border-indigo-500/30">🧑‍🌾</div>
+               <div className="w-12 h-12 rounded-full bg-[#3e2723] flex items-center justify-center text-xl border-2 border-[#5d4037] shadow-inner">🧑‍🌾</div>
                <div>
-                 <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">Global XP</p>
-                 <h2 className="text-lg font-bold text-white">Farmer Level {Math.floor(globalTotalXP / 1000) + 1}</h2>
+                 <p className="text-[#ffecb3] opacity-80 text-xs font-mono uppercase tracking-widest">Global XP</p>
+                 <h2 className="text-lg font-bold text-white drop-shadow-md">Farmer Level {Math.floor(globalTotalXP / 1000) + 1}</h2>
                </div>
              </div>
              <div className="text-right z-10">
-               <h3 className="text-2xl font-black text-yellow-400 flex items-center justify-end gap-2">
-                 <Trophy size={20} />
+               <h3 className="text-2xl font-black text-[#ffecb3] flex items-center justify-end gap-2 drop-shadow-md">
+                 <Trophy size={20} className="text-yellow-400" />
                  {globalTotalXP} XP
                </h3>
-               <p className="text-xs text-gray-500">Total Harvest Points</p>
+               <p className="text-xs text-[#ffecb3] opacity-80">Total Harvest Points</p>
              </div>
           </div>
 
-          <div className="bg-[#0f1218] p-6 rounded-2xl border border-white/10 flex items-center justify-between relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="wood-texture p-6 flex items-center justify-between relative overflow-hidden">
             <div className="flex items-center gap-4 z-10">
-              <div className="w-12 h-12 rounded-full bg-orange-900/20 flex items-center justify-center border border-orange-500/30">
+              <div className="w-12 h-12 rounded-full bg-[#3e2723] flex items-center justify-center border-2 border-[#5d4037] shadow-inner">
                 <Flame className="text-orange-500" size={24} fill="currentColor" />
               </div>
               <div>
-                <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">{activeNetworkName} Streak</p>
-                <h2 className="text-2xl font-bold text-white">{currentStreak} Days 🔥</h2>
+                <p className="text-[#ffecb3] opacity-80 text-xs font-mono uppercase tracking-widest">{activeNetworkName} Streak</p>
+                <h2 className="text-2xl font-bold text-white drop-shadow-md">{currentStreak} Days 🔥</h2>
               </div>
             </div>
             <div className="text-right max-w-[150px] z-10 hidden md:block">
-              <p className="text-xs text-gray-500 leading-relaxed">Keep the streak alive! Harvest daily.</p>
+              <p className="text-xs text-[#ffecb3] opacity-80 leading-relaxed">Keep the streak alive! Harvest daily.</p>
             </div>
           </div>
         </div>
@@ -138,12 +137,12 @@ export default function Home() {
              <SeedMarket />
           </div>
 
-          <div className="bg-[#0f1218] rounded-xl border border-white/10 p-6 flex flex-col justify-center">
-            <h4 className="text-purple-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
+          <div className="wood-texture p-6 flex flex-col justify-center">
+            <h4 className="text-[#ffecb3] text-xs font-bold uppercase mb-2 flex items-center gap-2 drop-shadow-md">
               <span className="text-lg">🎁</span> DAILY QUEST
             </h4>
-            <p className="text-sm text-gray-300 leading-relaxed">
-              Share your daily activity on Farcaster to earn <span className="text-yellow-400 font-bold">+50 XP</span> bonus.
+            <p className="text-sm text-[#ffecb3] opacity-80 leading-relaxed font-bold">
+              Share your daily activity on Farcaster to earn <span className="text-[#aed581] font-black">+50 XP</span> bonus.
             </p>
           </div>
         </div>

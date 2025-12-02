@@ -61,13 +61,13 @@ export default function SeedMarket() {
   };
 
   return (
-    <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full shadow-2xl">
+    <div className="wood-texture p-6 w-full shadow-2xl">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <ShoppingBag className="text-green-400" />
+        <h3 className="text-xl font-bold text-[#ffecb3] drop-shadow-md flex items-center gap-2">
+          <ShoppingBag className="text-[#aed581]" />
           Seed Market
         </h3>
-        <span className="text-xs text-gray-500 font-mono">Pay with Native Token</span>
+        <span className="text-xs text-[#ffecb3] opacity-80 font-mono">Pay with Native Token</span>
       </div>
 
       {/* Tabs / Seed Selection */}
@@ -76,10 +76,10 @@ export default function SeedMarket() {
           <button
             key={tier.id}
             onClick={() => { setActiveTab(tier.id); setSelectedEmoji(null); }}
-            className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
+            className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
               activeTab === tier.id
-                ? `${tier.bg} ${tier.color} text-white shadow-lg`
-                : 'bg-[#1a1a1a] border-transparent text-gray-500 hover:bg-[#222] hover:text-gray-300'
+                ? `${tier.bg} ${tier.color} text-white shadow-lg scale-105`
+                : 'bg-[#3e2723]/50 border-transparent text-[#ffecb3]/70 hover:bg-[#3e2723] hover:text-[#ffecb3]'
             }`}
           >
             <span className="text-sm font-bold">{tier.name}</span>
@@ -89,16 +89,16 @@ export default function SeedMarket() {
       </div>
 
       {/* Emoji Grid */}
-      <div className="bg-[#0a0a0a] rounded-xl p-4 mb-6 border border-white/5">
+      <div className="bg-[#3e2723]/40 rounded-xl p-4 mb-6 border-2 border-[#3e2723]/30">
         <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 max-h-48 overflow-y-auto custom-scrollbar p-1">
           {activeTier?.emojis.map((emoji) => (
             <button
               key={emoji}
               onClick={() => setSelectedEmoji(emoji)}
-              className={`aspect-square flex items-center justify-center text-2xl rounded-lg border transition-all hover:scale-110 ${
+              className={`aspect-square flex items-center justify-center text-2xl rounded-lg border-2 transition-all hover:scale-110 ${
                 selectedEmoji === emoji
-                  ? 'border-green-500 bg-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
-                  : 'border-transparent bg-[#1e1e1e] hover:border-white/20'
+                  ? 'border-[#aed581] bg-[#aed581]/20 shadow-[0_0_15px_rgba(174,213,129,0.3)]'
+                  : 'border-transparent bg-[#4e342e] hover:border-[#aed581]/50'
               }`}
             >
               {emoji}
@@ -112,10 +112,10 @@ export default function SeedMarket() {
         <button
           onClick={handlePlant}
           disabled={isPending || !selectedEmoji}
-          className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-3 relative overflow-hidden group ${
+          className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-3 relative overflow-hidden group game-btn ${
             isPending || !selectedEmoji
-              ? 'bg-[#222] text-gray-600 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-500 text-white shadow-xl hover:shadow-green-500/20'
+              ? 'opacity-50 cursor-not-allowed grayscale'
+              : 'hover:brightness-110'
           }`}
         >
           {isPending ? (
@@ -131,13 +131,13 @@ export default function SeedMarket() {
         </button>
 
         {/* Info Text */}
-        <p className="text-center text-[10px] text-gray-600 font-mono mt-2">
+        <p className="text-center text-[10px] text-[#ffecb3] opacity-70 font-mono mt-2">
             {activeTier?.name} seeds grant {activeTier?.sub}
         </p>
       </div>
 
       {isSuccess && (
-        <div className="mt-4 p-3 bg-green-900/30 border border-green-500/50 rounded-lg text-green-400 text-center text-sm font-bold animate-pulse flex items-center justify-center gap-2">
+        <div className="mt-4 p-3 bg-[#aed581]/20 border-2 border-[#aed581] rounded-lg text-[#aed581] text-center text-sm font-bold animate-pulse flex items-center justify-center gap-2">
           <span>🎉</span> Harvest Successful! Check the grid.
         </div>
       )}
