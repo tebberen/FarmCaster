@@ -1,18 +1,71 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --wood-light: #eecfa1;
+  --wood-main: #8b4513;
+  --wood-dark: #5d4037;
+  --grass-base: #7ec850;
+  --soil-dark: #3e2723;
+  --soil-light: #5d4037;
+
+  /* Keep existing vars just in case, or override relevant ones */
+  --background: var(--grass-base);
+  --foreground: #fff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  font-family: 'Fredoka', sans-serif; /* Cartoon Font */
+  background-color: var(--grass-base);
+  /* CSS Magic: Grass Pattern */
+  background-image:
+    radial-gradient(#aed581 15%, transparent 16%),
+    radial-gradient(#aed581 15%, transparent 16%);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+  color: #fff;
+}
+
+@layer components {
+  /* WOOD TEXTURE CLASS */
+  .wood-texture {
+    background-color: var(--wood-main);
+    /* CSS Magic: Wood Grain Effect */
+    background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2px, transparent 2px, transparent 4px);
+    border: 4px solid var(--wood-dark);
+    border-radius: 12px;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.2), /* Top Highlight */
+      0 6px 0 var(--wood-dark), /* 3D Bottom Edge */
+      0 10px 10px rgba(0,0,0,0.3); /* Drop Shadow */
+  }
+
+  /* SOIL PIT CLASS */
+  .soil-pit {
+    background-color: var(--soil-dark);
+    border-radius: 50%; /* Rounded pits like the reference */
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.6); /* Inner shadow for depth */
+    border-bottom: 2px solid rgba(255,255,255,0.05);
+  }
+
+  /* WOOD BUTTON CLASS */
+  .game-btn {
+    background: linear-gradient(to bottom, #a1887f, #8d6e63);
+    border: 2px solid #5d4037;
+    color: #fff;
+    text-shadow: 1px 1px 0 #3e2723;
+    border-radius: 8px;
+    box-shadow: 0 4px 0 #3e2723;
+    transition: transform 0.1s;
+  }
+  .game-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #3e2723;
+  }
 }
