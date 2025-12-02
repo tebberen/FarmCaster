@@ -2,17 +2,24 @@
 
 import React, { useMemo } from 'react';
 import { NETWORKS } from '@/constants';
-import { Flame, Sprout } from 'lucide-react';
+import { Sprout } from 'lucide-react';
 
 interface FarmGridProps {
-  gridData?: Record<string, number[]>; // Kept for legacy compatibility if needed
-  selectedCell?: { networkId: string; dayIndex: number };
+  statsMap: Record<number, { streak: number; lastAction: number }>;
   onSelect?: (cell: { networkId: string; dayIndex: number }) => void;
   onNetworkSelect?: (networkId: string) => void;
-  userStreak?: number;
-  lastActionTimestamp?: number;
   activeNetworkId?: string;
 }
+
+const NETWORK_CHAIN_IDS: Record<string, number> = {
+  base: 8453,
+  bsc: 56,
+  arb: 42161,
+  celo: 42220,
+  eth: 1,
+  monad: 143,
+  hyperevm: 999
+};
 
 const MONTH_NAMES = [
   'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
@@ -20,17 +27,14 @@ const MONTH_NAMES = [
 ];
 
 const FarmGrid = ({
-  gridData,
-  selectedCell,
+  statsMap,
   onSelect,
   onNetworkSelect,
-  userStreak = 0,
-  lastActionTimestamp = 0,
   activeNetworkId
 }: FarmGridProps) => {
 
   // 1. Dynamic Date Logic
-  const { currentMonthName, daysInMonth, days, todayIndex, currentYear } = useMemo(() => {
+  const { currentMonthName, days, todayIndex, currentYear } = useMemo(() => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth(); // 0-indexed
@@ -49,51 +53,36 @@ const FarmGrid = ({
   }, []);
 
   // 2. Visualization Logic (Backtrace Streak)
-  // We calculate the status of each day for the ACTIVE network based on streak and last action.
   const getCellStatus = (networkId: string, dayIndex: number) => {
-    // If this row is NOT the active network, we don't show the dynamic streak (unless we had data for all networks).
-    // The prompt implies we primarily track the active network's streak from the contract.
-    // However, to keep the UI looking "alive", if we have gridData (legacy) or just want to show empty plots, we can.
-    // But for the specific "Realistic" request, we should focus on the Active Network's data if provided.
+    if (dayIndex > todayIndex) return -1; // Future
 
-    // Default to 'base' if undefined, but ideally we match `activeNetworkId`.
-    const targetNetworkId = activeNetworkId || 'base';
+    const chainId = NETWORK_CHAIN_IDS[networkId];
+    const stats = statsMap[chainId];
+    if (!stats) return 0; // No data loaded yet or invalid chain
 
-    if (networkId !== targetNetworkId) {
-       // If we aren't the active network, we just return 0 (Empty Plot)
-       // This prevents showing misleading streaks for networks we haven't fetched data for.
-       return 0;
-    }
+    const { streak, lastAction } = stats;
 
-    // Future days are disabled/foggy
-    if (dayIndex > todayIndex) return -1; // -1 for Future
-
-    const streak = Number(userStreak);
-    const lastActionTime = Number(lastActionTimestamp);
-
-    if (streak === 0 || lastActionTime === 0) return 0; // Empty Soil
+    if (streak === 0 || lastAction === 0) return 0;
 
     const now = new Date();
-    const lastActionDate = new Date(lastActionTime * 1000);
+    const lastActionDate = new Date(lastAction * 1000);
 
-    // If the last action was not in this month/year, we don't show it on this calendar
-    // (unless we wanted to handle spillover, but for "Calendar Month" scope, strict match is safer).
+    // If last action not in current month/year, don't show (simple calendar view logic)
     if (lastActionDate.getMonth() !== now.getMonth() || lastActionDate.getFullYear() !== now.getFullYear()) {
       return 0;
     }
 
     const lastActionDayIndex = lastActionDate.getDate() - 1;
 
-    // Calculate the range of days covered by the streak
-    // The streak includes the lastActionDay and (streak - 1) days before it.
+    // Streak range: [lastActionDay - streak + 1, lastActionDay]
     const startDayIndex = lastActionDayIndex - streak + 1;
     const endDayIndex = lastActionDayIndex;
 
     if (dayIndex >= startDayIndex && dayIndex <= endDayIndex) {
-      return 1; // Filled / Crop
+      return 1; // Planted
     }
 
-    return 0; // Empty Soil
+    return 0; // Empty
   };
 
   return (
@@ -113,11 +102,11 @@ const FarmGrid = ({
         </div>
         <div className="hidden md:flex items-center gap-4 text-xs font-mono text-[#555]">
            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-[#2a2a2a] border border-[#444] rounded-sm"></div>
+              <div className="w-3 h-3 bg-[#1e1e1e] border border-white/5 rounded-sm"></div>
               <span>FALLOW</span>
            </div>
            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-[#3a3a3a] border border-[#555] rounded-sm flex items-center justify-center text-[8px]">🌱</div>
+              <div className="w-3 h-3 bg-[#1a1a1a] border border-[#333] rounded-sm flex items-center justify-center text-[8px]">🌱</div>
               <span>PLANTED</span>
            </div>
         </div>
@@ -129,10 +118,7 @@ const FarmGrid = ({
 
           {/* Calendar Header Row (Days) */}
           <div className="flex mb-4">
-             {/* Sticky Column Spacer */}
              <div className="w-36 shrink-0 mr-4"></div>
-
-             {/* Days */}
              <div className="flex-1 grid grid-cols-[repeat(31,minmax(0,1fr))] gap-1">
                 {days.map((day) => (
                   <div key={day} className={`text-center flex flex-col items-center gap-1 group`}>
@@ -155,7 +141,7 @@ const FarmGrid = ({
                return (
               <div key={network.id} className={`flex items-stretch group relative ${isActive ? 'bg-white/5 rounded-xl -mx-2 px-2 py-2 border border-white/5' : 'py-2'}`}>
 
-                {/* Network Label (Sticky-ish / Button) */}
+                {/* Network Label */}
                 <div className="w-36 shrink-0 mr-4 flex items-center">
                    <button
                      onClick={() => onNetworkSelect && onNetworkSelect(network.id)}
@@ -188,17 +174,18 @@ const FarmGrid = ({
                     const isFilled = status === 1;
                     const isToday = index === todayIndex;
 
-                    // Style determination
+                    // Updated Styling per request
+                    // Empty Cell: bg-[#1e1e1e] border-white/5
                     let cellClasses = "relative w-full aspect-square rounded-[4px] border transition-all duration-300 flex items-center justify-center";
 
                     if (isFuture) {
-                      cellClasses += " bg-[#0a0a0a] border-[#1a1a1a] opacity-50";
+                      cellClasses += " bg-[#0a0a0a] border-[#1a1a1a] opacity-50 cursor-not-allowed";
                     } else if (isFilled) {
-                      // Active Crop Cell
+                      // Planted
                       cellClasses += ` bg-[#1a1a1a] ${network.borderColor} border-opacity-50 shadow-[0_0_10px_-2px_rgba(0,0,0,0.5)] z-10 transform hover:scale-110`;
                     } else {
-                      // Empty Soil
-                      cellClasses += " bg-[#161616] border-[#222] hover:border-[#333] group/cell";
+                      // Empty / Fallow Soil
+                      cellClasses += " bg-[#1e1e1e] border-white/5 hover:border-white/10 group/cell";
                     }
 
                     if (isToday && !isFuture) {
@@ -216,13 +203,13 @@ const FarmGrid = ({
                         }}
                       >
                         {isFilled && (
-                           <div className="text-sm md:text-base animate-in zoom-in duration-300 filter drop-shadow-md cursor-default">
+                           <div className="text-sm md:text-base animate-in zoom-in duration-300 filter drop-shadow-md cursor-default select-none">
                               {network.cropEmoji}
                            </div>
                         )}
 
                         {!isFilled && !isFuture && (
-                           <div className="opacity-0 group-hover/cell:opacity-100 text-[8px] text-[#333] transition-opacity">
+                           <div className="opacity-0 group-hover/cell:opacity-100 text-[8px] text-[#333] transition-opacity select-none">
                               <Sprout size={8} />
                            </div>
                         )}
@@ -239,11 +226,6 @@ const FarmGrid = ({
             )})}
           </div>
         </div>
-      </div>
-
-      {/* Footer / Legend */}
-      <div className="bg-[#111] p-3 text-center border-t border-[#222] text-[10px] text-[#444] font-mono">
-         Use the <span className="text-[#666]">Action Area</span> below to water your crops daily.
       </div>
     </div>
   );

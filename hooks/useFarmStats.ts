@@ -1,49 +1,78 @@
 import { useReadContracts, useAccount } from 'wagmi';
 import { CONTRACT_ADDRESSES, HUB_ABI } from '@/constants/contracts';
+import { useMemo } from 'react';
 
 export function useFarmStats() {
-  const { address, chainId } = useAccount();
+  const { address } = useAccount();
 
-  // Eğer desteklenmeyen bir ağdaysa varsayılan olarak Base (8453) adreslerini kullan,
-  // ama veri çekmeye çalışma (hook enabled: false olur).
-  const currentChainId = chainId && CONTRACT_ADDRESSES[chainId] ? chainId : 8453;
-  const hubAddress = CONTRACT_ADDRESSES[currentChainId]?.hub;
+  const chainIds = useMemo(() => Object.keys(CONTRACT_ADDRESSES).map(Number), []);
 
-  // Sadece desteklenen ağdaysak ve adresimiz varsa sorgu yap
-  const isEnabled = !!address && !!CONTRACT_ADDRESSES[chainId || 0];
+  const contracts = useMemo(() => {
+    if (!address) return [];
+
+    return chainIds.flatMap((chainId) => {
+      const hubAddress = CONTRACT_ADDRESSES[chainId].hub;
+      return [
+        {
+          address: hubAddress,
+          abi: HUB_ABI,
+          functionName: 'userXP',
+          args: [address],
+          chainId,
+        },
+        {
+          address: hubAddress,
+          abi: HUB_ABI,
+          functionName: 'userStreak',
+          args: [address],
+          chainId,
+        },
+        {
+          address: hubAddress,
+          abi: HUB_ABI,
+          functionName: 'lastActionTimestamp',
+          args: [address],
+          chainId,
+        },
+      ];
+    });
+  }, [address, chainIds]);
 
   const result = useReadContracts({
-    contracts: [
-      {
-        address: hubAddress,
-        abi: HUB_ABI,
-        functionName: 'userXP',
-        args: [address as `0x${string}`],
-      },
-      {
-        address: hubAddress,
-        abi: HUB_ABI,
-        functionName: 'userStreak',
-        args: [address as `0x${string}`],
-      },
-      {
-        address: hubAddress,
-        abi: HUB_ABI,
-        functionName: 'lastActionTimestamp',
-        args: [address as `0x${string}`],
-      },
-    ],
+    contracts,
     query: {
-      enabled: isEnabled, // Desteklenmeyen ağda sorgu yapma
-      refetchInterval: 5000, // 5 saniyede bir güncelle
-    }
+      enabled: !!address,
+      refetchInterval: 10000,
+    },
   });
 
+  const { statsMap, globalTotalXP } = useMemo(() => {
+    if (!result.data) return { statsMap: {}, globalTotalXP: 0 };
+
+    const map: Record<number, { xp: number; streak: number; lastAction: number }> = {};
+    let totalXP = 0;
+
+    chainIds.forEach((chainId, index) => {
+      const offset = index * 3;
+      const xpRes = result.data[offset];
+      const streakRes = result.data[offset + 1];
+      const lastActionRes = result.data[offset + 2];
+
+      const xp = xpRes?.status === 'success' ? Number(xpRes.result) : 0;
+      const streak = streakRes?.status === 'success' ? Number(streakRes.result) : 0;
+      const lastAction = lastActionRes?.status === 'success' ? Number(lastActionRes.result) : 0;
+
+      map[chainId] = { xp, streak, lastAction };
+      totalXP += Math.floor(xp / 100);
+    });
+
+    return { statsMap: map, globalTotalXP: totalXP };
+  }, [result.data, chainIds]);
+
   return {
-    xp: result.data?.[0].result ? Number(result.data[0].result) : 0,
-    streak: result.data?.[1].result ? Number(result.data[1].result) : 0,
-    lastAction: result.data?.[2].result ? Number(result.data[2].result) : 0,
+    statsMap,
+    globalTotalXP,
     isLoading: result.isLoading,
-    chainId: currentChainId
+    refetch: result.refetch,
   };
 }

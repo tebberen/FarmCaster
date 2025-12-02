@@ -15,8 +15,8 @@ export default function Home() {
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
 
-  const { xp, streak, lastAction, isLoading } = useFarmStats();
-  const { waterPlant, isPending, isSuccess } = useWaterPlant();
+  const { statsMap, globalTotalXP, isLoading } = useFarmStats();
+  const { waterPlant, isPending } = useWaterPlant();
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isBarnOpen, setIsBarnOpen] = useState(false);
@@ -33,9 +33,14 @@ export default function Home() {
   );
 
   const activeNetworkName = activeNetwork?.name || "Unknown Network";
-  const activeNetworkId = activeNetwork?.id || "base"; // Default to base for Barn logic if unknown
+  const activeNetworkId = activeNetwork?.id || "base";
 
-  // Handle User Clicking a Row
+  // Extract Active Network Stats from Map
+  // chainId might be undefined, fallback to 8453 (Base) logic if not found?
+  // Actually, useAccount gives us the current connected chainId.
+  const currentStats = (chainId && statsMap[chainId]) || { xp: 0, streak: 0, lastAction: 0 };
+  const { streak: currentStreak, lastAction: currentLastAction, xp: currentXP } = currentStats;
+
   const handleNetworkSelect = (networkId: string) => {
     if (networkId === 'base') switchChain({ chainId: 8453 });
     if (networkId === 'bsc') switchChain({ chainId: 56 });
@@ -46,7 +51,7 @@ export default function Home() {
     if (networkId === 'hyperevm') switchChain({ chainId: 999 });
   };
 
-  const isTodayDone = lastAction > 0 && new Date(lastAction * 1000).toDateString() === new Date().toDateString();
+  const isTodayDone = currentLastAction > 0 && new Date(currentLastAction * 1000).toDateString() === new Date().toDateString();
 
   let buttonText = "WATER PLANT";
   let isButtonDisabled = false;
@@ -109,16 +114,16 @@ export default function Home() {
              <div className="flex items-center gap-4 z-10">
                <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl border border-indigo-500/30">🧑‍🌾</div>
                <div>
-                 <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">Farmer Profile</p>
-                 <h2 className="text-lg font-bold text-white">Connected</h2>
+                 <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">Global XP</p>
+                 <h2 className="text-lg font-bold text-white">Farmer Level {Math.floor(globalTotalXP / 1000) + 1}</h2>
                </div>
              </div>
              <div className="text-right z-10">
                <h3 className="text-2xl font-black text-yellow-400 flex items-center justify-end gap-2">
                  <Trophy size={20} />
-                 {Math.floor(xp / 100)} XP
+                 {globalTotalXP} XP
                </h3>
-               <p className="text-xs text-gray-500">Harvest Points</p>
+               <p className="text-xs text-gray-500">Total Harvest Points</p>
              </div>
           </div>
 
@@ -130,7 +135,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">{activeNetworkName} Streak</p>
-                <h2 className="text-2xl font-bold text-white">{streak} Days 🔥</h2>
+                <h2 className="text-2xl font-bold text-white">{currentStreak} Days 🔥</h2>
               </div>
             </div>
             <div className="text-right max-w-[150px] z-10 hidden md:block">
@@ -141,8 +146,7 @@ export default function Home() {
 
         {/* The Grid */}
         <FarmGrid
-          userStreak={streak}
-          lastActionTimestamp={lastAction}
+          statsMap={statsMap}
           onNetworkSelect={handleNetworkSelect}
           activeNetworkId={activeNetworkId}
         />
@@ -198,7 +202,10 @@ export default function Home() {
         isOpen={isBarnOpen}
         onClose={() => setIsBarnOpen(false)}
         currentNetworkId={activeNetworkId}
-        userXP={Number(xp)}
+        userXP={Number(currentXP)} // Show Active Chain XP in Barn for inventory calculation? Or global?
+        // Memory says: BarnModal calculates crop count as userXP / 100.
+        // It likely expects the XP for that specific network to show inventory for THAT network.
+        // So `currentXP` is correct here if Barn is network-specific.
       />
     </main>
   );
