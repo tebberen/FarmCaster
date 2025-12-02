@@ -8,7 +8,8 @@ import { Loader2, Sprout, ShoppingBag } from 'lucide-react';
 const SEED_TIERS = [
   {
     id: 0,
-    name: 'Starter (1 XP)',
+    name: 'Starter',
+    sub: '1 XP',
     priceLabel: 'Free',
     priceValue: '0',
     color: 'border-gray-500',
@@ -17,8 +18,9 @@ const SEED_TIERS = [
   },
   {
     id: 1,
-    name: 'Fruits (2 XP)',
-    priceLabel: '$0.10 (Native)',
+    name: 'Fruits',
+    sub: '2 XP',
+    priceLabel: '$0.10',
     priceValue: '0.00003', // ~10 Cent
     color: 'border-blue-500',
     bg: 'bg-blue-900/20',
@@ -26,8 +28,9 @@ const SEED_TIERS = [
   },
   {
     id: 2,
-    name: 'Flowers (3 XP)',
-    priceLabel: '$0.15 (Native)',
+    name: 'Flowers',
+    sub: '3 XP',
+    priceLabel: '$0.15',
     priceValue: '0.000045', // ~15 Cent
     color: 'border-pink-500',
     bg: 'bg-pink-900/20',
@@ -35,8 +38,9 @@ const SEED_TIERS = [
   },
   {
     id: 3,
-    name: 'Trees (5 XP)',
-    priceLabel: '$0.20 (Native)',
+    name: 'Trees',
+    sub: '5 XP',
+    priceLabel: '$0.20',
     priceValue: '0.00006', // ~20 Cent
     color: 'border-green-500',
     bg: 'bg-green-900/20',
@@ -57,7 +61,7 @@ export default function SeedMarket() {
   };
 
   return (
-    <div className="bg-[#151515] border border-white/10 rounded-xl p-6 w-full shadow-2xl">
+    <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full shadow-2xl">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-2">
           <ShoppingBag className="text-green-400" />
@@ -66,38 +70,41 @@ export default function SeedMarket() {
         <span className="text-xs text-gray-500 font-mono">Pay with Native Token</span>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar">
+      {/* Tabs / Seed Selection */}
+      <div className="grid grid-cols-4 gap-2 mb-6">
         {SEED_TIERS.map((tier) => (
           <button
             key={tier.id}
             onClick={() => { setActiveTab(tier.id); setSelectedEmoji(null); }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
+            className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
               activeTab === tier.id
                 ? `${tier.bg} ${tier.color} text-white shadow-lg`
-                : 'bg-[#1e1e1e] border-transparent text-gray-400 hover:bg-[#252525]'
+                : 'bg-[#1a1a1a] border-transparent text-gray-500 hover:bg-[#222] hover:text-gray-300'
             }`}
           >
-            {tier.name}
+            <span className="text-sm font-bold">{tier.name}</span>
+            <span className="text-[10px] opacity-70">{tier.priceLabel}</span>
           </button>
         ))}
       </div>
 
       {/* Emoji Grid */}
-      <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 mb-6 max-h-48 overflow-y-auto custom-scrollbar p-1">
-        {activeTier?.emojis.map((emoji) => (
-          <button
-            key={emoji}
-            onClick={() => setSelectedEmoji(emoji)}
-            className={`aspect-square flex items-center justify-center text-2xl rounded-xl border-2 transition-all hover:scale-110 hover:shadow-lg ${
-              selectedEmoji === emoji
-                ? 'border-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                : 'border-transparent bg-[#1e1e1e] hover:border-white/20'
-            }`}
-          >
-            {emoji}
-          </button>
-        ))}
+      <div className="bg-[#0a0a0a] rounded-xl p-4 mb-6 border border-white/5">
+        <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 max-h-48 overflow-y-auto custom-scrollbar p-1">
+          {activeTier?.emojis.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => setSelectedEmoji(emoji)}
+              className={`aspect-square flex items-center justify-center text-2xl rounded-lg border transition-all hover:scale-110 ${
+                selectedEmoji === emoji
+                  ? 'border-green-500 bg-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+                  : 'border-transparent bg-[#1e1e1e] hover:border-white/20'
+              }`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Action Button */}
@@ -107,8 +114,8 @@ export default function SeedMarket() {
           disabled={isPending || !selectedEmoji}
           className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-3 relative overflow-hidden group ${
             isPending || !selectedEmoji
-              ? 'bg-[#252525] text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white shadow-xl hover:shadow-green-500/20'
+              ? 'bg-[#222] text-gray-600 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-500 text-white shadow-xl hover:shadow-green-500/20'
           }`}
         >
           {isPending ? (
@@ -118,20 +125,15 @@ export default function SeedMarket() {
           ) : (
             <>
               <Sprout size={24} className={selectedEmoji ? "animate-bounce" : ""} />
-              {selectedEmoji ? `Plant ${selectedEmoji} for ${activeTier?.priceLabel}` : 'Select a Seed'}
+              {selectedEmoji ? `Plant ${selectedEmoji}` : 'Select a Seed'}
             </>
           )}
         </button>
 
-        {/* Free Option Quick Link */}
-        {activeTab !== 0 && (
-          <button
-            onClick={() => { setActiveTab(0); setSelectedEmoji('🌱'); }}
-            className="w-full text-center text-xs text-gray-500 hover:text-green-400 transition-colors"
-          >
-            Or plant a basic Sprout 🌱 (Free)
-          </button>
-        )}
+        {/* Info Text */}
+        <p className="text-center text-[10px] text-gray-600 font-mono mt-2">
+            {activeTier?.name} seeds grant {activeTier?.sub}
+        </p>
       </div>
 
       {isSuccess && (
