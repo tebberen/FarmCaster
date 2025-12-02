@@ -4,11 +4,11 @@ import { parseEther } from 'viem';
 import { Loader2, Sprout, ShoppingBag } from 'lucide-react';
 
 // CATALOG CONFIGURATION
-// Prices are in ETH/Native Token (Approximate for logic)
+// Prices are in ETH/Native Token (Matched to contract logic)
 const SEED_TIERS = [
   {
     id: 0,
-    name: 'Starter',
+    name: 'Starter (1 XP)',
     priceLabel: 'Free',
     priceValue: '0',
     color: 'border-gray-500',
@@ -17,27 +17,27 @@ const SEED_TIERS = [
   },
   {
     id: 1,
-    name: 'Fruits ($0.10)',
-    priceLabel: '0.00005 ETH',
-    priceValue: '0.0000003', // Matches contract logic
+    name: 'Fruits (2 XP)',
+    priceLabel: '$0.10 (Native)',
+    priceValue: '0.00003', // ~10 Cent
     color: 'border-blue-500',
     bg: 'bg-blue-900/20',
     emojis: ['🫐','🍋','🌽','🍇','🍄','🍓','🍆','🥥','🍒','🥕','🥦','🍅','🥝','🥑','🫒','🥜','🥒','🌶️']
   },
   {
     id: 2,
-    name: 'Flowers ($0.15)',
-    priceLabel: '0.00010 ETH',
-    priceValue: '0.00000045', // Matches contract logic
+    name: 'Flowers (3 XP)',
+    priceLabel: '$0.15 (Native)',
+    priceValue: '0.000045', // ~15 Cent
     color: 'border-pink-500',
     bg: 'bg-pink-900/20',
     emojis: ['🌻','🌹','🌷','🪷','🌺','🌸','🌼','💐','🥀','💮','🏵️','🪻']
   },
   {
     id: 3,
-    name: 'Trees ($0.20)',
-    priceLabel: '0.00020 ETH',
-    priceValue: '0.0000006', // Matches contract logic
+    name: 'Trees (5 XP)',
+    priceLabel: '$0.20 (Native)',
+    priceValue: '0.00006', // ~20 Cent
     color: 'border-green-500',
     bg: 'bg-green-900/20',
     emojis: ['🌳','🌲','🌴','🌵','🎄','🎋','🪵','🪴','🌲','🍂','🍁']
@@ -45,16 +45,14 @@ const SEED_TIERS = [
 ];
 
 export default function SeedMarket() {
-  const { plant: waterPlant, isPending, isSuccess } = useWaterPlant();
-  const [activeTab, setActiveTab] = useState(1); // Default to Fruits
+  const { waterPlant, isPending, isSuccess } = useWaterPlant();
+  const [activeTab, setActiveTab] = useState(1);
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
 
   const activeTier = SEED_TIERS.find(t => t.id === activeTab);
 
   const handlePlant = () => {
     if (!activeTier) return;
-    // Call contract with Seed ID (0, 1, 2, 3) and Price
-    // Note: The specific emoji is visual only for now, the contract tracks the Tier.
     waterPlant(activeTier.id, parseEther(activeTier.priceValue));
   };
 
@@ -125,7 +123,7 @@ export default function SeedMarket() {
           )}
         </button>
 
-        {/* Free Option Quick Link (If not on Free tab) */}
+        {/* Free Option Quick Link */}
         {activeTab !== 0 && (
           <button
             onClick={() => { setActiveTab(0); setSelectedEmoji('🌱'); }}

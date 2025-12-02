@@ -133,25 +133,9 @@ export default function Home() {
 
         {/* Action Area */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-[#0f1218] rounded-xl border border-white/10 p-6 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-
-             <div className="w-full h-full flex flex-col gap-6 relative z-10">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-2 h-2 rounded-full ${isTodayDone ? 'bg-green-500' : 'bg-orange-500 animate-pulse'}`}></div>
-                    <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">ACTION AREA</h4>
-                  </div>
-                  <h2 className="text-3xl font-bold text-white">{activeNetworkName} Network</h2>
-                  <p className="text-green-400 text-sm font-mono mt-1">
-                    {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} • {isTodayDone ? 'Harvested' : 'Ready to Harvest'}
-                  </p>
-                </div>
-
-                <div className="w-full">
-                  <SeedMarket />
-                </div>
-             </div>
+           <div className="md:col-span-2">
+             {/* Replaced the old Action Area card with the Market */}
+             <SeedMarket />
           </div>
 
           <div className="bg-[#0f1218] rounded-xl border border-white/10 p-6 flex flex-col justify-center">

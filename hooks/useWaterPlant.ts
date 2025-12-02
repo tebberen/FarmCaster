@@ -5,8 +5,7 @@ export function useWaterPlant() {
   const { chainId } = useAccount();
   const { writeContract, isPending, isSuccess, data: hash } = useWriteContract();
 
-  const plant = (seedId: number, value: bigint) => {
-    // Check if we are on a valid network
+  const waterPlant = (seedId: number, value: bigint) => {
     if (!chainId || !CONTRACT_ADDRESSES[chainId]) {
       alert("Please switch to a supported network first!");
       return;
@@ -23,5 +22,5 @@ export function useWaterPlant() {
     });
   };
 
-  return { plant, isPending, isSuccess, hash };
+  return { waterPlant, isPending, isSuccess, hash };
 }

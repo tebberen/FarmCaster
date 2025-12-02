@@ -2,8 +2,8 @@ from playwright.sync_api import Page, expect, sync_playwright
 
 def verify_seed_market(page: Page):
     # 1. Arrange: Go to the app
-    # Using the port from serve.log
-    page.goto("http://localhost:46109")
+    # Using the port 3001
+    page.goto("http://localhost:3001")
 
     # 2. Act: Wait for the Seed Market to be visible
     # We look for the "Seed Market" heading
@@ -27,11 +27,12 @@ def verify_seed_market(page: Page):
     blueberry.click()
 
     # Check if the "Plant" button updates
+    # The expected text is "Plant 🫐 for $0.10 (Native)"
     plant_button = page.get_by_role("button", name="Plant 🫐 for $0.10 (Native)")
     expect(plant_button).to_be_visible()
 
     # 4. Screenshot: Capture the state
-    page.screenshot(path="verification/seed_market.png")
+    page.screenshot(path="verification/seed_market_fixed.png")
 
 if __name__ == "__main__":
     with sync_playwright() as p:
@@ -41,7 +42,7 @@ if __name__ == "__main__":
             verify_seed_market(page)
         except Exception as e:
             print(f"Error: {e}")
-            page.screenshot(path="verification/error.png")
+            page.screenshot(path="verification/error_fixed.png")
             raise e
         finally:
             browser.close()
