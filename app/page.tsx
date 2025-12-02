@@ -5,10 +5,11 @@ import FarmGrid from '@/components/FarmGrid';
 import LeaderboardModal from '@/components/LeaderboardModal';
 import WeatherOverlay from '@/components/WeatherOverlay';
 import BarnModal from '@/components/BarnModal';
+import SeedMarket from '@/components/SeedMarket';
 import { useFarmStats } from '@/hooks/useFarmStats';
 import { useWaterPlant } from '@/hooks/useWaterPlant';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Tractor, Flame, Trophy, Wallet, Droplets, Loader2, Warehouse } from 'lucide-react';
+import { Tractor, Flame, Trophy, Wallet, Warehouse } from 'lucide-react';
 import { NETWORKS } from '@/constants';
 
 export default function Home() {
@@ -16,7 +17,7 @@ export default function Home() {
   const { switchChain } = useSwitchChain();
 
   const { statsMap, globalTotalXP, isLoading } = useFarmStats();
-  const { waterPlant, isPending } = useWaterPlant();
+  const { plant, isPending } = useWaterPlant();
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isBarnOpen, setIsBarnOpen] = useState(false);
@@ -36,8 +37,6 @@ export default function Home() {
   const activeNetworkId = activeNetwork?.id || "base";
 
   // Extract Active Network Stats from Map
-  // chainId might be undefined, fallback to 8453 (Base) logic if not found?
-  // Actually, useAccount gives us the current connected chainId.
   const currentStats = (chainId && statsMap[chainId]) || { xp: 0, streak: 0, lastAction: 0 };
   const { streak: currentStreak, lastAction: currentLastAction, xp: currentXP } = currentStats;
 
@@ -53,22 +52,21 @@ export default function Home() {
 
   const isTodayDone = currentLastAction > 0 && new Date(currentLastAction * 1000).toDateString() === new Date().toDateString();
 
-  let buttonText = "WATER PLANT";
-  let isButtonDisabled = false;
+  let isDisabled = false;
 
   if (!address) {
-    buttonText = "CONNECT WALLET";
-    isButtonDisabled = true;
+    isDisabled = true;
   } else if (isLoading) {
-    buttonText = "LOADING...";
-    isButtonDisabled = true;
+    isDisabled = true;
   } else if (isTodayDone) {
-    buttonText = "HARVESTED 🌿";
-    isButtonDisabled = true;
+    isDisabled = true;
   } else if (isPending) {
-    buttonText = "WATERING...";
-    isButtonDisabled = true;
+    isDisabled = true;
   }
+
+  const handlePlant = (seedId: number, value: bigint) => {
+    plant(seedId, value);
+  };
 
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-green-500/30 font-sans relative">
@@ -155,31 +153,27 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 bg-[#0f1218] rounded-xl border border-white/10 p-6 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
              <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-            <div className="mb-4 md:mb-0 z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`w-2 h-2 rounded-full ${isTodayDone ? 'bg-green-500' : 'bg-orange-500 animate-pulse'}`}></div>
-                <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">ACTION AREA</h4>
-              </div>
-              <h2 className="text-3xl font-bold text-white">{activeNetworkName} Network</h2>
-              <p className="text-green-400 text-sm font-mono mt-1">
-                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} • Ready to Harvest
-              </p>
-            </div>
 
-            <button
-              onClick={() => waterPlant()}
-              disabled={isButtonDisabled}
-              className={`
-                relative w-full md:w-auto px-8 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-lg z-10
-                ${isButtonDisabled
-                  ? 'bg-[#1a1f2e] text-gray-500 border border-white/5 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-500 text-white border border-blue-400 hover:shadow-blue-500/20'
-                }
-              `}
-            >
-              {isPending ? <Loader2 className="animate-spin" /> : <Droplets size={20} />}
-              {buttonText}
-            </button>
+             <div className="w-full h-full flex flex-col gap-6 relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-2 h-2 rounded-full ${isTodayDone ? 'bg-green-500' : 'bg-orange-500 animate-pulse'}`}></div>
+                    <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">ACTION AREA</h4>
+                  </div>
+                  <h2 className="text-3xl font-bold text-white">{activeNetworkName} Network</h2>
+                  <p className="text-green-400 text-sm font-mono mt-1">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} • {isTodayDone ? 'Harvested' : 'Ready to Harvest'}
+                  </p>
+                </div>
+
+                <div className="w-full">
+                  <SeedMarket
+                    onPlant={handlePlant}
+                    isPending={isPending}
+                    disabled={isDisabled}
+                  />
+                </div>
+             </div>
           </div>
 
           <div className="bg-[#0f1218] rounded-xl border border-white/10 p-6 flex flex-col justify-center">
@@ -202,10 +196,7 @@ export default function Home() {
         isOpen={isBarnOpen}
         onClose={() => setIsBarnOpen(false)}
         currentNetworkId={activeNetworkId}
-        userXP={Number(currentXP)} // Show Active Chain XP in Barn for inventory calculation? Or global?
-        // Memory says: BarnModal calculates crop count as userXP / 100.
-        // It likely expects the XP for that specific network to show inventory for THAT network.
-        // So `currentXP` is correct here if Barn is network-specific.
+        userXP={Number(currentXP)}
       />
     </main>
   );
