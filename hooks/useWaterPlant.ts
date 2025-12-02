@@ -1,14 +1,14 @@
 import { useWriteContract, useAccount } from 'wagmi';
-import { CONTRACT_ADDRESSES, LOGIC_ABI } from '@/constants/contracts';
+import { CONTRACT_ADDRESSES, GARDEN_ABI } from '@/constants/contracts';
 
 export function useWaterPlant() {
   const { chainId } = useAccount();
   const { writeContract, isPending, isSuccess, data: hash } = useWriteContract();
 
-  const waterPlant = () => {
-    // Geçerli bir ağda mıyız kontrol et
+  const plant = (seedId: number, value: bigint) => {
+    // Check if we are on a valid network
     if (!chainId || !CONTRACT_ADDRESSES[chainId]) {
-      alert("Please switch to a supported network (Base or BSC) first!");
+      alert("Please switch to a supported network first!");
       return;
     }
 
@@ -16,10 +16,12 @@ export function useWaterPlant() {
 
     writeContract({
       address: logicAddress,
-      abi: LOGIC_ABI,
-      functionName: 'waterPlant',
+      abi: GARDEN_ABI,
+      functionName: 'plant',
+      args: [BigInt(seedId)],
+      value: value,
     });
   };
 
-  return { waterPlant, isPending, isSuccess, hash };
+  return { plant, isPending, isSuccess, hash };
 }
