@@ -1,163 +1,146 @@
 import React, { useState } from 'react';
+import { useWaterPlant } from '@/hooks/useWaterPlant';
 import { parseEther } from 'viem';
-import { Loader2, Sprout } from 'lucide-react';
+import { Loader2, Sprout, ShoppingBag } from 'lucide-react';
 
-interface Seed {
-  id: number;
-  emoji: string;
-  name: string;
-}
-
-interface SeedCategory {
-  name: string;
-  price: string;
-  ethPrice: string;
-  seeds: Seed[];
-}
-
-interface SeedMarketProps {
-  onPlant: (seedId: number, value: bigint) => void;
-  isPending: boolean;
-  disabled?: boolean;
-}
-
-const SEED_CATEGORIES: SeedCategory[] = [
+// CATALOG CONFIGURATION
+// Prices are in ETH/Native Token (Approximate for logic)
+const SEED_TIERS = [
   {
-    name: 'Fruits',
-    price: '$0.15',
-    ethPrice: '0.00005',
-    seeds: [
-      { id: 1, emoji: '🍇', name: 'Grapes' },
-      { id: 1, emoji: '🍓', name: 'Strawberry' },
-      { id: 1, emoji: '🍋', name: 'Lemon' },
-      { id: 1, emoji: '🍒', name: 'Cherry' },
-    ]
+    id: 0,
+    name: 'Starter',
+    priceLabel: 'Free',
+    priceValue: '0',
+    color: 'border-gray-500',
+    bg: 'bg-gray-800',
+    emojis: ['🌱', '🌿', '🍃', '🎍']
   },
   {
-    name: 'Flowers',
-    price: '$0.30',
-    ethPrice: '0.0001',
-    seeds: [
-      { id: 2, emoji: '🌹', name: 'Rose' },
-      { id: 2, emoji: '🌻', name: 'Sunflower' },
-      { id: 2, emoji: '🌷', name: 'Tulip' },
-      { id: 2, emoji: '🪷', name: 'Lotus' },
-    ]
+    id: 1,
+    name: 'Fruits ($0.10)',
+    priceLabel: '0.00005 ETH',
+    priceValue: '0.0000003', // Matches contract logic
+    color: 'border-blue-500',
+    bg: 'bg-blue-900/20',
+    emojis: ['🫐','🍋','🌽','🍇','🍄','🍓','🍆','🥥','🍒','🥕','🥦','🍅','🥝','🥑','🫒','🥜','🥒','🌶️']
   },
   {
-    name: 'Trees',
-    price: '$0.60',
-    ethPrice: '0.0002',
-    seeds: [
-      { id: 3, emoji: '🌳', name: 'Deciduous' },
-      { id: 3, emoji: '🌲', name: 'Evergreen' },
-      { id: 3, emoji: '🌴', name: 'Palm' },
-      { id: 3, emoji: '🌵', name: 'Cactus' },
-    ]
+    id: 2,
+    name: 'Flowers ($0.15)',
+    priceLabel: '0.00010 ETH',
+    priceValue: '0.00000045', // Matches contract logic
+    color: 'border-pink-500',
+    bg: 'bg-pink-900/20',
+    emojis: ['🌻','🌹','🌷','🪷','🌺','🌸','🌼','💐','🥀','💮','🏵️','🪻']
+  },
+  {
+    id: 3,
+    name: 'Trees ($0.20)',
+    priceLabel: '0.00020 ETH',
+    priceValue: '0.0000006', // Matches contract logic
+    color: 'border-green-500',
+    bg: 'bg-green-900/20',
+    emojis: ['🌳','🌲','🌴','🌵','🎄','🎋','🪵','🪴','🌲','🍂','🍁']
   }
 ];
 
-export default function SeedMarket({ onPlant, isPending, disabled }: SeedMarketProps) {
-  const [activeTab, setActiveTab] = useState<number>(0);
-  const [selectedSeed, setSelectedSeed] = useState<Seed | null>(null);
+export default function SeedMarket() {
+  const { plant: waterPlant, isPending, isSuccess } = useWaterPlant();
+  const [activeTab, setActiveTab] = useState(1); // Default to Fruits
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
 
-  const handlePlant = (isFree: boolean) => {
-    if (isFree) {
-      onPlant(0, BigInt(0));
-    } else if (selectedSeed) {
-      const category = SEED_CATEGORIES[activeTab];
-      onPlant(selectedSeed.id, parseEther(category.ethPrice));
-    }
+  const activeTier = SEED_TIERS.find(t => t.id === activeTab);
+
+  const handlePlant = () => {
+    if (!activeTier) return;
+    // Call contract with Seed ID (0, 1, 2, 3) and Price
+    // Note: The specific emoji is visual only for now, the contract tracks the Tier.
+    waterPlant(activeTier.id, parseEther(activeTier.priceValue));
   };
 
-  const currentCategory = SEED_CATEGORIES[activeTab];
-
   return (
-    <div className="bg-[#0f1218] rounded-xl border border-white/10 p-6 w-full">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="bg-green-600/20 p-2 rounded-lg text-green-500">
-          <Sprout size={20} />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-white">Seed Market</h2>
-          <p className="text-gray-400 text-xs">Purchase and plant exotic seeds</p>
-        </div>
+    <div className="bg-[#151515] border border-white/10 rounded-xl p-6 w-full shadow-2xl">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+          <ShoppingBag className="text-green-400" />
+          Seed Market
+        </h3>
+        <span className="text-xs text-gray-500 font-mono">Pay with Native Token</span>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-        {SEED_CATEGORIES.map((cat, idx) => (
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar">
+        {SEED_TIERS.map((tier) => (
           <button
-            key={cat.name}
-            onClick={() => {
-              setActiveTab(idx);
-              setSelectedSeed(null);
-            }}
-            className={`
-              px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all border
-              ${activeTab === idx
-                ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
-                : 'bg-[#1a1f2e] border-white/5 text-gray-400 hover:text-white hover:border-white/20'}
-            `}
+            key={tier.id}
+            onClick={() => { setActiveTab(tier.id); setSelectedEmoji(null); }}
+            className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
+              activeTab === tier.id
+                ? `${tier.bg} ${tier.color} text-white shadow-lg`
+                : 'bg-[#1e1e1e] border-transparent text-gray-400 hover:bg-[#252525]'
+            }`}
           >
-            {cat.name} <span className="text-blue-200 opacity-70">({cat.price})</span>
+            {tier.name}
           </button>
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        {currentCategory.seeds.map((seed, idx) => (
+      {/* Emoji Grid */}
+      <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 mb-6 max-h-48 overflow-y-auto custom-scrollbar p-1">
+        {activeTier?.emojis.map((emoji) => (
           <button
-            key={`${seed.id}-${idx}`}
-            onClick={() => setSelectedSeed(seed)}
-            className={`
-              aspect-square rounded-xl text-3xl flex items-center justify-center transition-all border-2
-              ${selectedSeed === seed
-                ? 'bg-blue-500/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] scale-105'
-                : 'bg-[#1a1f2e] border-white/5 hover:border-white/20 hover:bg-[#252a3d]'}
-            `}
+            key={emoji}
+            onClick={() => setSelectedEmoji(emoji)}
+            className={`aspect-square flex items-center justify-center text-2xl rounded-xl border-2 transition-all hover:scale-110 hover:shadow-lg ${
+              selectedEmoji === emoji
+                ? 'border-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                : 'border-transparent bg-[#1e1e1e] hover:border-white/20'
+            }`}
           >
-            {seed.emoji}
+            {emoji}
           </button>
         ))}
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-col gap-3">
+      {/* Action Button */}
+      <div className="space-y-3">
         <button
-          onClick={() => handlePlant(false)}
-          disabled={disabled || !selectedSeed || isPending}
-          className={`
-            w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2
-            ${disabled || !selectedSeed || isPending
-              ? 'bg-[#1a1f2e] text-gray-500 border border-white/5 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-500 text-white border border-blue-400 shadow-lg shadow-blue-500/20'}
-          `}
+          onClick={handlePlant}
+          disabled={isPending || !selectedEmoji}
+          className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-3 relative overflow-hidden group ${
+            isPending || !selectedEmoji
+              ? 'bg-[#252525] text-gray-500 cursor-not-allowed'
+              : 'bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white shadow-xl hover:shadow-green-500/20'
+          }`}
         >
           {isPending ? (
-            <Loader2 className="animate-spin" />
+            <>
+              <Loader2 className="animate-spin" /> Planting...
+            </>
           ) : (
-             <>
-               {selectedSeed ? `Plant ${selectedSeed.emoji}` : 'Select a Seed'}
-               {selectedSeed && <span className="opacity-70 text-sm font-normal">for {currentCategory.ethPrice} ETH</span>}
-             </>
+            <>
+              <Sprout size={24} className={selectedEmoji ? "animate-bounce" : ""} />
+              {selectedEmoji ? `Plant ${selectedEmoji} for ${activeTier?.priceLabel}` : 'Select a Seed'}
+            </>
           )}
         </button>
 
-        <button
-          onClick={() => handlePlant(true)}
-          disabled={disabled || isPending}
-          className={`
-            w-full py-2 rounded-xl text-sm font-bold transition-all border
-            ${disabled || isPending
-              ? 'text-gray-600 border-transparent cursor-not-allowed'
-              : 'text-gray-400 border-white/10 hover:bg-white/5 hover:text-white'}
-          `}
-        >
-          Or plant basic Sprout 🌱 (Free)
-        </button>
+        {/* Free Option Quick Link (If not on Free tab) */}
+        {activeTab !== 0 && (
+          <button
+            onClick={() => { setActiveTab(0); setSelectedEmoji('🌱'); }}
+            className="w-full text-center text-xs text-gray-500 hover:text-green-400 transition-colors"
+          >
+            Or plant a basic Sprout 🌱 (Free)
+          </button>
+        )}
       </div>
+
+      {isSuccess && (
+        <div className="mt-4 p-3 bg-green-900/30 border border-green-500/50 rounded-lg text-green-400 text-center text-sm font-bold animate-pulse flex items-center justify-center gap-2">
+          <span>🎉</span> Harvest Successful! Check the grid.
+        </div>
+      )}
     </div>
   );
 }
