@@ -7,7 +7,6 @@ import WeatherOverlay from '@/components/WeatherOverlay';
 import BarnModal from '@/components/BarnModal';
 import SeedMarket from '@/components/SeedMarket';
 import { useFarmStats } from '@/hooks/useFarmStats';
-import { useWaterPlant } from '@/hooks/useWaterPlant';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Tractor, Flame, Trophy, Wallet, Warehouse } from 'lucide-react';
 import { NETWORKS } from '@/constants';
@@ -17,7 +16,6 @@ export default function Home() {
   const { switchChain } = useSwitchChain();
 
   const { statsMap, globalTotalXP, isLoading } = useFarmStats();
-  const { plant, isPending } = useWaterPlant();
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isBarnOpen, setIsBarnOpen] = useState(false);
@@ -51,22 +49,6 @@ export default function Home() {
   };
 
   const isTodayDone = currentLastAction > 0 && new Date(currentLastAction * 1000).toDateString() === new Date().toDateString();
-
-  let isDisabled = false;
-
-  if (!address) {
-    isDisabled = true;
-  } else if (isLoading) {
-    isDisabled = true;
-  } else if (isTodayDone) {
-    isDisabled = true;
-  } else if (isPending) {
-    isDisabled = true;
-  }
-
-  const handlePlant = (seedId: number, value: bigint) => {
-    plant(seedId, value);
-  };
 
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-green-500/30 font-sans relative">
@@ -167,11 +149,7 @@ export default function Home() {
                 </div>
 
                 <div className="w-full">
-                  <SeedMarket
-                    onPlant={handlePlant}
-                    isPending={isPending}
-                    disabled={isDisabled}
-                  />
+                  <SeedMarket />
                 </div>
              </div>
           </div>
