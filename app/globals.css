@@ -3,18 +3,10 @@
 @tailwind utilities;
 
 :root {
-  /* Updated Palette */
-  --bg-main: #0f0c0a;     /* Dark Soil */
-  --panel-bg: #1a1614;    /* Dark Wood Container */
+  --bg-main: #0f0c0a;
+  --panel-bg: #1a1614;
   --panel-border: #3e3229;
-
-  /* Legacy/Mapping to new */
-  --grass-base: var(--bg-main);
-  --wood-dark: var(--panel-border);
-  --wood-light: var(--panel-bg);
-  --soil-dark: #0f0c0a;
-  --soil-light: #2c241b;
-  --text-cream: #e0d8c8;
+  --text-cream: #e8d5c4;
 }
 
 body {
@@ -22,39 +14,23 @@ body {
   background-color: var(--bg-main);
   color: var(--text-cream);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 @layer components {
-  /* Wood Panel Container - Updated for Dark Theme */
-  .wood-panel {
+  /* Common Panel Styles */
+  .panel-container {
     background-color: var(--panel-bg);
-    border: 4px solid var(--panel-border);
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-    position: relative;
-  }
-
-  /* Corner Bolts */
-  .wood-panel::after {
-    content: '';
-    position: absolute;
-    top: 8px; left: 8px; right: 8px; bottom: 8px;
-    border: 1px dashed var(--panel-border);
-    border-radius: 8px;
-    pointer-events: none;
-    opacity: 0.2;
-  }
-
-  /* Deep Soil Pit - Grid Cells */
-  .soil-pit {
-    background-color: #000000;
     border: 1px solid var(--panel-border);
-    border-radius: 4px;
-    transition: transform 0.1s, border-color 0.1s;
+    border-radius: 12px;
   }
-  .soil-pit:hover {
-    transform: scale(1.05);
-    cursor: pointer;
-    border-color: #5d4d3d;
-  }
+}
+
+/* Custom Scrollbar for Grid */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
