@@ -15,7 +15,7 @@ interface FarmGridProps {
     statsMap: any;
     onNetworkSelect?: (networkId: string) => void;
     activeNetworkId?: string;
-    history?: Record<number, Record<number, number>>;
+    history?: Record<number, Record<string, string>>;
 }
 
 export default function FarmGrid({ statsMap, onNetworkSelect, history }: FarmGridProps) {
@@ -64,10 +64,12 @@ export default function FarmGrid({ statsMap, onNetworkSelect, history }: FarmGri
 
             // Streak fallback logic
             const lastActionDate = stats.lastAction > 0 ? new Date(stats.lastAction * 1000) : null;
-            const isCurrentMonth = lastActionDate && lastActionDate.getMonth() === now.getMonth() && lastActionDate.getFullYear() === now.getFullYear();
-            const lastActionDay = isCurrentMonth ? (lastActionDate?.getDate() || -999) : -999;
+            const lastActionDay = lastActionDate?.getDate() || -999;
+            const lastActionMonth = lastActionDate?.getMonth();
+            const currentMonth = now.getMonth();
 
-            const chainHistory = history?.[chainId] || {};
+            // Determine Emoji: Use history if available, else default to Sprout
+            const cropEmoji = history?.[chainId]?.['latest'] || '🌱';
 
             return (
               <div key={network.id} className="flex items-center mb-3">
@@ -86,26 +88,15 @@ export default function FarmGrid({ statsMap, onNetworkSelect, history }: FarmGri
                   style={{ gridTemplateColumns: `repeat(${daysInMonth}, minmax(0, 1fr))` }}
                 >
                   {days.map((day) => {
-                    // 1. Check precise history
-                    const plantedSeedId = chainHistory[day];
-                    const hasHistory = plantedSeedId !== undefined;
-
-                    // 2. Check streak (fallback)
-                    // Logic: day <= lastActionDay && day > (lastActionDay - stats.streak)
-                    const isStreak = day <= lastActionDay && day > (lastActionDay - stats.streak);
-
-                    let content = null;
-                    if (hasHistory) {
-                        // Render exact crop
-                        content = <span className="filter drop-shadow-lg animate-in zoom-in">{network.cropEmoji}</span>;
-                    } else if (isStreak) {
-                        // Render default seedling
-                        content = <span className="filter drop-shadow-lg opacity-80">🌱</span>;
-                    }
+                    // Logic: Highlight if day is within the active streak range ending at lastActionDay
+                    // Only valid if the last action was in the CURRENT month
+                    const isStreak = lastActionMonth === currentMonth &&
+                                     day <= lastActionDay &&
+                                     day > (lastActionDay - stats.streak);
 
                     return (
                       <div key={day} className="soil-pit aspect-square flex items-center justify-center text-sm relative">
-                        {content}
+                        {isStreak && <span className="filter drop-shadow-lg animate-in zoom-in">{cropEmoji}</span>}
                       </div>
                     );
                   })}

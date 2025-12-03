@@ -1,10 +1,11 @@
 import { useReadContracts, useAccount } from 'wagmi';
 import { CONTRACT_ADDRESSES, HUB_ABI } from '@/constants/contracts';
-import { useMemo, useState, useEffect } from 'react';
 import { createPublicClient, http, parseAbiItem } from 'viem';
-import { base, bsc, arbitrum, celo, mainnet } from 'viem/chains';
-import { monad, hyperEvm } from '@/config/wagmi';
+import { base, bsc, arbitrum, celo, mainnet } from 'wagmi/chains';
+import { useState, useEffect, useMemo } from 'react';
+import { config } from '@/config/wagmi';
 
+// RPC URLs (High Performance)
 const RPC_URLS: Record<number, string> = {
   8453: 'https://base.llamarpc.com',
   56: 'https://binance.llamarpc.com',
@@ -13,16 +14,6 @@ const RPC_URLS: Record<number, string> = {
   1: 'https://eth.llamarpc.com',
   143: 'https://rpc.monad.xyz',
   999: 'https://rpc.hyperliquid.xyz/evm',
-};
-
-const CHAINS: Record<number, any> = {
-  8453: base,
-  56: bsc,
-  42161: arbitrum,
-  42220: celo,
-  1: mainnet,
-  143: monad,
-  999: hyperEvm
 };
 
 const BLOCKS_PER_DAY: Record<number, number> = {
@@ -37,158 +28,110 @@ const BLOCKS_PER_DAY: Record<number, number> = {
 
 export function useFarmStats() {
   const { address } = useAccount();
+  // History: chainId -> { 'latest': emoji }
+  const [history, setHistory] = useState<Record<number, Record<string, string>>>({});
 
-  const chainIds = useMemo(() => Object.keys(CONTRACT_ADDRESSES).map(Number), []);
-
+  // 1. Fetch Basic Stats (XP, Streak) - Lightweight
+  const chains = useMemo(() => Object.keys(CONTRACT_ADDRESSES).map(Number), []);
   const contracts = useMemo(() => {
-    if (!address) return [];
+      if (!address) return [];
+      return chains.flatMap((chainId) => {
+        const hubAddress = CONTRACT_ADDRESSES[chainId].hub;
+        return [
+          { address: hubAddress, abi: HUB_ABI, functionName: 'userXP', args: [address], chainId },
+          { address: hubAddress, abi: HUB_ABI, functionName: 'userStreak', args: [address], chainId },
+          { address: hubAddress, abi: HUB_ABI, functionName: 'lastActionTimestamp', args: [address], chainId },
+        ];
+      });
+  }, [address, chains]);
 
-    return chainIds.flatMap((chainId) => {
-      const hubAddress = CONTRACT_ADDRESSES[chainId].hub;
-      return [
-        {
-          address: hubAddress,
-          abi: HUB_ABI,
-          functionName: 'userXP',
-          args: [address],
-          chainId,
-        },
-        {
-          address: hubAddress,
-          abi: HUB_ABI,
-          functionName: 'userStreak',
-          args: [address],
-          chainId,
-        },
-        {
-          address: hubAddress,
-          abi: HUB_ABI,
-          functionName: 'lastActionTimestamp',
-          args: [address],
-          chainId,
-        },
-      ];
-    });
-  }, [address, chainIds]);
-
-  const result = useReadContracts({
+  const { data: readData, isLoading } = useReadContracts({
     contracts,
-    query: {
-      enabled: !!address,
-      refetchInterval: 10000,
-    },
+    query: { enabled: !!address, refetchInterval: 10000 },
   });
 
+  // Process Basic Stats
   const { statsMap, globalTotalXP } = useMemo(() => {
-    if (!result.data) return { statsMap: {}, globalTotalXP: 0 };
+    const stats: Record<number, { xp: number; streak: number; lastAction: number }> = {};
+    let globalXP = 0;
 
-    const map: Record<number, { xp: number; streak: number; lastAction: number }> = {};
-    let totalXP = 0;
+    if (readData) {
+      chains.forEach((chainId, index) => {
+        const i = index * 3;
+        const xp = Number(readData[i]?.result || 0);
+        stats[chainId] = {
+          xp,
+          streak: Number(readData[i+1]?.result || 0),
+          lastAction: Number(readData[i+2]?.result || 0)
+        };
+        globalXP += Math.floor(xp / 100);
+      });
+    }
+    return { statsMap: stats, globalTotalXP: globalXP };
+  }, [readData, chains]);
 
-    chainIds.forEach((chainId, index) => {
-      const offset = index * 3;
-      const xpRes = result.data[offset];
-      const streakRes = result.data[offset + 1];
-      const lastActionRes = result.data[offset + 2];
-
-      const xp = xpRes?.status === 'success' ? Number(xpRes.result) : 0;
-      const streak = streakRes?.status === 'success' ? Number(streakRes.result) : 0;
-      const lastAction = lastActionRes?.status === 'success' ? Number(lastActionRes.result) : 0;
-
-      map[chainId] = { xp, streak, lastAction };
-      totalXP += Math.floor(xp / 100);
-    });
-
-    return { statsMap: map, globalTotalXP: totalXP };
-  }, [result.data, chainIds]);
-
-  // --- History Fetching Logic ---
-  const [history, setHistory] = useState<Record<number, Record<number, number>>>({});
-
+  // 2. Fetch History Logs (The Heavy Part) - Optimized
   useEffect(() => {
     if (!address) return;
 
-    const fetchHistory = async () => {
-      const newHistory: Record<number, Record<number, number>> = {};
+    const fetchLogs = async () => {
+      const newHistory: Record<number, Record<string, string>> = {};
 
-      await Promise.all(Object.keys(CONTRACT_ADDRESSES).map(async (chainIdStr) => {
-        const chainId = Number(chainIdStr);
-        const rpc = RPC_URLS[chainId];
-        const chain = CHAINS[chainId];
-        const logicAddress = CONTRACT_ADDRESSES[chainId].logic;
-
-        if (!rpc || !chain || !logicAddress) return;
-
+      await Promise.all(chains.map(async (chainId) => {
         try {
+          const chainDef = config.chains.find(c => c.id === chainId);
+          // Use our custom RPC URL if available, else fallback to undefined (default)
+          const transport = RPC_URLS[chainId] ? http(RPC_URLS[chainId]) : http();
+
           const client = createPublicClient({
-            chain,
-            transport: http(rpc),
+            chain: chainDef,
+            transport
           });
 
-          // Fetch recent blocks
-          const currentBlock = await client.getBlockNumber();
-          const blocksBack = BigInt(BLOCKS_PER_DAY[chainId] ? BLOCKS_PER_DAY[chainId] * 32 : 1000000);
-          const fromBlock = currentBlock - blocksBack > 0n ? currentBlock - blocksBack : 0n;
+          // Calculate "From Block" roughly based on time (30 days ago) to save RPC calls
+          let fromBlock = BigInt(0);
+          try {
+             const currentBlock = await client.getBlockNumber();
+             const blocksBack = BigInt(BLOCKS_PER_DAY[chainId] ? BLOCKS_PER_DAY[chainId] * 30 : 100000);
+             fromBlock = currentBlock - blocksBack > BigInt(0) ? currentBlock - blocksBack : BigInt(0);
+          } catch(err) {
+             console.warn(`Could not fetch block number for chain ${chainId}`, err);
+          }
 
+          // Get logs for 'SeedPlanted'
           const logs = await client.getLogs({
-            address: logicAddress,
+            address: CONTRACT_ADDRESSES[chainId].logic,
             event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
             args: { user: address },
-            fromBlock,
-            toBlock: 'latest'
+            fromBlock: fromBlock === BigInt(0) ? 'earliest' : fromBlock
           });
 
-          if (logs.length === 0) return;
+          newHistory[chainId] = {};
 
-          // Process timestamps by fetching blocks
-          const blockNumbers = Array.from(new Set(logs.map(l => l.blockNumber)));
-          const blockTimestamps: Record<string, number> = {};
-
-          await Promise.all(blockNumbers.map(async (bn) => {
-             try {
-                const block = await client.getBlock({ blockNumber: bn });
-                blockTimestamps[bn.toString()] = Number(block.timestamp);
-             } catch (err) {
-                console.warn(`Failed to fetch block ${bn} on chain ${chainId}`, err);
-             }
-          }));
-
-          const chainHistory: Record<number, number> = {};
-          const now = new Date();
-          const currentMonth = now.getMonth();
-          const currentYear = now.getFullYear();
-
-          logs.forEach(log => {
-            const ts = blockTimestamps[log.blockNumber.toString()];
-            if (ts) {
-              const date = new Date(ts * 1000);
-              // Only add if it belongs to the current month view
-              if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-                chainHistory[date.getDate()] = Number(log.args.seedId);
-              }
-            }
-          });
-
-          if (Object.keys(chainHistory).length > 0) {
-              newHistory[chainId] = chainHistory;
+          if (logs.length > 0) {
+              const lastLog = logs[logs.length - 1];
+              const seedId = Number(lastLog.args.seedId);
+              newHistory[chainId]['latest'] = getEmojiForSeed(seedId);
           }
 
         } catch (e) {
-          console.error(`Failed to fetch history for chain ${chainId}`, e);
+          console.error(`Failed to fetch logs for chain ${chainId}`, e);
         }
       }));
 
       setHistory(newHistory);
     };
 
-    fetchHistory();
-  }, [address]);
+    fetchLogs();
+  }, [address, chains]);
 
-  return {
-    statsMap,
-    globalTotalXP,
-    isLoading: result.isLoading,
-    refetch: result.refetch,
-    history,
-  };
+  return { statsMap, globalTotalXP, isLoading, history };
+}
+
+// Helper
+function getEmojiForSeed(id: number) {
+  if (id === 1) return '🍇'; // Default fruit
+  if (id === 2) return '🌹'; // Default flower
+  if (id === 3) return '🌳'; // Default tree
+  return '🌱';
 }

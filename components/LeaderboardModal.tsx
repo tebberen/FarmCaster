@@ -69,7 +69,7 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
       });
 
       const currentBlock = await client.getBlockNumber();
-      const fromBlock = currentBlock - 10000n > 0n ? currentBlock - 10000n : 0n;
+      const fromBlock = currentBlock - BigInt(10000) > BigInt(0) ? currentBlock - BigInt(10000) : BigInt(0);
 
       // 1. Fetch Logs to find active users
       const logs = await client.getLogs({
