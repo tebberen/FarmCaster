@@ -10,7 +10,7 @@ const SEED_TIERS = [
     xp: '1 XP',
     priceLabel: 'Free',
     priceValue: '0',
-    color: '#9e9e9e', // Grey
+    color: '#9e9e9e',
     bgClass: 'bg-[#424242]',
     emojis: ['🌱','🌿']
   },
@@ -20,7 +20,7 @@ const SEED_TIERS = [
     xp: 'High XP',
     priceLabel: '$0.10',
     priceValue: '0.00003',
-    color: '#42a5f5', // Blue
+    color: '#42a5f5',
     bgClass: 'bg-[#1565c0]',
     emojis: ['🫐','🍋','🌽','🍇','🍄','🍓','🍆','🥥','🍒']
   },
@@ -30,7 +30,7 @@ const SEED_TIERS = [
     xp: 'Max XP',
     priceLabel: '$0.15',
     priceValue: '0.000045',
-    color: '#ec407a', // Pink
+    color: '#ec407a',
     bgClass: 'bg-[#ad1457]',
     emojis: ['🌻','🌹','🌷','🪷','🌺','🌸','🌼']
   },
@@ -40,7 +40,7 @@ const SEED_TIERS = [
     xp: 'Epic XP',
     priceLabel: '$0.20',
     priceValue: '0.00006',
-    color: '#66bb6a', // Green
+    color: '#66bb6a',
     bgClass: 'bg-[#2e7d32]',
     emojis: ['🌳','🌲','🌴','🌵','🎄']
   }
@@ -57,7 +57,7 @@ export default function SeedMarket() {
   };
 
   return (
-    <div className="wood-panel p-5 w-full mt-4 flex flex-col gap-4">
+    <div className="bg-[#1a1614] border-4 border-[#3e3229] rounded-xl p-5 w-full mt-4 flex flex-col gap-4 shadow-xl">
       {/* Header */}
       <div className="flex justify-between items-end border-b border-[#3e3229] pb-3">
         <div>
@@ -128,42 +128,30 @@ export default function SeedMarket() {
         </div>
       </div>
 
-      {/* Seed Grid - Updated to Card Design */}
-      <div className="bg-[#151210] p-4 rounded-xl border-2 border-[#3e3229] shadow-[inset_0_2px_8px_rgba(0,0,0,0.6)]">
-        <div className="grid grid-cols-4 gap-4">
-          {activeTier.emojis.map(emoji => {
-            const isSelected = selectedEmoji === emoji;
-            return (
-              <button
-                key={emoji}
-                onClick={() => setSelectedEmoji(emoji)}
-                className={`
-                   rounded-lg p-3 transition-all flex flex-col items-center gap-2 group relative
-                   ${isSelected
-                     ? 'bg-[#2c241b] border-2 border-[#e0d8c8] shadow-[0_0_15px_rgba(255,255,255,0.1)] transform scale-105'
-                     : 'bg-[#1a1614] border border-[#3e3229] hover:border-green-500 hover:bg-[#251f1c]'}
-                `}
-              >
-                <div className="text-3xl group-hover:scale-110 transition-transform filter drop-shadow-md">
-                   {emoji}
-                </div>
-                <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">{activeTier.name}</div>
-                <div className={`
-                    text-[10px] px-2 py-1 rounded border
-                    ${activeTier.priceLabel === 'Free'
-                       ? 'bg-blue-900/30 text-blue-400 border-blue-500/30'
-                       : 'bg-[#0f0c0a] text-green-400 border-white/5'}
-                `}>
-                  {activeTier.priceLabel === 'Free' ? 'FREE' : activeTier.priceLabel}
-                </div>
-
-                {isSelected && (
-                   <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#4caf50] animate-pulse"></div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      {/* Seed Grid - Cleaned up */}
+      <div className="grid grid-cols-4 gap-4">
+        {activeTier.emojis.map(emoji => {
+          const isSelected = selectedEmoji === emoji;
+          return (
+            <button
+              key={emoji}
+              onClick={() => setSelectedEmoji(emoji)}
+              className={`
+                 rounded-xl p-3 transition-all flex flex-col items-center justify-center gap-2 group relative h-24
+                 ${isSelected
+                   ? 'bg-[#2c241b] border-2 border-[#e0d8c8] shadow-lg transform scale-105'
+                   : 'bg-[#1a1614] border border-[#3e3229] hover:border-[#8d6e63] hover:bg-[#251f1c]'}
+              `}
+            >
+              <div className="text-2xl group-hover:scale-110 transition-transform filter drop-shadow-md">
+                 {emoji}
+              </div>
+              {isSelected && (
+                 <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#4caf50] animate-pulse"></div>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Action Button */}
@@ -179,7 +167,7 @@ export default function SeedMarket() {
       >
         {isPending ? <Loader2 className="animate-spin" /> : <Sprout strokeWidth={3} />}
         {selectedEmoji ? (
-          <span>Plant <span className="text-yellow-200 mx-1">{selectedEmoji}</span> for {activeTier.priceLabel}</span>
+          <span>Plant {selectedEmoji}</span>
         ) : (
           'Choose a Seed'
         )}
@@ -187,7 +175,7 @@ export default function SeedMarket() {
 
       {isSuccess && (
         <div className="bg-[#1b5e20] text-green-100 text-xs font-bold text-center p-3 rounded border border-green-500 animate-pulse">
-          🌱 Seed planted successfully! Watch it grow!
+          🌱 Seed planted successfully!
         </div>
       )}
     </div>
