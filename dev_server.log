@@ -14,7 +14,7 @@ This information is used to shape Next.js' roadmap and prioritize features.
 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
 https://nextjs.org/telemetry
 
- ✓ Ready in 1962ms
+ ✓ Ready in 2.1s
  ○ Compiling / ...
  ⚠ ./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
 Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
@@ -37,7 +37,133 @@ Import trace for requested module:
 ./node_modules/wagmi/dist/esm/exports/connectors.js
 ./node_modules/@rainbow-me/rainbowkit/dist/index.js
 ./app/providers.tsx
- HEAD / 200 in 4.3s (compile: 3.5s, render: 828ms)
- GET / 200 in 104ms (compile: 17ms, render: 87ms)
- GET / 200 in 243ms (compile: 13ms, render: 230ms)
- GET / 200 in 113ms (compile: 6ms, render: 107ms)
+ GET / 200 in 28.1s (compile: 27.1s, render: 1028ms)
+ GET / 200 in 250ms (compile: 101ms, render: 149ms)
+ ⚠ ./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+ ⚠ ./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+ GET / 200 in 2.1s (compile: 284ms, render: 1833ms)
+ ⚠ ./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+ ⚠ ./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+ GET / 200 in 858ms (compile: 151ms, render: 707ms)
+ ⚠ ./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+ ⚠ ./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx
+
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+Module not found: Can't resolve '@react-native-async-storage/async-storage' in '/app/node_modules/@metamask/sdk/dist/browser/es'
+
+Import trace for requested module:
+./node_modules/@metamask/sdk/dist/browser/es/metamask-sdk.js
+./node_modules/@wagmi/connectors/dist/esm/metaMask.js
+./node_modules/@wagmi/connectors/dist/esm/exports/index.js
+./node_modules/wagmi/dist/esm/exports/connectors.js
+./node_modules/@rainbow-me/rainbowkit/dist/index.js
+./app/providers.tsx

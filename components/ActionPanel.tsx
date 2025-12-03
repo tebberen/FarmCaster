@@ -65,33 +65,33 @@ export default function ActionPanel({ seedId = 0 }: { seedId?: number }) {
   const isChainSupported = chainId && CHAIN_ID_TO_KEY[chainId];
 
   return (
-    <div className="flex flex-col gap-4 p-4 wood-panel rounded-lg">
-      <h3 className="text-xl font-bold text-[#5c3a21] text-center mb-2">Farm Controls</h3>
+    <div className="flex flex-col gap-4 p-5 wood-panel rounded-lg h-full">
+      <h3 className="text-xl font-black text-[#e0d8c8] text-center mb-2 tracking-widest uppercase">Farm Controls</h3>
 
       {!address ? (
-        <div className="text-center text-red-700 font-bold bg-red-100 p-2 rounded">
+        <div className="text-center text-red-400 font-bold bg-red-900/20 p-3 rounded border border-red-900/50">
           Please Connect Wallet
         </div>
       ) : !isChainSupported ? (
-        <div className="text-center text-orange-700 font-bold bg-orange-100 p-2 rounded">
+        <div className="text-center text-orange-400 font-bold bg-orange-900/20 p-3 rounded border border-orange-900/50">
           Unsupported Network
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2">
-            <div className="text-sm font-semibold text-[#5c3a21]">
-                Planting Seed ID: {seedId}
+        <div className="flex flex-col items-center gap-4 flex-1 justify-center">
+            <div className="text-sm font-bold text-[#8d6e63] uppercase tracking-wide">
+                Planting Seed ID: <span className="text-[#e0d8c8]">{seedId}</span>
             </div>
 
             <button
                 onClick={handlePlant}
                 disabled={isPending}
                 className={`
-                    w-full py-3 px-6 rounded-xl font-bold text-white shadow-lg
+                    w-full py-4 px-6 rounded-xl font-black text-white shadow-lg uppercase tracking-widest text-sm
                     transform transition-all active:scale-95
-                    flex items-center justify-center gap-2
+                    flex items-center justify-center gap-3
                     ${isPending
-                        ? 'bg-gray-500 cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-green-500 border-b-4 border-green-800 hover:border-green-700'}
+                        ? 'bg-[#2c241b] border-[#1a1614] text-[#5d4037] cursor-not-allowed'
+                        : 'bg-gradient-to-b from-[#66bb6a] to-[#43a047] border-b-4 border-[#1b5e20] hover:brightness-110'}
                 `}
             >
                 {isPending ? (
@@ -107,13 +107,13 @@ export default function ActionPanel({ seedId = 0 }: { seedId?: number }) {
             </button>
 
             {error && (
-                <div className="text-xs text-red-600 mt-2 text-center max-w-[200px] break-words">
+                <div className="text-xs text-red-400 mt-2 text-center break-words bg-red-900/20 p-2 rounded border border-red-900/30 w-full">
                     {error.message.split('.')[0]}
                 </div>
             )}
 
             {isSuccess && (
-                <div className="text-xs text-green-700 mt-2 font-bold text-center">
+                <div className="text-xs text-green-400 mt-2 font-bold text-center bg-green-900/20 p-2 rounded border border-green-900/30 w-full animate-pulse">
                     Successfully planted!
                 </div>
             )}
