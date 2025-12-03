@@ -3,74 +3,79 @@
 @tailwind utilities;
 
 :root {
-  --grass-base: #7ec850;
-  --wood-dark: #5d4037;
-  --wood-light: #a1887f;
-  --soil-dark: #3e2723;
-  --soil-light: #4e342e;
-  --text-cream: #fff8e1;
+  /* Updated Palette */
+  --bg-main: #0f0c0a;     /* Dark Soil */
+  --panel-bg: #1a1614;    /* Dark Wood Container */
+  --panel-border: #3e3229;
+
+  /* Legacy/Mapping to new */
+  --grass-base: var(--bg-main);
+  --wood-dark: var(--panel-border);
+  --wood-light: var(--panel-bg);
+  --soil-dark: #0f0c0a;
+  --soil-light: #2c241b;
+  --text-cream: #e0d8c8;
 }
 
 body {
   font-family: 'Verdana', sans-serif;
-  background-color: var(--grass-base);
-  /* Polished Grass Pattern */
+  background-color: var(--bg-main);
+  /* Subtle texture for soil if needed, or just clean dark */
   background-image:
-    radial-gradient(circle, rgba(255,255,255,0.2) 2px, transparent 2.5px),
-    radial-gradient(circle, rgba(0,0,0,0.05) 2px, transparent 2.5px);
-  background-size: 40px 40px;
-  background-position: 0 0, 20px 20px;
-  color: #fff;
+    radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  color: var(--text-cream);
   overflow-x: hidden;
 }
 
 @layer components {
-  /* Wood Panel Container */
+  /* Wood Panel Container - Updated for Dark Theme */
   .wood-panel {
-    background-color: var(--wood-light);
-    background-image: linear-gradient(180deg, #bcaaa4 0%, #8d6e63 100%);
-    border: 6px solid var(--wood-dark);
-    border-radius: 16px;
-    box-shadow:
-      inset 0 2px 0 rgba(255,255,255,0.3),
-      0 10px 20px rgba(0,0,0,0.4);
+    background-color: var(--panel-bg);
+    border: 4px solid var(--panel-border); /* Slightly thinner border for cleaner look? User said 6px in old code, let's stick to border color requested */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
     position: relative;
   }
 
-  /* Corner Bolts */
+  /* Corner Bolts - Adjusted color */
   .wood-panel::after {
     content: '';
     position: absolute;
     top: 8px; left: 8px; right: 8px; bottom: 8px;
-    border: 2px dashed #5d4037;
+    border: 1px dashed var(--panel-border);
     border-radius: 8px;
     pointer-events: none;
-    opacity: 0.3;
+    opacity: 0.2;
   }
 
-  /* Deep Soil Pit */
+  /* Deep Soil Pit - Grid Cells */
   .soil-pit {
-    background-color: var(--soil-dark);
-    border-radius: 8px;
-    box-shadow: inset 0 4px 8px rgba(0,0,0,0.6);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: transform 0.1s;
+    background-color: #000000; /* Darker pit */
+    border: 1px solid var(--panel-border);
+    border-radius: 4px; /* More square-ish */
+    transition: transform 0.1s, border-color 0.1s;
   }
-  .soil-pit:hover { transform: scale(1.05); cursor: pointer; }
+  .soil-pit:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+    border-color: #5d4d3d;
+  }
 
   /* 3D Game Button */
   .game-btn {
-    background: linear-gradient(to bottom, #66bb6a, #43a047);
-    border: 2px solid #1b5e20;
-    border-bottom: 5px solid #1b5e20;
-    color: white;
+    background: linear-gradient(to bottom, #4a6fa5, #3b5998); /* Update to something neutral or keep green? User said Stardew Valley. Maybe Orange or Blue? Sticking to Green for action is usually safe, but let's check context. Keeping green for now but maybe darker/richer. */
+    background: linear-gradient(to bottom, #2e7d32, #1b5e20);
+    border: 2px solid #0f3d0f;
+    border-bottom: 5px solid #0f3d0f;
+    color: #e0d8c8;
     font-weight: 800;
     text-transform: uppercase;
-    border-radius: 10px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    border-radius: 8px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
   }
   .game-btn:active {
     transform: translateY(3px);
-    border-bottom: 2px solid #1b5e20;
+    border-bottom: 2px solid #0f3d0f;
   }
 }
