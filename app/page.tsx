@@ -2,8 +2,8 @@
 import React from 'react';
 import FarmGrid from '@/components/FarmGrid';
 import SeedMarket from '@/components/SeedMarket';
+import ActionPanel from '@/components/ActionPanel';
 import { useFarmStats } from '@/hooks/useFarmStats';
-import { useWaterPlant } from '@/hooks/useWaterPlant';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Tractor, Wallet, Trophy } from 'lucide-react';
 import { NETWORKS } from '@/constants';
@@ -37,10 +37,7 @@ export default function Home() {
         <FarmGrid statsMap={statsMap} onNetworkSelect={handleNetworkSelect} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <SeedMarket />
-          <div className="wood-panel p-6 flex flex-col justify-center items-center text-center">
-             <h3 className="text-xl font-bold text-[#3e2723] mb-2">Daily Quest 📜</h3>
-             <p className="text-[#5d4037] text-sm">Harvest daily on {activeNetworkName} to keep your streak alive!</p>
-          </div>
+          <ActionPanel />
         </div>
       </div>
     </main>

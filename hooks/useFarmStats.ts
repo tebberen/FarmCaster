@@ -1,18 +1,33 @@
 import { useReadContracts, useAccount } from 'wagmi';
-import { CONTRACT_ADDRESSES, HUB_ABI } from '@/constants/contracts';
+import { CONTRACT_ADDRESSES } from '@/constants/contracts';
+import { HUB_ABI } from '@/constants/abis';
+
+// Helper to map chain ID to contract key
+const CHAIN_ID_TO_KEY: Record<number, string> = {
+  8453: 'base',
+  56: 'bsc',
+  42161: 'arb',
+  42220: 'celo',
+  1: 'eth',
+  143: 'monad',
+  999: 'hyperevm'
+};
 
 export function useFarmStats() {
   const { address } = useAccount();
 
   // Create contract calls for ALL 7 chains
-  // We use Object.keys(CONTRACT_ADDRESSES) which gives strings, so map to Number
-  const chains = Object.keys(CONTRACT_ADDRESSES).map(Number);
-  const contracts = chains.flatMap((chainId) => {
-    const hubAddress = CONTRACT_ADDRESSES[chainId].hub;
+  const chainIds = Object.keys(CHAIN_ID_TO_KEY).map(Number);
+
+  const contracts = chainIds.flatMap((chainId) => {
+    const chainKey = CHAIN_ID_TO_KEY[chainId];
+    const hubAddress = CONTRACT_ADDRESSES[chainKey]?.hub as `0x${string}`;
+
+    // Safety check if address is missing
+    if (!hubAddress) return [];
+
     return [
-      { address: hubAddress, abi: HUB_ABI, functionName: 'userXP', args: [address], chainId },
-      { address: hubAddress, abi: HUB_ABI, functionName: 'userStreak', args: [address], chainId },
-      { address: hubAddress, abi: HUB_ABI, functionName: 'lastActionTimestamp', args: [address], chainId },
+      { address: hubAddress, abi: HUB_ABI, functionName: 'getUserStats', args: [address], chainId },
     ];
   });
 
@@ -20,7 +35,7 @@ export function useFarmStats() {
     contracts,
     query: {
       enabled: !!address,
-      refetchInterval: 5000
+      refetchInterval: 10000
     },
   });
 
@@ -29,16 +44,26 @@ export function useFarmStats() {
   let globalTotalXP = 0;
 
   if (data) {
-    chains.forEach((chainId, index) => {
-      const i = index * 3;
-      // Handle potential read errors gracefully with defaults
-      // data[i] is the result object which has { result, status, error }
-      const xp = Number(data[i]?.result || 0);
-      const streak = Number(data[i+1]?.result || 0);
-      const lastAction = Number(data[i+2]?.result || 0);
+    chainIds.forEach((chainId, index) => {
+      // The new ABI has getUserStats returning a tuple/struct
+      // Output: [totalPoints, currentStreak, maxStreak, totalTxCount, lastActivityTime, joinedAt]
+
+      const result = data[index]?.result as any;
+
+      let xp = 0;
+      let streak = 0;
+      let lastAction = 0;
+
+      if (result) {
+        // Struct usually returned as object or array depending on wagmi config/version
+        // Assuming object based on ABI components names
+        xp = Number(result.totalPoints || result[0] || 0);
+        streak = Number(result.currentStreak || result[1] || 0);
+        lastAction = Number(result.lastActivityTime || result[4] || 0);
+      }
 
       statsMap[chainId] = { xp, streak, lastAction };
-      globalTotalXP += Math.floor(xp / 100); // XP is usually scaled by 100 in this app based on memory
+      globalTotalXP += Math.floor(xp / 100);
     });
   }
 
