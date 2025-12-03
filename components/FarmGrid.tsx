@@ -6,79 +6,70 @@ const CHAIN_IDS: Record<string, number> = {
   base: 8453, bsc: 56, arb: 42161, celo: 42220, eth: 1, monad: 143, hyperevm: 999
 };
 
-// Crop Emojis
-const CROPS: Record<string, string> = {
-  base: '🫐', bsc: '🌽', eth: '🍄', arb: '🍇', celo: '🥑', monad: '🍆', hyperevm: '⚡'
-};
-
 export default function FarmGrid({ statsMap, onNetworkSelect }: any) {
   const currentMonthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   const days = Array.from({ length: currentMonthDays }, (_, i) => i + 1);
   const today = new Date().getDate();
-  const currentMonth = new Date().getMonth();
+  const monthName = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
 
   return (
-    <div className="wood-fence p-6 w-full mb-8 mt-4">
-      {/* Wooden Header Sign */}
-      <div className="flex justify-center -mt-10 mb-6">
-        <div className="bg-[#5d4037] px-8 py-2 rounded-lg border-4 border-[#3e2723] shadow-lg transform rotate-1">
-          <h3 className="text-2xl font-black text-[#fff8e1] tracking-widest uppercase drop-shadow-md">
-            🚜 My Farm
-          </h3>
-        </div>
+    <div className="game-card">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-extrabold text-green-700 flex items-center gap-2">
+          🌱 My Farm
+        </h3>
+        <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+          {monthName}
+        </span>
       </div>
 
-      <div className="overflow-x-auto pb-2">
-        <div className="min-w-[800px]">
-          {/* Day Numbers */}
-          <div className="grid grid-cols-[140px_repeat(31,1fr)] gap-1 mb-2">
-            <div className="text-xs font-bold text-[#8d6e63] pl-2 self-end uppercase">Plots</div>
+      <div className="soil-container overflow-x-auto">
+        <div className="min-w-[700px]">
+          {/* Days Header */}
+          <div className="grid grid-cols-[120px_repeat(31,1fr)] gap-1 mb-2">
+            <div className="text-[10px] font-bold text-[#a1887f] pl-2 self-end">NETWORKS</div>
             {days.map((day) => (
-              <div key={day} className={`text-center text-[10px] font-bold ${day === today ? 'text-yellow-400 scale-125' : 'text-[#8d6e63]'}`}>
+              <div key={day} className={`text-center text-[9px] font-bold ${day === today ? 'text-yellow-400' : 'text-[#a1887f]'}`}>
                 {day}
               </div>
             ))}
           </div>
 
-          {/* Farm Rows */}
+          {/* Rows */}
           {NETWORKS.map((network) => {
             const chainId = CHAIN_IDS[network.id];
-            // Safe fallback for stats
             const stats = statsMap?.[chainId] || { streak: 0, lastAction: 0 };
 
             // HISTORY LOGIC: Backtrace from Last Action
             const lastActionDate = stats.lastAction > 0 ? new Date(stats.lastAction * 1000) : null;
             const lastActionDay = lastActionDate?.getDate() || -999;
+            const currentMonth = new Date().getMonth();
             const lastActionMonth = lastActionDate?.getMonth();
 
             return (
-              <div key={network.id} className="grid grid-cols-[140px_repeat(31,1fr)] gap-1 items-center mb-3">
-
-                {/* Network Sign (Button) */}
+              <div key={network.id} className="grid grid-cols-[120px_repeat(31,1fr)] gap-1 items-center mb-2">
+                {/* Network Pill */}
                 <button
                   onClick={() => onNetworkSelect(network.id)}
-                  className="wood-btn px-2 py-1.5 flex items-center gap-2 text-xs font-bold mr-2 hover:brightness-110 w-full"
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 transition-colors border border-white/10"
                 >
-                  <span className="text-lg bg-black/20 rounded p-0.5 shadow-inner">
-                    {network.icon ? <network.icon size={14}/> : '🌱'}
-                  </span>
-                  <span className="uppercase truncate flex-1 text-left">{network.name}</span>
+                  <span>{network.icon ? <network.icon size={12}/> : '•'}</span>
+                  <span className="truncate">{network.name}</span>
                 </button>
 
-                {/* Soil Pits (The Field) */}
+                {/* Soil Holes */}
                 {days.map((day) => {
-                  // THE MAGIC FORMULA:
-                  // Show crop IF: (Same Month) AND (Day <= Last Harvest) AND (Day > Last Harvest - Streak)
+                  // Only show streak if it falls within the streak range AND it's the current month (or close enough logic)
                   const isStreak =
-                    lastActionMonth === currentMonth &&
+                    (lastActionMonth === currentMonth) &&
                     day <= lastActionDay &&
                     day > (lastActionDay - stats.streak);
 
                   return (
-                    <div key={day} className="soil-pit aspect-square flex items-center justify-center text-lg relative">
+                    <div key={day} className="soil-hole aspect-square flex items-center justify-center text-sm">
                       {isStreak ? (
-                        <span className="filter drop-shadow-md animate-in zoom-in duration-300">
-                          {CROPS[network.id] || '🌱'}
+                        <span className="filter drop-shadow-md animate-in zoom-in">
+                          {network.cropEmoji || '🌱'}
                         </span>
                       ) : null}
                     </div>
