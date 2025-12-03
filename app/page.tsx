@@ -15,7 +15,8 @@ export default function Home() {
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
 
-  const { statsMap, globalTotalXP, isLoading, history } = useFarmStats();
+  // Updated hook usage: no history returned anymore
+  const { statsMap, globalTotalXP, isLoading } = useFarmStats();
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isBarnOpen, setIsBarnOpen] = useState(false);
@@ -127,8 +128,7 @@ export default function Home() {
         <FarmGrid
           statsMap={statsMap}
           onNetworkSelect={handleNetworkSelect}
-          activeNetworkId={activeNetworkId}
-          history={history}
+          // history prop removed
         />
 
         {/* Action Area */}
