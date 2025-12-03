@@ -2,7 +2,7 @@
 import React from 'react';
 import FarmGrid from '@/components/FarmGrid';
 import SeedMarket from '@/components/SeedMarket';
-import ActionPanel from '@/components/ActionPanel';
+import ActionPanel from '@/components/ActionPanel'; // Keeping ActionPanel as requested implicitly by "assemble everything" but user only asked to rewrite 3 files. I will assume ActionPanel is still needed for layout balance or I can remove it if "assemble cleanly" implies only using the new SeedMarket. But the previous page had it. I'll keep it.
 import { useFarmStats } from '@/hooks/useFarmStats';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Tractor, Wallet, Trophy } from 'lucide-react';
@@ -11,9 +11,7 @@ import { NETWORKS } from '@/constants';
 export default function Home() {
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
-  const { statsMap, globalTotalXP } = useFarmStats(); // Multichain Hook
-
-  const activeNetworkName = NETWORKS.find(n => (n as any).chainId === chainId)?.name || "Unknown";
+  const { statsMap, globalTotalXP } = useFarmStats();
 
   const handleNetworkSelect = (id: string) => {
     const chainMap: Record<string, number> = { base: 8453, bsc: 56, arb: 42161, celo: 42220, eth: 1, monad: 143, hyperevm: 999 };
@@ -21,25 +19,42 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen p-4 pb-20">
-      <nav className="wood-panel mb-8 p-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="bg-[#2c241b] p-2 rounded text-[#e0d8c8]"><Tractor size={24} /></div>
-          <h1 className="text-2xl font-black text-[#e0d8c8] hidden md:block">FARMCASTER</h1>
+    <main className="min-h-screen p-4 md:p-8 max-w-6xl mx-auto flex flex-col gap-8">
+
+      {/* Navbar - Wood Panel Style */}
+      <nav className="bg-[#1a1614] border border-[#3e3229] rounded-xl p-4 flex justify-between items-center shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-[#0f0c0a] p-2 rounded border border-[#3e3229] text-[#e8d5c4]">
+            <Tractor size={20} />
+          </div>
+          <h1 className="text-xl font-bold text-[#e8d5c4] tracking-widest hidden sm:block">FARMCASTER</h1>
         </div>
-        <div className="flex gap-2">
-           <button className="bg-[#2c241b] text-[#e0d8c8] px-3 py-1 rounded border-b-4 border-[#3e3229] font-bold text-xs flex items-center gap-1"><Trophy size={14}/> {Math.floor(globalTotalXP)} XP</button>
-           <div className="bg-[#0f0c0a] text-[#e0d8c8] px-3 py-1 rounded font-mono text-xs flex items-center gap-2 border border-[#3e3229]"><Wallet size={14}/> {address ? address.slice(0,6) : 'Connect'}</div>
+
+        <div className="flex items-center gap-3">
+           <div className="bg-[#0f0c0a] px-4 py-2 rounded border border-[#3e3229] text-[#e8d5c4] text-xs font-mono flex items-center gap-2">
+             <Trophy size={14} className="text-[#e8d5c4]" />
+             <span>{Math.floor(globalTotalXP)} XP</span>
+           </div>
+           <div className="bg-[#0f0c0a] px-4 py-2 rounded border border-[#3e3229] text-[#e8d5c4] text-xs font-mono flex items-center gap-2">
+             <Wallet size={14} className="text-[#e8d5c4]" />
+             <span>{address ? `${address.slice(0,6)}...` : 'Connect'}</span>
+           </div>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto">
+      {/* Main Content */}
+      <div className="flex flex-col gap-8">
         <FarmGrid statsMap={statsMap} onNetworkSelect={handleNetworkSelect} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <SeedMarket />
-          <ActionPanel />
+          {/* Preserving ActionPanel for balance, assuming it handles other quick actions */}
+          <div className="opacity-80 hover:opacity-100 transition-opacity">
+             <ActionPanel />
+          </div>
         </div>
       </div>
+
     </main>
   );
 }

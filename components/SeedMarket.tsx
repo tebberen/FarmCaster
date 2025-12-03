@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useWaterPlant } from '@/hooks/useWaterPlant';
 import { parseEther } from 'viem';
-import { Loader2, Sprout, ShoppingBag, Coins, Zap } from 'lucide-react';
+import { Loader2, Sprout } from 'lucide-react';
 
 const SEED_TIERS = [
   {
@@ -11,7 +11,6 @@ const SEED_TIERS = [
     priceLabel: 'Free',
     priceValue: '0',
     color: '#9e9e9e',
-    bgClass: 'bg-[#424242]',
     emojis: ['🌱','🌿']
   },
   {
@@ -21,7 +20,6 @@ const SEED_TIERS = [
     priceLabel: '$0.10',
     priceValue: '0.00003',
     color: '#42a5f5',
-    bgClass: 'bg-[#1565c0]',
     emojis: ['🫐','🍋','🌽','🍇','🍄','🍓','🍆','🥥','🍒']
   },
   {
@@ -31,7 +29,6 @@ const SEED_TIERS = [
     priceLabel: '$0.15',
     priceValue: '0.000045',
     color: '#ec407a',
-    bgClass: 'bg-[#ad1457]',
     emojis: ['🌻','🌹','🌷','🪷','🌺','🌸','🌼']
   },
   {
@@ -41,7 +38,6 @@ const SEED_TIERS = [
     priceLabel: '$0.20',
     priceValue: '0.00006',
     color: '#66bb6a',
-    bgClass: 'bg-[#2e7d32]',
     emojis: ['🌳','🌲','🌴','🌵','🎄']
   }
 ];
@@ -57,79 +53,33 @@ export default function SeedMarket() {
   };
 
   return (
-    <div className="bg-[#1a1614] border-4 border-[#3e3229] rounded-xl p-5 w-full mt-4 flex flex-col gap-4 shadow-xl">
-      {/* Header */}
-      <div className="flex justify-between items-end border-b border-[#3e3229] pb-3">
-        <div>
-          <h3 className="text-xl font-black text-[#e0d8c8] flex items-center gap-2 uppercase tracking-wide">
-            <ShoppingBag className="text-[#8d6e63]" /> Seed Market
-          </h3>
-          <p className="text-[10px] font-bold text-[#8d6e63] mt-1 uppercase tracking-wider">
-            Select a category to view seeds
-          </p>
-        </div>
-        <div className="text-right">
-           <span className="text-[10px] font-bold text-[#5d4037] bg-[#e0d8c8] px-2 py-1 rounded">
-             {activeTier.priceLabel === 'Free' ? 'NO COST' : 'PAID ENTRY'}
-           </span>
-        </div>
+    <div className="bg-[#1a1614] border border-[#3e3229] rounded-xl p-6 w-full flex flex-col gap-6">
+
+      <div className="flex justify-between items-center border-b border-[#3e3229] pb-4">
+        <h3 className="text-xl font-bold text-[#e8d5c4] uppercase tracking-wider">Seed Market</h3>
+        <span className="text-xs font-mono text-[#e8d5c4] opacity-50 uppercase">{activeTier.priceLabel} ENTRY</span>
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-4 gap-2">
-        {SEED_TIERS.map(tier => {
-          const isActive = activeTab === tier.id;
-          return (
-            <button
-              key={tier.id}
-              onClick={() => { setActiveTab(tier.id); setSelectedEmoji(null); }}
-              className={`
-                relative flex flex-col items-center justify-center py-3 rounded-xl border-2 transition-all duration-200
-                ${isActive
-                  ? `border-[#e0d8c8] bg-gradient-to-br from-[#2c241b] to-[#0f0c0a] shadow-inner`
-                  : 'border-transparent bg-[#1a1614] hover:bg-[#2c241b] opacity-70 hover:opacity-100'}
-              `}
-            >
-              <div
-                className={`w-3 h-3 rounded-full mb-1 shadow-sm`}
-                style={{ backgroundColor: tier.color }}
-              />
-              <span className={`text-[10px] font-bold uppercase ${isActive ? 'text-[#e0d8c8]' : 'text-[#8d6e63]'}`}>
-                {tier.name}
-              </span>
-              {isActive && (
-                <div className="absolute -bottom-1 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[#e0d8c8]"></div>
-              )}
-            </button>
-          );
-        })}
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {SEED_TIERS.map(tier => (
+          <button
+            key={tier.id}
+            onClick={() => { setActiveTab(tier.id); setSelectedEmoji(null); }}
+            className={`
+              px-4 py-2 rounded text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap
+              ${activeTab === tier.id
+                ? 'bg-[#e8d5c4] text-[#1a1614]'
+                : 'bg-[#0f0c0a] text-[#e8d5c4] border border-[#3e3229] opacity-70 hover:opacity-100'}
+            `}
+          >
+            {tier.name}
+          </button>
+        ))}
       </div>
 
-      {/* Info Banner */}
-      <div className="bg-[#0f0c0a] rounded-lg p-3 flex justify-between items-center border border-[#3e3229] shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-md ${activeTier.bgClass} text-white shadow-md`}>
-            <Coins size={16} />
-          </div>
-          <div>
-             <div className="text-xs font-bold text-[#8d6e63] uppercase">Price</div>
-             <div className="text-sm font-black text-[#e0d8c8]">{activeTier.priceLabel}</div>
-          </div>
-        </div>
-        <div className="h-8 w-px bg-[#3e3229]"></div>
-        <div className="flex items-center gap-3 text-right">
-          <div>
-             <div className="text-xs font-bold text-[#8d6e63] uppercase">Reward</div>
-             <div className="text-sm font-black text-[#e0d8c8]">{activeTier.xp}</div>
-          </div>
-          <div className={`p-2 rounded-md bg-[#2c241b] text-[#e0d8c8] border border-[#3e3229]`}>
-            <Zap size={16} />
-          </div>
-        </div>
-      </div>
-
-      {/* Seed Grid - Cleaned up */}
-      <div className="grid grid-cols-4 gap-4">
+      {/* Grid Layout - 4 Columns */}
+      <div className="grid grid-cols-4 gap-3">
         {activeTier.emojis.map(emoji => {
           const isSelected = selectedEmoji === emoji;
           return (
@@ -137,18 +87,13 @@ export default function SeedMarket() {
               key={emoji}
               onClick={() => setSelectedEmoji(emoji)}
               className={`
-                 rounded-xl p-3 transition-all flex flex-col items-center justify-center gap-2 group relative h-24
-                 ${isSelected
-                   ? 'bg-[#2c241b] border-2 border-[#e0d8c8] shadow-lg transform scale-105'
-                   : 'bg-[#1a1614] border border-[#3e3229] hover:border-[#8d6e63] hover:bg-[#251f1c]'}
+                aspect-square rounded-lg flex items-center justify-center text-3xl transition-all relative
+                ${isSelected
+                  ? 'bg-[#2c241b] border-2 border-[#e8d5c4] scale-105 shadow-[0_0_15px_rgba(232,213,196,0.1)]'
+                  : 'bg-[#1a1614] border border-[#3e3229] hover:bg-[#251f1c] hover:border-[#5d4d3d]'}
               `}
             >
-              <div className="text-2xl group-hover:scale-110 transition-transform filter drop-shadow-md">
-                 {emoji}
-              </div>
-              {isSelected && (
-                 <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#4caf50] animate-pulse"></div>
-              )}
+              {emoji}
             </button>
           );
         })}
@@ -159,23 +104,19 @@ export default function SeedMarket() {
         onClick={handlePlant}
         disabled={isPending || !selectedEmoji}
         className={`
-          w-full py-4 rounded-xl border-b-4 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 transition-all
+          w-full py-4 rounded-lg font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all mt-2
           ${isPending || !selectedEmoji
-            ? 'bg-[#2c241b] border-[#1a1614] text-[#5d4037] cursor-not-allowed'
-            : 'bg-gradient-to-b from-[#66bb6a] to-[#43a047] border-[#1b5e20] text-white hover:brightness-110 active:border-b-0 active:translate-y-1'}
+            ? 'bg-[#2c241b] text-[#5d4037] cursor-not-allowed border border-[#3e3229]'
+            : 'bg-[#e8d5c4] text-[#1a1614] hover:bg-[#d4c3b3]'}
         `}
       >
-        {isPending ? <Loader2 className="animate-spin" /> : <Sprout strokeWidth={3} />}
-        {selectedEmoji ? (
-          <span>Plant {selectedEmoji}</span>
-        ) : (
-          'Choose a Seed'
-        )}
+        {isPending ? <Loader2 className="animate-spin w-4 h-4" /> : <Sprout className="w-4 h-4" />}
+        {selectedEmoji ? `Plant ${selectedEmoji}` : 'Select Seed'}
       </button>
 
       {isSuccess && (
-        <div className="bg-[#1b5e20] text-green-100 text-xs font-bold text-center p-3 rounded border border-green-500 animate-pulse">
-          🌱 Seed planted successfully!
+        <div className="text-green-400 text-xs font-mono text-center mt-2">
+          Seed planted successfully!
         </div>
       )}
     </div>
