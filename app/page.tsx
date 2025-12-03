@@ -15,7 +15,7 @@ export default function Home() {
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
 
-  const { statsMap, globalTotalXP, isLoading } = useFarmStats();
+  const { statsMap, globalTotalXP, isLoading, history } = useFarmStats();
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isBarnOpen, setIsBarnOpen] = useState(false);
@@ -128,6 +128,7 @@ export default function Home() {
           statsMap={statsMap}
           onNetworkSelect={handleNetworkSelect}
           activeNetworkId={activeNetworkId}
+          history={history}
         />
 
         {/* Action Area */}
