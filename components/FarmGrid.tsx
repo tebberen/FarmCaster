@@ -7,7 +7,6 @@ const CROPS: Record<string, string> = { base: '🫐', bsc: '🌽', eth: '🍄', 
 export default function FarmGrid({ statsMap, onNetworkSelect }: any) {
   const currentMonthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   const days = Array.from({ length: currentMonthDays }, (_, i) => i + 1);
-  const today = new Date().getDate();
   const currentMonth = new Date().getMonth();
 
   return (
@@ -19,41 +18,41 @@ export default function FarmGrid({ statsMap, onNetworkSelect }: any) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[800px]">
-          <div className="grid grid-cols-[120px_repeat(31,1fr)] gap-1 mb-2">
-            <div className="text-xs font-bold text-[#8d6e63] pl-2 self-end">NETWORKS</div>
-            {days.map(d => <div key={d} className={`text-center text-[9px] font-bold ${d===today?'text-yellow-400':'text-[#5d4037]'}`}>{d}</div>)}
-          </div>
+      <div className="overflow-hidden">
+        {NETWORKS.map((network) => {
+          const chainId = (network as any).chainId || CHAIN_IDS[network.id];
+          const stats = statsMap?.[chainId] || { streak: 0, lastAction: 0 };
 
-          {NETWORKS.map((network) => {
-            const chainId = (network as any).chainId || CHAIN_IDS[network.id];
-            const stats = statsMap?.[chainId] || { streak: 0, lastAction: 0 };
+          // HISTORY LOGIC (Backtrace)
+          const lastActionDate = stats.lastAction > 0 ? new Date(stats.lastAction * 1000) : null;
+          const lastActionDay = lastActionDate?.getDate() || -999;
+          const lastActionMonth = lastActionDate?.getMonth();
 
-            // HISTORY LOGIC (Backtrace)
-            const lastActionDate = stats.lastAction > 0 ? new Date(stats.lastAction * 1000) : null;
-            const lastActionDay = lastActionDate?.getDate() || -999;
-            const lastActionMonth = lastActionDate?.getMonth();
+          return (
+            <div key={network.id} className="flex items-center h-12 mb-2 border-b border-white/5">
+              {/* Left: Network Name (Fixed Width) */}
+              <button
+                onClick={() => onNetworkSelect(network.id)}
+                className="w-32 shrink-0 flex items-center pl-4 font-bold text-gray-400 hover:text-white transition-colors text-xs"
+              >
+                 {network.icon && <network.icon className="mr-2 w-4 h-4" />}
+                 {network.name}
+              </button>
 
-            return (
-              <div key={network.id} className="grid grid-cols-[120px_repeat(31,1fr)] gap-1 items-center mb-2">
-                <button onClick={() => onNetworkSelect(network.id)} className="bg-[#2c241b] text-[#e0d8c8] p-1.5 rounded border border-[#3e3229] flex items-center gap-2 text-xs font-bold hover:bg-[#3e3229] transition-colors shadow-sm">
-                  <span>{network.icon ? <network.icon size={14}/> : '🌱'}</span>
-                  <span className="truncate">{network.name}</span>
-                </button>
-
+              {/* Right: The Grid Cells (Scrollable) */}
+              <div className="flex-1 flex items-center overflow-x-auto no-scrollbar gap-1">
                 {days.map((day) => {
                   const isStreak = lastActionMonth === currentMonth && day <= lastActionDay && day > (lastActionDay - stats.streak);
                   return (
-                    <div key={day} className="soil-pit aspect-square w-full h-full flex items-center justify-center text-sm">
+                    <div key={day} className="w-8 h-8 shrink-0 soil-pit flex items-center justify-center text-sm bg-[#0f0c0a] border border-[#2c241b] rounded-sm">
                       {isStreak && <span className="filter drop-shadow-md animate-in zoom-in">{CROPS[network.id] || '🌱'}</span>}
                     </div>
                   );
                 })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

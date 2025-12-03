@@ -128,9 +128,9 @@ export default function SeedMarket() {
         </div>
       </div>
 
-      {/* Seed Grid */}
+      {/* Seed Grid - Updated to Card Design */}
       <div className="bg-[#151210] p-4 rounded-xl border-2 border-[#3e3229] shadow-[inset_0_2px_8px_rgba(0,0,0,0.6)]">
-        <div className="grid grid-cols-5 sm:grid-cols-8 gap-3">
+        <div className="grid grid-cols-4 gap-4">
           {activeTier.emojis.map(emoji => {
             const isSelected = selectedEmoji === emoji;
             return (
@@ -138,13 +138,28 @@ export default function SeedMarket() {
                 key={emoji}
                 onClick={() => setSelectedEmoji(emoji)}
                 className={`
-                  aspect-square flex items-center justify-center text-3xl rounded-lg transition-all duration-150
-                  ${isSelected
-                    ? 'bg-[#2c241b] shadow-[0_0_0_2px_#e0d8c8,0_4px_10px_rgba(0,0,0,0.5)] transform -translate-y-1'
-                    : 'bg-[#0f0c0a] border border-[#2c241b] hover:bg-[#1a1614] hover:border-[#5d4037] opacity-80 hover:opacity-100'}
+                   rounded-lg p-3 transition-all flex flex-col items-center gap-2 group relative
+                   ${isSelected
+                     ? 'bg-[#2c241b] border-2 border-[#e0d8c8] shadow-[0_0_15px_rgba(255,255,255,0.1)] transform scale-105'
+                     : 'bg-[#1a1614] border border-[#3e3229] hover:border-green-500 hover:bg-[#251f1c]'}
                 `}
               >
-                <span className="filter drop-shadow-md">{emoji}</span>
+                <div className="text-3xl group-hover:scale-110 transition-transform filter drop-shadow-md">
+                   {emoji}
+                </div>
+                <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">{activeTier.name}</div>
+                <div className={`
+                    text-[10px] px-2 py-1 rounded border
+                    ${activeTier.priceLabel === 'Free'
+                       ? 'bg-blue-900/30 text-blue-400 border-blue-500/30'
+                       : 'bg-[#0f0c0a] text-green-400 border-white/5'}
+                `}>
+                  {activeTier.priceLabel === 'Free' ? 'FREE' : activeTier.priceLabel}
+                </div>
+
+                {isSelected && (
+                   <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#4caf50] animate-pulse"></div>
+                )}
               </button>
             );
           })}
