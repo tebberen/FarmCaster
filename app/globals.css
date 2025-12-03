@@ -1,71 +1,79 @@
-@import "tailwindcss";
-
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --wood-light: #eecfa1;
-  --wood-main: #8b4513;
-  --wood-dark: #5d4037;
-  --grass-base: #7ec850;
+  --grass-base: #567d46;
   --soil-dark: #3e2723;
   --soil-light: #5d4037;
-
-  /* Keep existing vars just in case, or override relevant ones */
-  --background: var(--grass-base);
-  --foreground: #fff;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --wood-light: #a1887f;
+  --wood-dark: #3e2723;
 }
 
 body {
-  font-family: 'Fredoka', sans-serif; /* Cartoon Font */
   background-color: var(--grass-base);
-  /* CSS Magic: Grass Pattern */
+  /* Realistic Grass Pattern */
   background-image:
-    radial-gradient(#aed581 15%, transparent 16%),
-    radial-gradient(#aed581 15%, transparent 16%);
-  background-size: 30px 30px;
-  background-position: 0 0, 15px 15px;
+    radial-gradient(circle at 100% 50%, transparent 20%, rgba(255,255,255,.1) 21%, rgba(255,255,255,.1) 34%, transparent 35%, transparent),
+    radial-gradient(circle at 0% 50%, transparent 20%, rgba(255,255,255,.1) 21%, rgba(255,255,255,.1) 34%, transparent 35%, transparent) 0 -50px;
+  background-size: 75px 100px;
+  font-family: 'Verdana', sans-serif;
   color: #fff;
 }
 
 @layer components {
-  /* WOOD TEXTURE CLASS */
-  .wood-texture {
-    background-color: var(--wood-main);
-    /* CSS Magic: Wood Grain Effect */
-    background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2px, transparent 2px, transparent 4px);
-    border: 4px solid var(--wood-dark);
+  /* THE WOODEN FENCE CONTAINER */
+  .wood-fence {
+    background-color: #4e342e; /* Soil Base */
+    border: 12px solid #5d4037; /* Base Wood */
     border-radius: 12px;
     box-shadow:
-      inset 0 2px 0 rgba(255,255,255,0.2), /* Top Highlight */
-      0 6px 0 var(--wood-dark), /* 3D Bottom Edge */
-      0 10px 10px rgba(0,0,0,0.3); /* Drop Shadow */
+      0 0 0 4px #3e2723, /* Inner detail */
+      0 20px 25px -5px rgba(0, 0, 0, 0.6); /* Drop shadow on grass */
+    position: relative;
   }
 
-  /* SOIL PIT CLASS */
+  /* Corner Posts for the Fence */
+  .wood-fence::before, .wood-fence::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #8d6e63;
+    border: 2px solid #3e2723;
+    border-radius: 50%;
+    top: -16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  }
+  .wood-fence::before { left: -16px; }
+  .wood-fence::after { right: -16px; }
+
+  /* THE SOIL PIT (Grid Cell) */
   .soil-pit {
-    background-color: var(--soil-dark);
-    border-radius: 50%; /* Rounded pits like the reference */
-    box-shadow: inset 0 3px 6px rgba(0,0,0,0.6); /* Inner shadow for depth */
-    border-bottom: 2px solid rgba(255,255,255,0.05);
-  }
-
-  /* WOOD BUTTON CLASS */
-  .game-btn {
-    background: linear-gradient(to bottom, #a1887f, #8d6e63);
-    border: 2px solid #5d4037;
-    color: #fff;
-    text-shadow: 1px 1px 0 #3e2723;
+    background-color: #281812; /* Deep Hole */
     border-radius: 8px;
-    box-shadow: 0 4px 0 #3e2723;
+    box-shadow:
+      inset 2px 2px 6px rgba(0,0,0,0.8), /* Inner Shadow (Depth) */
+      1px 1px 0 rgba(255,255,255,0.05); /* Rim Highlight */
     transition: transform 0.1s;
   }
-  .game-btn:active {
-    transform: translateY(4px);
-    box-shadow: 0 0 0 #3e2723;
+  .soil-pit:hover {
+    background-color: #3e2723;
+    cursor: pointer;
+  }
+
+  /* WOODEN SIGNBOARD BUTTON */
+  .wood-btn {
+    background: repeating-linear-gradient(45deg, #8d6e63, #8d6e63 10px, #795548 10px, #795548 20px);
+    border: 3px solid #3e2723;
+    border-radius: 8px;
+    color: #fff8e1;
+    text-shadow: 2px 2px 0 #3e2723;
+    box-shadow: 0 6px 0 #281812, 0 10px 10px rgba(0,0,0,0.3);
+    transition: transform 0.1s;
+  }
+  .wood-btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 #281812;
   }
 }

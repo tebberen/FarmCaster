@@ -61,7 +61,7 @@ export default function SeedMarket() {
   };
 
   return (
-    <div className="wood-texture p-6 w-full shadow-2xl">
+    <div className="wood-fence p-6 w-full shadow-2xl">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-[#ffecb3] drop-shadow-md flex items-center gap-2">
           <ShoppingBag className="text-[#aed581]" />
@@ -112,7 +112,7 @@ export default function SeedMarket() {
         <button
           onClick={handlePlant}
           disabled={isPending || !selectedEmoji}
-          className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-3 relative overflow-hidden group game-btn ${
+          className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-3 relative overflow-hidden group wood-btn ${
             isPending || !selectedEmoji
               ? 'opacity-50 cursor-not-allowed grayscale'
               : 'hover:brightness-110'
