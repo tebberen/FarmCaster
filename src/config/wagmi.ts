@@ -1,43 +1,26 @@
-import { http, createConfig } from "wagmi";
-import { base, mainnet, arbitrum, celo, bsc } from "wagmi/chains";
-import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
-import { defineChain } from "viem";
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { base, bsc, mainnet, arbitrum, celo } from 'wagmi/chains';
+import { defineChain } from 'viem';
 
+// Define Monad Testnet (Placeholder)
 const monadTestnet = defineChain({
   id: 10143,
   name: 'Monad Testnet',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc-devnet.monadinfra.com/rpc/3fe540e310bbb6ed'] },
-  },
-  blockExplorers: {
-    default: { name: 'MonadExplorer', url: 'https://explorer.monadinfra.com/' },
-  },
-  testnet: true,
+  rpcUrls: { default: { http: ['https://testnet-rpc.monad.xyz'] } },
 });
 
-const hyperEvmTestnet = defineChain({
-  id: 999,
-  name: 'HyperEVM Testnet',
+// Define HyperEVM (Placeholder)
+const hyperEvm = defineChain({
+  id: 999, // Replace with actual ID later
+  name: 'HyperEVM',
   nativeCurrency: { name: 'Hyper', symbol: 'HYPE', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc.hyper-evm.example.com'] },
-  },
-  testnet: true,
+  rpcUrls: { default: { http: ['https://rpc.hyper.xyz'] } },
 });
 
-export const config = createConfig({
-  chains: [mainnet, base, bsc, arbitrum, celo, monadTestnet, hyperEvmTestnet],
-  transports: {
-    [mainnet.id]: http(),
-    [base.id]: http(),
-    [bsc.id]: http(),
-    [arbitrum.id]: http(),
-    [celo.id]: http(),
-    [monadTestnet.id]: http(),
-    [hyperEvmTestnet.id]: http(),
-  },
-  connectors: [
-    farcasterMiniApp(),
-  ],
+export const config = getDefaultConfig({
+  appName: 'FarmCaster',
+  projectId: 'YOUR_PROJECT_ID', // Public testing ID
+  chains: [base, bsc, mainnet, arbitrum, celo, monadTestnet, hyperEvm],
+  ssr: true,
 });
