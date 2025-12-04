@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Tractor, Wallet, User, Droplets } from "lucide-react";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Tractor, User, Droplets } from "lucide-react";
 
 const NETWORKS = [
   { id: "base", name: "Base", color: "bg-blue-600" },
@@ -37,10 +38,7 @@ export default function FarmCaster() {
           <span className="font-medium">Farmer_01</span>
           <span className="text-emerald-400 font-bold">| 1,240 XP</span>
         </div>
-        <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition px-4 py-2 rounded-lg font-bold text-sm text-white">
-          <Wallet size={16} />
-          Connect
-        </button>
+        <ConnectButton />
       </header>
 
       {/* CONTENT */}
