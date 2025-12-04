@@ -83,14 +83,13 @@ export default function FarmCaster() {
 
     console.log("Planting...", { address: contractAddress, seedId, price });
 
-    // 3. EXECUTE WITH GAS LIMIT (Safety for Celo)
+    // 3. EXECUTE
     writeContract({
       address: contractAddress,
       abi: GARDEN_ABI,
       functionName: 'plant',
       args: [seedId],
       value: price,
-      gas: 300000n, // Manual gas limit to prevent estimation errors
     });
   };
 
