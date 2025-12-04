@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Tractor, User, Droplets } from "lucide-react";
-import { useWriteContract, useAccount, useSwitchChain } from "wagmi";
-import { GARDEN_CONTRACTS, GARDEN_ABI } from "../config/contracts";
+import { useWriteContract, useAccount, useSwitchChain, usePublicClient, useReadContract } from "wagmi";
+import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/contracts";
+import { parseAbiItem } from "viem";
 
 const NETWORKS = [
   { id: "base", name: "Base", color: "bg-blue-600" },
@@ -23,44 +24,107 @@ const SEEDS = [
   { id: "trees", name: "Trees", price: "$0.20", xp: 5, icon: "🌲" },
 ];
 
+// Map network IDs to Chain IDs
+const CHAIN_IDS: Record<string, number> = {
+  base: 8453, bsc: 56, eth: 1, arb: 42161,
+  monad: 10143, hyper: 999, celo: 42220
+};
+
 export default function FarmCaster() {
   const [selectedSeed, setSelectedSeed] = useState(SEEDS[0]);
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
 
-  const { writeContract, isPending, error: writeError } = useWriteContract();
-  const { chain } = useAccount();
+  // Data Viz State
+  const [viewMode, setViewMode] = useState<7 | 31>(7);
+  const [plantingHistory, setPlantingHistory] = useState<Set<string>>(new Set());
+
+  const { address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
+  const { writeContract, isPending, error: writeError } = useWriteContract();
+
+  // Fetch XP
+  const { data: userXP } = useReadContract({
+    address: HUB_CONTRACTS[selectedNetwork.id],
+    abi: HUB_ABI,
+    functionName: "userXP",
+    args: address ? [address] : undefined,
+    chainId: CHAIN_IDS[selectedNetwork.id],
+    query: {
+        enabled: !!address,
+        refetchInterval: 5000
+    }
+  });
+
+  // Client for fetching logs
+  const publicClient = usePublicClient({
+    chainId: CHAIN_IDS[selectedNetwork.id]
+  });
 
   // 1. AUTO-SYNC: If wallet changes network, update UI
   useEffect(() => {
     if (chain) {
-      // Find the network in our list that matches the chain ID
-      const match = NETWORKS.find(n =>
-        (n.id === 'celo' && chain.id === 42220) ||
-        (n.id === 'base' && chain.id === 8453) ||
-        (n.id === 'bsc' && chain.id === 56) ||
-        (n.id === 'arb' && chain.id === 42161) ||
-        (n.id === 'eth' && chain.id === 1) ||
-        (n.id === 'monad' && chain.id === 10143) ||
-        (n.id === 'hyper' && chain.id === 999)
-      );
+      const match = NETWORKS.find(n => CHAIN_IDS[n.id] === chain.id);
       if (match) setSelectedNetwork(match);
     }
   }, [chain]);
 
+  // Fetch History Logs
+  useEffect(() => {
+    let isMounted = true;
+
+    // Clear history when switching networks to avoid stale data
+    setPlantingHistory(new Set());
+
+    async function fetchHistory() {
+        if (!address || !publicClient) return;
+
+        const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
+        if (!contractAddress) return;
+
+        try {
+            const logs = await publicClient.getLogs({
+                address: contractAddress,
+                event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
+                args: { user: address },
+                fromBlock: 'earliest'
+            });
+
+            if (!isMounted) return;
+
+            // Optimization: Fetch blocks in parallel
+            // Note: In a real app with many logs, we should batch these or use an indexer.
+            const blockPromises = logs.map(log =>
+                publicClient.getBlock({ blockNumber: log.blockNumber })
+            );
+
+            const blocks = await Promise.all(blockPromises);
+
+            if (!isMounted) return;
+
+            const historySet = new Set<string>();
+            for (const block of blocks) {
+                const date = new Date(Number(block.timestamp) * 1000);
+                const dateStr = date.toISOString().split('T')[0];
+                historySet.add(dateStr);
+            }
+
+            setPlantingHistory(historySet);
+        } catch (e) {
+            console.error("Error fetching history:", e);
+        }
+    }
+
+    fetchHistory();
+
+    return () => { isMounted = false; };
+  }, [address, selectedNetwork.id, publicClient]);
+
+
   const handlePlant = () => {
     if (!chain) return alert("Please connect wallet first");
 
-    // 2. CHECK MISMATCH
-    // Define expected Chain IDs
-    const CHAIN_IDS: Record<string, number> = {
-      base: 8453, bsc: 56, eth: 1, arb: 42161,
-      monad: 10143, hyper: 999, celo: 42220
-    };
-
     const targetChainId = CHAIN_IDS[selectedNetwork.id];
 
-    // If wallet is on wrong chain, try to switch
     if (chain.id !== targetChainId) {
       if (confirm(`Wrong Network! Switch to ${selectedNetwork.name}?`)) {
         switchChain({ chainId: targetChainId });
@@ -71,19 +135,15 @@ export default function FarmCaster() {
     const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
     if (!contractAddress) return alert("Contract not defined");
 
-    // Seed Logic
     let seedId = 0n;
     let price = 0n;
     switch (selectedSeed.id) {
       case 'fruits': seedId = 1n; price = 30000000000000n; break;
       case 'flowers': seedId = 2n; price = 45000000000000n; break;
       case 'trees': seedId = 3n; price = 60000000000000n; break;
-      default: seedId = 0n; price = 0n; // Starter
+      default: seedId = 0n; price = 0n;
     }
 
-    console.log("Planting...", { address: contractAddress, seedId, price });
-
-    // 3. EXECUTE
     writeContract({
       address: contractAddress,
       abi: GARDEN_ABI,
@@ -92,6 +152,20 @@ export default function FarmCaster() {
       value: price,
     });
   };
+
+  // Generate date list for grid
+  const generateDates = (days: number) => {
+      const dates = [];
+      const today = new Date();
+      for (let i = 0; i < days; i++) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
+          dates.push(d.toISOString().split('T')[0]);
+      }
+      return dates; // [Today, Yesterday, ...]
+  };
+
+  const gridDates = generateDates(viewMode);
 
   return (
     <main className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-emerald-500 selection:text-white pb-24">
@@ -103,8 +177,8 @@ export default function FarmCaster() {
         </div>
         <div className="hidden md:flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-sm border border-slate-700">
           <User size={16} className="text-slate-400" />
-          <span className="font-medium">Farmer_01</span>
-          <span className="text-emerald-400 font-bold">| 1,240 XP</span>
+          <span className="font-medium">{address ? `${address.substring(0,6)}...` : 'Farmer'}</span>
+          <span className="text-emerald-400 font-bold">| {userXP ? Number(userXP).toLocaleString() : '0'} XP</span>
         </div>
         <ConnectButton />
       </header>
@@ -114,8 +188,21 @@ export default function FarmCaster() {
         {/* FARM GRID */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
           <div className="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Weekly Schedule</h2>
-            <span className="text-xs text-slate-500">Scroll →</span>
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Planting History</h2>
+            <div className="flex items-center gap-2">
+                 <button
+                    onClick={() => setViewMode(7)}
+                    className={`text-xs px-2 py-1 rounded ${viewMode === 7 ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                 >
+                     7 Days
+                 </button>
+                 <button
+                    onClick={() => setViewMode(31)}
+                    className={`text-xs px-2 py-1 rounded ${viewMode === 31 ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                 >
+                     31 Days
+                 </button>
+            </div>
           </div>
           <div className="flex flex-col">
             {NETWORKS.map((net) => (
@@ -130,14 +217,26 @@ export default function FarmCaster() {
                   </span>
                 </div>
                 <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-3 px-4 mask-linear-fade">
-                   {[...Array(7)].map((_, i) => (
-                     <div
-                        key={i}
-                        className="w-10 h-10 flex-shrink-0 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-slate-500 text-xs font-medium hover:border-emerald-500/50 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
-                     >
-                       {i + 1}
-                     </div>
-                   ))}
+                   {gridDates.map((dateStr, i) => {
+                     const isActive = selectedNetwork.id === net.id && plantingHistory.has(dateStr);
+                     return (
+                         <div
+                            key={dateStr}
+                            title={dateStr}
+                            className={`w-10 h-10 flex-shrink-0 border rounded-lg flex items-center justify-center text-xs font-medium transition-all cursor-default
+                                ${isActive
+                                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                                    : 'bg-slate-800 border-slate-700 text-slate-600'}
+                            `}
+                         >
+                           {/* Show Day Number relative to Today (e.g. 1 is Today, 2 is Yesterday...) or just the day of month?
+                               Requirements say: "list of dates ... [Today, Yesterday, ...]"
+                               Let's display the day of the month for clarity.
+                           */}
+                           {new Date(dateStr).getDate()}
+                         </div>
+                     );
+                   })}
                 </div>
               </div>
             ))}
