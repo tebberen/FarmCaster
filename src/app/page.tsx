@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Tractor, User, Droplets } from "lucide-react";
+import { useWriteContract, useAccount } from "wagmi";
+import { GARDEN_CONTRACTS, GARDEN_ABI } from "../config/contracts";
 
 const NETWORKS = [
   { id: "base", name: "Base", color: "bg-blue-600" },
@@ -24,6 +26,49 @@ const SEEDS = [
 export default function FarmCaster() {
   const [selectedSeed, setSelectedSeed] = useState(SEEDS[0]);
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
+
+  const { writeContract, isPending } = useWriteContract();
+  const { chain } = useAccount();
+
+  const handlePlant = () => {
+    if (!chain) return alert("Please connect wallet first");
+
+    const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
+    if (!contractAddress) return alert("Contract not supported on this network");
+
+    // MAP SEED TO ID AND PRICE (Based on Solidity Contract)
+    let seedId = 0n;
+    let price = 0n; // Wei
+
+    switch (selectedSeed.id) {
+      case 'starter':
+        seedId = 0n;
+        price = 0n;
+        break;
+      case 'fruits':
+        seedId = 1n;
+        price = 30000000000000n; // ~0.00003 ETH
+        break;
+      case 'flowers':
+        seedId = 2n;
+        price = 45000000000000n; // ~0.000045 ETH
+        break;
+      case 'trees':
+        seedId = 3n;
+        price = 60000000000000n; // ~0.00006 ETH
+        break;
+    }
+
+    console.log(`Planting Seed: ${seedId} Price: ${price}`);
+
+    writeContract({
+      address: contractAddress,
+      abi: GARDEN_ABI,
+      functionName: 'plant',
+      args: [seedId],
+      value: price,
+    });
+  };
 
   return (
     <main className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-emerald-500 selection:text-white pb-24">
@@ -116,10 +161,19 @@ export default function FarmCaster() {
                   Planting <span className="text-white font-bold">{selectedSeed.name}</span> on <span className="text-emerald-400 font-bold">{selectedNetwork.name}</span>
                </div>
             </div>
-            <button className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black text-lg py-3.5 rounded-xl shadow-lg shadow-emerald-900/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-emerald-400/20">
-              <Droplets size={20} className="fill-white" />
-              PLANT SEED NOW
-            </button>
+            <div className="flex-1 flex flex-col gap-1">
+              <button
+                onClick={handlePlant}
+                disabled={isPending}
+                className={`w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black text-lg py-3.5 rounded-xl shadow-lg shadow-emerald-900/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-emerald-400/20 disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                <Droplets size={20} className="fill-white" />
+                {isPending ? "Planting..." : "PLANT SEED NOW"}
+              </button>
+              <div className="text-center">
+                 <span className="text-[10px] text-slate-500">Cooldown: 1 min between plants</span>
+              </div>
+            </div>
          </div>
       </section>
     </main>
