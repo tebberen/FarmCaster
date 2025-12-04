@@ -3,7 +3,7 @@ import { base, mainnet, arbitrum, celo, bsc } from "wagmi/chains";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { defineChain } from "viem";
 
-const monadTestnet = defineChain({
+export const monadTestnet = defineChain({
   id: 10143,
   name: 'Monad Testnet',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
@@ -16,7 +16,7 @@ const monadTestnet = defineChain({
   testnet: true,
 });
 
-const hyperEvmTestnet = defineChain({
+export const hyperEvmTestnet = defineChain({
   id: 999,
   name: 'HyperEVM Testnet',
   nativeCurrency: { name: 'Hyper', symbol: 'HYPE', decimals: 18 },
