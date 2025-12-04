@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Tractor, User, Droplets } from "lucide-react";
-import { useWriteContract, useAccount } from "wagmi";
+import { useWriteContract, useAccount, useSwitchChain } from "wagmi";
 import { GARDEN_CONTRACTS, GARDEN_ABI } from "../config/contracts";
 
 const NETWORKS = [
@@ -27,46 +27,70 @@ export default function FarmCaster() {
   const [selectedSeed, setSelectedSeed] = useState(SEEDS[0]);
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
 
-  const { writeContract, isPending } = useWriteContract();
+  const { writeContract, isPending, error: writeError } = useWriteContract();
   const { chain } = useAccount();
+  const { switchChain } = useSwitchChain();
+
+  // 1. AUTO-SYNC: If wallet changes network, update UI
+  useEffect(() => {
+    if (chain) {
+      // Find the network in our list that matches the chain ID
+      const match = NETWORKS.find(n =>
+        (n.id === 'celo' && chain.id === 42220) ||
+        (n.id === 'base' && chain.id === 8453) ||
+        (n.id === 'bsc' && chain.id === 56) ||
+        (n.id === 'arb' && chain.id === 42161) ||
+        (n.id === 'eth' && chain.id === 1) ||
+        (n.id === 'monad' && chain.id === 10143) ||
+        (n.id === 'hyper' && chain.id === 999)
+      );
+      if (match) setSelectedNetwork(match);
+    }
+  }, [chain]);
 
   const handlePlant = () => {
     if (!chain) return alert("Please connect wallet first");
 
-    const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
-    if (!contractAddress) return alert("Contract not supported on this network");
+    // 2. CHECK MISMATCH
+    // Define expected Chain IDs
+    const CHAIN_IDS: Record<string, number> = {
+      base: 8453, bsc: 56, eth: 1, arb: 42161,
+      monad: 10143, hyper: 999, celo: 42220
+    };
 
-    // MAP SEED TO ID AND PRICE (Based on Solidity Contract)
-    let seedId = 0n;
-    let price = 0n; // Wei
+    const targetChainId = CHAIN_IDS[selectedNetwork.id];
 
-    switch (selectedSeed.id) {
-      case 'starter':
-        seedId = 0n;
-        price = 0n;
-        break;
-      case 'fruits':
-        seedId = 1n;
-        price = 30000000000000n; // ~0.00003 ETH
-        break;
-      case 'flowers':
-        seedId = 2n;
-        price = 45000000000000n; // ~0.000045 ETH
-        break;
-      case 'trees':
-        seedId = 3n;
-        price = 60000000000000n; // ~0.00006 ETH
-        break;
+    // If wallet is on wrong chain, try to switch
+    if (chain.id !== targetChainId) {
+      if (confirm(`Wrong Network! Switch to ${selectedNetwork.name}?`)) {
+        switchChain({ chainId: targetChainId });
+      }
+      return;
     }
 
-    console.log(`Planting Seed: ${seedId} Price: ${price}`);
+    const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
+    if (!contractAddress) return alert("Contract not defined");
 
+    // Seed Logic
+    let seedId = 0n;
+    let price = 0n;
+    switch (selectedSeed.id) {
+      case 'fruits': seedId = 1n; price = 30000000000000n; break;
+      case 'flowers': seedId = 2n; price = 45000000000000n; break;
+      case 'trees': seedId = 3n; price = 60000000000000n; break;
+      default: seedId = 0n; price = 0n; // Starter
+    }
+
+    console.log("Planting...", { address: contractAddress, seedId, price });
+
+    // 3. EXECUTE WITH GAS LIMIT (Safety for Celo)
     writeContract({
       address: contractAddress,
       abi: GARDEN_ABI,
       functionName: 'plant',
       args: [seedId],
       value: price,
+      gas: 300000n, // Manual gas limit to prevent estimation errors
     });
   };
 
@@ -173,6 +197,7 @@ export default function FarmCaster() {
               <div className="text-center">
                  <span className="text-[10px] text-slate-500">Cooldown: 1 min between plants</span>
               </div>
+              {writeError && <div className="text-red-500 text-xs mt-2 text-center">{writeError.message.split('\n')[0]}</div>}
             </div>
          </div>
       </section>
