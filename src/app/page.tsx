@@ -3,20 +3,22 @@
 import React, { useState, useEffect } from "react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Tractor, User, Droplets } from "lucide-react";
-import { useWriteContract, useAccount, useSwitchChain, usePublicClient, useReadContract } from "wagmi";
+import { useWriteContract, useAccount, useSwitchChain, useReadContract } from "wagmi";
 import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/contracts";
-import { BLOCKS_PER_DAY } from "../config/chainParams";
-import { parseAbiItem } from "viem";
+import { AVERAGE_BLOCK_TIMES } from "../config/chainParams";
+import { createPublicClient, http, parseAbiItem } from "viem";
+import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
+import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
 import { Calendar } from "../components/Calendar";
 
 const NETWORKS = [
-  { id: "base", name: "Base", color: "bg-blue-600" },
-  { id: "bsc", name: "BSC", color: "bg-yellow-500" },
-  { id: "eth", name: "Ethereum", color: "bg-slate-600" },
-  { id: "arb", name: "Arbitrum", color: "bg-cyan-600" },
-  { id: "monad", name: "Monad", color: "bg-purple-600" },
-  { id: "hyper", name: "HyperEVM", color: "bg-pink-600" },
-  { id: "celo", name: "Celo", color: "bg-green-500" },
+  { id: "base", name: "Base", color: "bg-blue-600", chain: base },
+  { id: "bsc", name: "BSC", color: "bg-yellow-500", chain: bsc },
+  { id: "eth", name: "Ethereum", color: "bg-slate-600", chain: mainnet },
+  { id: "arb", name: "Arbitrum", color: "bg-cyan-600", chain: arbitrum },
+  { id: "monad", name: "Monad", color: "bg-purple-600", chain: monadTestnet },
+  { id: "hyper", name: "HyperEVM", color: "bg-pink-600", chain: hyperEvmTestnet },
+  { id: "celo", name: "Celo", color: "bg-green-500", chain: celo },
 ];
 
 const SEEDS = [
@@ -70,11 +72,6 @@ export default function FarmCaster() {
     }
   });
 
-  // Client for fetching logs
-  const publicClient = usePublicClient({
-    chainId: CHAIN_IDS[selectedNetwork.id]
-  });
-
   // 1. AUTO-SYNC: If wallet changes network, update UI
   useEffect(() => {
     if (chain) {
@@ -83,87 +80,175 @@ export default function FarmCaster() {
     }
   }, [chain]);
 
-  // Fetch History Logs
+  // Fetch History Logs from ALL networks
   useEffect(() => {
     let active = true;
 
-    // Clear history when switching networks to avoid stale data
-    setPlantingHistory(new Map());
+    async function fetchAllHistory() {
+        if (!address || !isMounted) return;
 
-    async function fetchHistory() {
-        if (!address || !publicClient || !isMounted) return;
+        const allLogs = new Map<string, number>();
+        const year = new Date().getFullYear();
+        // Target: December 1st of the current year
+        const targetDate = new Date(year, 11, 1); // Month is 0-indexed (11 = Dec)
+        const now = new Date();
 
-        const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
-        if (!contractAddress) return;
-
-        try {
-            const currentBlock = await publicClient.getBlockNumber();
-            const blocksPerDay = BigInt(BLOCKS_PER_DAY(selectedNetwork.id));
-            const totalBlocksToFetch = blocksPerDay * 32n;
-            const startBlock = currentBlock - totalBlocksToFetch > 0n ? currentBlock - totalBlocksToFetch : 0n;
-
-            // Maximum block range per request (conservative 20k to avoid RPC limits on L2s)
-            const CHUNK_SIZE = 20000n;
-            const chunks = [];
-
-            for (let i = currentBlock; i > startBlock; i -= CHUNK_SIZE) {
-                const to = i;
-                const from = i - CHUNK_SIZE > startBlock ? i - CHUNK_SIZE : startBlock;
-                chunks.push({ from, to });
-            }
-
-            // Fetch chunks in parallel (limited concurrency could be better but this is simple)
-            // Flatten results
-            const chunkPromises = chunks.map(({ from, to }) =>
-                publicClient.getLogs({
-                    address: contractAddress,
-                    event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
-                    args: { user: address },
-                    fromBlock: from,
-                    toBlock: to
-                })
-            );
-
-            const nestedLogs = await Promise.all(chunkPromises);
-            const logs = nestedLogs.flat();
-
-            if (!active) return;
-
-            // Optimization: Fetch blocks in parallel
-            const blockPromises = logs.map(log =>
-                publicClient.getBlock({ blockNumber: log.blockNumber })
-            );
-
-            const blocks = await Promise.all(blockPromises);
-
-            if (!active) return;
-
-            const historyMap = new Map<string, number>();
-
-            // Iterate logs and blocks together.
-            for (let i = 0; i < logs.length; i++) {
-                const log = logs[i];
-                const block = blocks[i];
-                if (!block) continue;
-
-                const date = new Date(Number(block.timestamp) * 1000);
-                const dateStr = formatDate(date);
-
-                // log.args.seedId is a bigint
-                const seedId = Number(log.args.seedId);
-                historyMap.set(dateStr, seedId);
-            }
-
-            setPlantingHistory(historyMap);
-        } catch (e) {
-            console.error("Error fetching history:", e);
+        // If today is before Dec 1st, maybe we should look at previous year?
+        // Assuming current context is late 2024 or 2025.
+        // If now < targetDate, it means we are in e.g. Jan-Nov 2025, and target is Dec 2025.
+        // In that case, we should look at Dec 2024.
+        if (now < targetDate) {
+           targetDate.setFullYear(year - 1);
         }
+
+        const fetchPromises = NETWORKS.map(async (net) => {
+             const contractAddress = GARDEN_CONTRACTS[net.id];
+             if (!contractAddress) return;
+
+             try {
+                 const publicClient = createPublicClient({
+                     chain: net.chain,
+                     transport: http()
+                 });
+
+                 const currentBlock = await publicClient.getBlockNumber();
+                 const avgBlockTime = AVERAGE_BLOCK_TIMES[net.id] || 2;
+                 const secondsDiff = (now.getTime() - targetDate.getTime()) / 1000;
+                 const blocksToFetch = BigInt(Math.ceil(secondsDiff / avgBlockTime));
+
+                 // Ensure we don't go below 0
+                 const startBlock = currentBlock - blocksToFetch > 0n ? currentBlock - blocksToFetch : 0n;
+
+                 // We can fetch in one go if the range isn't massive, but safer to chunk or just try.
+                 // Given "Dec 1st" is likely recent (few days), one call might work on L2s if not strict.
+                 // However, for safety, let's just use the calculated range.
+                 // To avoid "Log response size exceeded", we might need chunking.
+                 // Let's implement simple chunking if range is large (> 50k blocks).
+                 // Arb: 0.25s block time. 4 blocks/sec. 1 day = 345,600 blocks. 4 days = 1.3M blocks.
+                 // We definitely need chunking for Arbitrum.
+
+                 const CHUNK_SIZE = 20000n;
+                 const chunks = [];
+                 // Ensure we don't fetch overlapping blocks by making ranges exclusive
+                 // However, getLogs is inclusive. So we need [from, to].
+                 // If we do [100, 200] and [0, 100], block 100 is fetched twice.
+                 // Correct is [101, 200] and [0, 100].
+                 for (let i = currentBlock; i > startBlock; i -= CHUNK_SIZE) {
+                     const to = i;
+                     let from = i - CHUNK_SIZE;
+                     if (from < startBlock) from = startBlock;
+
+                     // Avoid overlap with previous chunk (which started at 'to')
+                     // But here we are iterating backwards.
+                     // Chunk 1: to=Current, from=Current-20k
+                     // Chunk 2: to=Current-20k, from=Current-40k
+                     // The shared boundary is Current-20k.
+                     // To avoid overlap, Chunk 2 'to' should be (Current-20k) - 1.
+
+                     // Correct logic:
+                     // Chunk 1: [Current-20k + 1, Current]
+                     // Chunk 2: [Current-40k + 1, Current-20k]
+                     // Exception: The very last chunk (oldest) goes down to startBlock.
+
+                     // Let's refine the loop
+                     // But for simplicity and safety against "off-by-one" resulting in missed blocks,
+                     // duplicate fetch of 1 block is acceptable and safer than missing one.
+                     // Map will deduplicate anyway.
+                     // I will stick to the safe overlapping version but clean up the comment.
+
+                     const chunkFrom = i - CHUNK_SIZE > startBlock ? i - CHUNK_SIZE : startBlock;
+                     chunks.push({ from: chunkFrom, to });
+                 }
+
+                 // Limit parallelism to avoid overwhelming the browser/RPC
+                 const logs = [];
+                 // Process chunks in batches of 5
+                 for (let i = 0; i < chunks.length; i += 5) {
+                     const batch = chunks.slice(i, i + 5);
+                     const batchResults = await Promise.all(batch.map(({ from, to }) =>
+                         publicClient.getLogs({
+                             address: contractAddress,
+                             event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
+                             args: { user: address },
+                             fromBlock: from,
+                             toBlock: to
+                         }).catch(e => {
+                             console.warn(`Failed to fetch logs for ${net.name} chunk ${from}-${to}`, e);
+                             return [];
+                         })
+                     ));
+                     logs.push(...batchResults.flat());
+                 }
+
+                 // Fetch timestamps for logs
+                 // Optimization: Group by blockNumber to avoid duplicate getBlock
+                 const uniqueBlockNumbers = [...new Set(logs.map(l => l.blockNumber))];
+
+                 // Fetch blocks in batches
+                 const blockMap = new Map<bigint, any>();
+                 for (let i = 0; i < uniqueBlockNumbers.length; i += 20) {
+                      const batch = uniqueBlockNumbers.slice(i, i + 20);
+                      const blocks = await Promise.all(batch.map(bn =>
+                          publicClient.getBlock({ blockNumber: bn }).catch(() => null)
+                      ));
+                      blocks.forEach((b, idx) => {
+                          if (b) blockMap.set(batch[idx], b);
+                      });
+                 }
+
+                 // Return processed entries
+                 const entries: [string, number][] = [];
+                 logs.forEach(log => {
+                     const block = blockMap.get(log.blockNumber);
+                     if (block) {
+                         const date = new Date(Number(block.timestamp) * 1000);
+                         const dateStr = formatDate(date);
+                         // Check if date is >= targetDate (Dec 1)
+                         // We reset time to midnight for comparison
+                         const dTime = new Date(dateStr).getTime();
+                         const tTime = new Date(formatDate(targetDate)).getTime();
+
+                         if (dTime >= tTime) {
+                             const seedId = Number(log.args.seedId);
+                             entries.push([dateStr, seedId]);
+                         }
+                     }
+                 });
+                 return entries;
+
+             } catch (e) {
+                 console.error(`Error fetching history for ${net.name}:`, e);
+                 return [];
+             }
+        });
+
+        const results = await Promise.all(fetchPromises);
+
+        if (!active) return;
+
+        // Merge results
+        // If multiple networks have events on same day, or multiple events on same day,
+        // we take the last one encountered (or we could prioritize).
+        // Since `results` is ordered by NETWORKS array, later networks overwrite earlier ones.
+        // It's arbitrary but sufficient.
+        results.forEach((networkLogs) => {
+             if (networkLogs) {
+                 networkLogs.forEach((entry) => {
+                     if (entry) {
+                         const [dateStr, seedId] = entry;
+                         allLogs.set(dateStr, seedId);
+                     }
+                 });
+             }
+        });
+
+        setPlantingHistory(allLogs);
     }
 
-    fetchHistory();
+    fetchAllHistory();
 
     return () => { active = false; };
-  }, [address, selectedNetwork.id, publicClient, isMounted]);
+  }, [address, isMounted]); // Removed selectedNetwork dependency
 
 
   const handlePlant = () => {
@@ -197,30 +282,6 @@ export default function FarmCaster() {
       args: [seedId],
       value: price,
     });
-  };
-
-  // Generate date list for grid (Last 31 Days)
-  const generateDates = () => {
-      const dates = [];
-      const today = new Date();
-      // Generate last 31 days (Oldest to Today)
-      for (let i = 30; i >= 0; i--) {
-          const d = new Date(today);
-          d.setDate(today.getDate() - i);
-          dates.push(formatDate(d));
-      }
-      return dates;
-  };
-
-  // Helper to get emoji for seedId
-  const getSeedEmoji = (seedId: number) => {
-      switch (seedId) {
-          case 0: return "🌱";
-          case 1: return "🍒";
-          case 2: return "🌻";
-          case 3: return "🌳";
-          default: return "🌱";
-      }
   };
 
   // Only render content when mounted to prevent hydration mismatch
