@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Tractor, Wallet, User, Droplets } from "lucide-react";
 
-// --- DATA CONSTANTS ---
 const NETWORKS = [
   { id: "base", name: "Base", color: "bg-blue-600" },
   { id: "bsc", name: "BSC", color: "bg-yellow-500" },
@@ -27,42 +26,34 @@ export default function FarmCaster() {
 
   return (
     <main className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-emerald-500 selection:text-white pb-24">
-
-      {/* 1. HEADER */}
+      {/* HEADER */}
       <header className="fixed top-0 w-full z-50 bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-800 h-16 flex items-center justify-between px-4">
         <div className="flex items-center gap-2 text-emerald-400">
           <Tractor size={24} />
           <span className="font-bold text-lg tracking-tight">FarmCaster</span>
         </div>
-
-        {/* Mock Profile */}
         <div className="hidden md:flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-sm border border-slate-700">
           <User size={16} className="text-slate-400" />
           <span className="font-medium">Farmer_01</span>
           <span className="text-emerald-400 font-bold">| 1,240 XP</span>
         </div>
-
-        {/* Connect Button Placeholder */}
         <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition px-4 py-2 rounded-lg font-bold text-sm text-white">
           <Wallet size={16} />
           Connect
         </button>
       </header>
 
-      {/* MAIN CONTENT */}
+      {/* CONTENT */}
       <div className="pt-20 px-4 max-w-3xl mx-auto space-y-8">
-
-        {/* 2. THE FARM GRID */}
+        {/* FARM GRID */}
         <section className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
           <div className="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
             <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Weekly Schedule</h2>
             <span className="text-xs text-slate-500">Scroll →</span>
           </div>
-
           <div className="flex flex-col">
             {NETWORKS.map((net) => (
               <div key={net.id} className="flex items-center border-b border-slate-800 last:border-0 h-16 hover:bg-slate-800/30 transition-colors group">
-                {/* Fixed Network Column */}
                 <div
                   className="w-[130px] flex-shrink-0 pl-4 flex items-center gap-3 cursor-pointer"
                   onClick={() => setSelectedNetwork(net)}
@@ -72,9 +63,7 @@ export default function FarmCaster() {
                     {net.name}
                   </span>
                 </div>
-
-                {/* Scrollable Days Column */}
-                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-3 px-4">
+                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-3 px-4 mask-linear-fade">
                    {[...Array(7)].map((_, i) => (
                      <div
                         key={i}
@@ -89,12 +78,11 @@ export default function FarmCaster() {
           </div>
         </section>
 
-        {/* 3. SEED MARKET */}
+        {/* SEED MARKET */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-white">Seed Market</h3>
           </div>
-
           <div className="grid grid-cols-4 gap-3 sm:gap-4">
             {SEEDS.map((seed) => (
               <div
@@ -121,7 +109,7 @@ export default function FarmCaster() {
         </section>
       </div>
 
-      {/* 4. ACTION PANEL */}
+      {/* ACTION PANEL */}
       <section className="fixed bottom-0 left-0 w-full p-4 bg-[#0f172a]/95 backdrop-blur-xl border-t border-slate-800 z-40 pb-6">
          <div className="max-w-3xl mx-auto flex items-center gap-4">
             <div className="hidden sm:flex flex-col min-w-[120px]">
@@ -130,7 +118,6 @@ export default function FarmCaster() {
                   Planting <span className="text-white font-bold">{selectedSeed.name}</span> on <span className="text-emerald-400 font-bold">{selectedNetwork.name}</span>
                </div>
             </div>
-
             <button className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black text-lg py-3.5 rounded-xl shadow-lg shadow-emerald-900/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-emerald-400/20">
               <Droplets size={20} className="fill-white" />
               PLANT SEED NOW
