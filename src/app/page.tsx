@@ -5,7 +5,9 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Tractor, User, Droplets } from "lucide-react";
 import { useWriteContract, useAccount, useSwitchChain, usePublicClient, useReadContract } from "wagmi";
 import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/contracts";
+import { BLOCKS_PER_DAY } from "../config/chainParams";
 import { parseAbiItem } from "viem";
+import { Calendar } from "../components/Calendar";
 
 const NETWORKS = [
   { id: "base", name: "Base", color: "bg-blue-600" },
@@ -96,15 +98,34 @@ export default function FarmCaster() {
 
         try {
             const currentBlock = await publicClient.getBlockNumber();
-            const fromBlockCalc = currentBlock - 1400000n;
-            const fromBlock = fromBlockCalc > 0n ? fromBlockCalc : 0n;
+            const blocksPerDay = BigInt(BLOCKS_PER_DAY(selectedNetwork.id));
+            const totalBlocksToFetch = blocksPerDay * 32n;
+            const startBlock = currentBlock - totalBlocksToFetch > 0n ? currentBlock - totalBlocksToFetch : 0n;
 
-            const logs = await publicClient.getLogs({
-                address: contractAddress,
-                event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
-                args: { user: address },
-                fromBlock: fromBlock
-            });
+            // Maximum block range per request (conservative 20k to avoid RPC limits on L2s)
+            const CHUNK_SIZE = 20000n;
+            const chunks = [];
+
+            for (let i = currentBlock; i > startBlock; i -= CHUNK_SIZE) {
+                const to = i;
+                const from = i - CHUNK_SIZE > startBlock ? i - CHUNK_SIZE : startBlock;
+                chunks.push({ from, to });
+            }
+
+            // Fetch chunks in parallel (limited concurrency could be better but this is simple)
+            // Flatten results
+            const chunkPromises = chunks.map(({ from, to }) =>
+                publicClient.getLogs({
+                    address: contractAddress,
+                    event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
+                    args: { user: address },
+                    fromBlock: from,
+                    toBlock: to
+                })
+            );
+
+            const nestedLogs = await Promise.all(chunkPromises);
+            const logs = nestedLogs.flat();
 
             if (!active) return;
 
@@ -205,8 +226,6 @@ export default function FarmCaster() {
   // Only render content when mounted to prevent hydration mismatch
   if (!isMounted) return null;
 
-  const gridDates = generateDates();
-
   return (
     <main className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-emerald-500 selection:text-white pb-24">
       {/* HEADER */}
@@ -225,51 +244,32 @@ export default function FarmCaster() {
 
       {/* CONTENT */}
       <div className="pt-20 px-4 max-w-3xl mx-auto space-y-8">
-        {/* FARM GRID */}
-        <section className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
-          <div className="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Planting History</h2>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              Last 31 Days
-            </div>
-          </div>
-          <div className="flex flex-col">
-            {NETWORKS.map((net) => (
-              <div key={net.id} className="flex items-center border-b border-slate-800 last:border-0 h-16 hover:bg-slate-800/30 transition-colors group">
-                <div
-                  className="w-[130px] flex-shrink-0 pl-4 flex items-center gap-3 cursor-pointer"
-                  onClick={() => setSelectedNetwork(net)}
-                >
-                  <div className={`w-3 h-3 rounded-full ${net.color} shadow-[0_0_10px_rgba(255,255,255,0.3)]`} />
-                  <span className={`text-sm font-medium transition-colors ${selectedNetwork.id === net.id ? 'text-white font-bold' : 'text-slate-400 group-hover:text-slate-200'}`}>
-                    {net.name}
-                  </span>
-                </div>
-                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-3 px-4 mask-linear-fade">
-                   {gridDates.map((dateStr) => {
-                     const isNetworkSelected = selectedNetwork.id === net.id;
-                     const hasLog = isNetworkSelected && plantingHistory.has(dateStr);
-                     const seedId = hasLog ? plantingHistory.get(dateStr) : null;
 
-                     return (
-                         <div
-                            key={dateStr}
-                            title={dateStr}
-                            className={`w-10 h-10 flex-shrink-0 border rounded-lg flex items-center justify-center text-lg transition-all cursor-default
-                                ${hasLog
-                                    ? 'bg-emerald-500/20 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                                    : 'bg-slate-800 border-slate-700 text-slate-600'}
-                            `}
-                         >
-                           {hasLog && seedId !== null && seedId !== undefined ? getSeedEmoji(seedId) : <span className="text-slate-700">·</span>}
-                         </div>
-                     );
-                   })}
-                </div>
-              </div>
+        {/* NETWORK SELECTOR (Replaces old grid row headers) */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+            {NETWORKS.map(net => (
+                <button
+                    key={net.id}
+                    onClick={() => setSelectedNetwork(net)}
+                    className={`
+                        flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all
+                        ${selectedNetwork.id === net.id
+                            ? `bg-slate-800 border-emerald-500 text-white shadow-lg`
+                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                        }
+                    `}
+                >
+                    <div className={`w-2 h-2 rounded-full ${net.color}`} />
+                    {net.name}
+                </button>
             ))}
-          </div>
-        </section>
+        </div>
+
+        {/* CALENDAR */}
+        <Calendar
+            history={plantingHistory}
+            networkName={selectedNetwork.name}
+        />
 
         {/* SEED MARKET */}
         <section>
