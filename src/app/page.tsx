@@ -80,175 +80,117 @@ export default function FarmCaster() {
     }
   }, [chain]);
 
-  // Fetch History Logs from ALL networks
+  // Fetch History Logs from SELECTED network
   useEffect(() => {
     let active = true;
 
-    async function fetchAllHistory() {
+    async function fetchHistory() {
         if (!address || !isMounted) return;
 
-        const allLogs = new Map<string, number>();
+        setPlantingHistory(new Map()); // Clear previous history
+
         const year = new Date().getFullYear();
         // Target: December 1st of the current year
         const targetDate = new Date(year, 11, 1); // Month is 0-indexed (11 = Dec)
         const now = new Date();
 
-        // If today is before Dec 1st, maybe we should look at previous year?
-        // Assuming current context is late 2024 or 2025.
-        // If now < targetDate, it means we are in e.g. Jan-Nov 2025, and target is Dec 2025.
-        // In that case, we should look at Dec 2024.
         if (now < targetDate) {
            targetDate.setFullYear(year - 1);
         }
 
-        const fetchPromises = NETWORKS.map(async (net) => {
-             const contractAddress = GARDEN_CONTRACTS[net.id];
-             if (!contractAddress) return;
+        const net = selectedNetwork;
+        const contractAddress = GARDEN_CONTRACTS[net.id];
+        if (!contractAddress) return;
 
-             try {
-                 const publicClient = createPublicClient({
-                     chain: net.chain,
-                     transport: http()
-                 });
+        try {
+            const publicClient = createPublicClient({
+                chain: net.chain,
+                transport: http()
+            });
 
-                 const currentBlock = await publicClient.getBlockNumber();
-                 const avgBlockTime = AVERAGE_BLOCK_TIMES[net.id] || 2;
-                 const secondsDiff = (now.getTime() - targetDate.getTime()) / 1000;
-                 const blocksToFetch = BigInt(Math.ceil(secondsDiff / avgBlockTime));
+            const currentBlock = await publicClient.getBlockNumber();
+            const avgBlockTime = AVERAGE_BLOCK_TIMES[net.id] || 2;
+            const secondsDiff = (now.getTime() - targetDate.getTime()) / 1000;
+            const blocksToFetch = BigInt(Math.ceil(secondsDiff / avgBlockTime));
 
-                 // Ensure we don't go below 0
-                 const startBlock = currentBlock - blocksToFetch > 0n ? currentBlock - blocksToFetch : 0n;
+            // Ensure we don't go below 0
+            const startBlock = currentBlock - blocksToFetch > 0n ? currentBlock - blocksToFetch : 0n;
 
-                 // We can fetch in one go if the range isn't massive, but safer to chunk or just try.
-                 // Given "Dec 1st" is likely recent (few days), one call might work on L2s if not strict.
-                 // However, for safety, let's just use the calculated range.
-                 // To avoid "Log response size exceeded", we might need chunking.
-                 // Let's implement simple chunking if range is large (> 50k blocks).
-                 // Arb: 0.25s block time. 4 blocks/sec. 1 day = 345,600 blocks. 4 days = 1.3M blocks.
-                 // We definitely need chunking for Arbitrum.
+            const CHUNK_SIZE = 20000n;
+            const chunks = [];
 
-                 const CHUNK_SIZE = 20000n;
-                 const chunks = [];
-                 // Ensure we don't fetch overlapping blocks by making ranges exclusive
-                 // However, getLogs is inclusive. So we need [from, to].
-                 // If we do [100, 200] and [0, 100], block 100 is fetched twice.
-                 // Correct is [101, 200] and [0, 100].
-                 for (let i = currentBlock; i > startBlock; i -= CHUNK_SIZE) {
-                     const to = i;
-                     let from = i - CHUNK_SIZE;
-                     if (from < startBlock) from = startBlock;
+            for (let i = currentBlock; i > startBlock; i -= CHUNK_SIZE) {
+                const to = i;
+                const chunkFrom = i - CHUNK_SIZE > startBlock ? i - CHUNK_SIZE : startBlock;
+                chunks.push({ from: chunkFrom, to });
+            }
 
-                     // Avoid overlap with previous chunk (which started at 'to')
-                     // But here we are iterating backwards.
-                     // Chunk 1: to=Current, from=Current-20k
-                     // Chunk 2: to=Current-20k, from=Current-40k
-                     // The shared boundary is Current-20k.
-                     // To avoid overlap, Chunk 2 'to' should be (Current-20k) - 1.
+            // Limit parallelism to avoid overwhelming the browser/RPC
+            const logs = [];
+            // Process chunks in batches of 5
+            for (let i = 0; i < chunks.length; i += 5) {
+                const batch = chunks.slice(i, i + 5);
+                const batchResults = await Promise.all(batch.map(({ from, to }) =>
+                    publicClient.getLogs({
+                        address: contractAddress,
+                        event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
+                        args: { user: address },
+                        fromBlock: from,
+                        toBlock: to
+                    }).catch(e => {
+                        console.warn(`Failed to fetch logs for ${net.name} chunk ${from}-${to}`, e);
+                        return [];
+                    })
+                ));
+                logs.push(...batchResults.flat());
+            }
 
-                     // Correct logic:
-                     // Chunk 1: [Current-20k + 1, Current]
-                     // Chunk 2: [Current-40k + 1, Current-20k]
-                     // Exception: The very last chunk (oldest) goes down to startBlock.
+            // Fetch timestamps for logs
+            // Optimization: Group by blockNumber to avoid duplicate getBlock
+            const uniqueBlockNumbers = [...new Set(logs.map(l => l.blockNumber))];
 
-                     // Let's refine the loop
-                     // But for simplicity and safety against "off-by-one" resulting in missed blocks,
-                     // duplicate fetch of 1 block is acceptable and safer than missing one.
-                     // Map will deduplicate anyway.
-                     // I will stick to the safe overlapping version but clean up the comment.
+            // Fetch blocks in batches
+            const blockMap = new Map<bigint, any>();
+            for (let i = 0; i < uniqueBlockNumbers.length; i += 20) {
+                  const batch = uniqueBlockNumbers.slice(i, i + 20);
+                  const blocks = await Promise.all(batch.map(bn =>
+                      publicClient.getBlock({ blockNumber: bn }).catch(() => null)
+                  ));
+                  blocks.forEach((b, idx) => {
+                      if (b) blockMap.set(batch[idx], b);
+                  });
+            }
 
-                     const chunkFrom = i - CHUNK_SIZE > startBlock ? i - CHUNK_SIZE : startBlock;
-                     chunks.push({ from: chunkFrom, to });
-                 }
+            // Process entries
+            const newHistory = new Map<string, number>();
+            logs.forEach(log => {
+                const block = blockMap.get(log.blockNumber);
+                if (block) {
+                    const date = new Date(Number(block.timestamp) * 1000);
+                    const dateStr = formatDate(date);
+                    const dTime = new Date(dateStr).getTime();
+                    const tTime = new Date(formatDate(targetDate)).getTime();
 
-                 // Limit parallelism to avoid overwhelming the browser/RPC
-                 const logs = [];
-                 // Process chunks in batches of 5
-                 for (let i = 0; i < chunks.length; i += 5) {
-                     const batch = chunks.slice(i, i + 5);
-                     const batchResults = await Promise.all(batch.map(({ from, to }) =>
-                         publicClient.getLogs({
-                             address: contractAddress,
-                             event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
-                             args: { user: address },
-                             fromBlock: from,
-                             toBlock: to
-                         }).catch(e => {
-                             console.warn(`Failed to fetch logs for ${net.name} chunk ${from}-${to}`, e);
-                             return [];
-                         })
-                     ));
-                     logs.push(...batchResults.flat());
-                 }
+                    if (dTime >= tTime) {
+                        const seedId = Number(log.args.seedId);
+                        newHistory.set(dateStr, seedId);
+                    }
+                }
+            });
 
-                 // Fetch timestamps for logs
-                 // Optimization: Group by blockNumber to avoid duplicate getBlock
-                 const uniqueBlockNumbers = [...new Set(logs.map(l => l.blockNumber))];
+            if (active) {
+                setPlantingHistory(newHistory);
+            }
 
-                 // Fetch blocks in batches
-                 const blockMap = new Map<bigint, any>();
-                 for (let i = 0; i < uniqueBlockNumbers.length; i += 20) {
-                      const batch = uniqueBlockNumbers.slice(i, i + 20);
-                      const blocks = await Promise.all(batch.map(bn =>
-                          publicClient.getBlock({ blockNumber: bn }).catch(() => null)
-                      ));
-                      blocks.forEach((b, idx) => {
-                          if (b) blockMap.set(batch[idx], b);
-                      });
-                 }
-
-                 // Return processed entries
-                 const entries: [string, number][] = [];
-                 logs.forEach(log => {
-                     const block = blockMap.get(log.blockNumber);
-                     if (block) {
-                         const date = new Date(Number(block.timestamp) * 1000);
-                         const dateStr = formatDate(date);
-                         // Check if date is >= targetDate (Dec 1)
-                         // We reset time to midnight for comparison
-                         const dTime = new Date(dateStr).getTime();
-                         const tTime = new Date(formatDate(targetDate)).getTime();
-
-                         if (dTime >= tTime) {
-                             const seedId = Number(log.args.seedId);
-                             entries.push([dateStr, seedId]);
-                         }
-                     }
-                 });
-                 return entries;
-
-             } catch (e) {
-                 console.error(`Error fetching history for ${net.name}:`, e);
-                 return [];
-             }
-        });
-
-        const results = await Promise.all(fetchPromises);
-
-        if (!active) return;
-
-        // Merge results
-        // If multiple networks have events on same day, or multiple events on same day,
-        // we take the last one encountered (or we could prioritize).
-        // Since `results` is ordered by NETWORKS array, later networks overwrite earlier ones.
-        // It's arbitrary but sufficient.
-        results.forEach((networkLogs) => {
-             if (networkLogs) {
-                 networkLogs.forEach((entry) => {
-                     if (entry) {
-                         const [dateStr, seedId] = entry;
-                         allLogs.set(dateStr, seedId);
-                     }
-                 });
-             }
-        });
-
-        setPlantingHistory(allLogs);
+        } catch (e) {
+            console.error(`Error fetching history for ${net.name}:`, e);
+        }
     }
 
-    fetchAllHistory();
+    fetchHistory();
 
     return () => { active = false; };
-  }, [address, isMounted]); // Removed selectedNetwork dependency
+  }, [address, isMounted, selectedNetwork]);
 
 
   const handlePlant = () => {
