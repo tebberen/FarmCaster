@@ -30,26 +30,30 @@ const CHAIN_IDS: Record<string, number> = {
   monad: 10143, hyper: 999, celo: 42220
 };
 
-// Helper for date formatting DD/MM/YYYY
+// Helper for date formatting YYYY-MM-DD
 const formatDate = (date: Date) => {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  return `${year}-${month}-${day}`;
 };
 
 export default function FarmCaster() {
   const [selectedSeed, setSelectedSeed] = useState(SEEDS[0]);
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Data Viz State
-  const [viewMode, setViewMode] = useState<'7d' | 'month'>('7d');
-  // Map date string (DD/MM/YYYY) -> seedId (number)
+  // Map date string (YYYY-MM-DD) -> seedId (number)
   const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
 
   const { address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContract, isPending, error: writeError } = useWriteContract();
+
+  // Handle Hydration
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Fetch XP
   const { data: userXP } = useReadContract({
@@ -59,7 +63,7 @@ export default function FarmCaster() {
     args: address ? [address] : undefined,
     chainId: CHAIN_IDS[selectedNetwork.id],
     query: {
-        enabled: !!address,
+        enabled: !!address && isMounted,
         refetchInterval: 5000
     }
   });
@@ -79,42 +83,43 @@ export default function FarmCaster() {
 
   // Fetch History Logs
   useEffect(() => {
-    let isMounted = true;
+    let active = true;
 
     // Clear history when switching networks to avoid stale data
     setPlantingHistory(new Map());
 
     async function fetchHistory() {
-        if (!address || !publicClient) return;
+        if (!address || !publicClient || !isMounted) return;
 
         const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
         if (!contractAddress) return;
 
         try {
+            const currentBlock = await publicClient.getBlockNumber();
+            const fromBlockCalc = currentBlock - 1400000n;
+            const fromBlock = fromBlockCalc > 0n ? fromBlockCalc : 0n;
+
             const logs = await publicClient.getLogs({
                 address: contractAddress,
                 event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
                 args: { user: address },
-                fromBlock: 'earliest'
+                fromBlock: fromBlock
             });
 
-            if (!isMounted) return;
+            if (!active) return;
 
             // Optimization: Fetch blocks in parallel
-            // Note: In a real app with many logs, we should batch these or use an indexer.
             const blockPromises = logs.map(log =>
                 publicClient.getBlock({ blockNumber: log.blockNumber })
             );
 
             const blocks = await Promise.all(blockPromises);
 
-            if (!isMounted) return;
+            if (!active) return;
 
             const historyMap = new Map<string, number>();
 
             // Iterate logs and blocks together.
-            // Logs are returned in chronological order by default from getLogs (by block number, then log index).
-            // So processing them in order ensures the last one overwrites previous ones for the same day.
             for (let i = 0; i < logs.length; i++) {
                 const log = logs[i];
                 const block = blocks[i];
@@ -136,8 +141,8 @@ export default function FarmCaster() {
 
     fetchHistory();
 
-    return () => { isMounted = false; };
-  }, [address, selectedNetwork.id, publicClient]);
+    return () => { active = false; };
+  }, [address, selectedNetwork.id, publicClient, isMounted]);
 
 
   const handlePlant = () => {
@@ -173,32 +178,18 @@ export default function FarmCaster() {
     });
   };
 
-  // Generate date list for grid
-  const generateDates = (mode: '7d' | 'month') => {
+  // Generate date list for grid (Last 31 Days)
+  const generateDates = () => {
       const dates = [];
       const today = new Date();
-
-      if (mode === '7d') {
-          // [Today - 6, ..., Today] -> Left is Oldest
-          for (let i = 6; i >= 0; i--) {
-              const d = new Date(today);
-              d.setDate(today.getDate() - i);
-              dates.push(formatDate(d));
-          }
-      } else {
-          // [1st Day of Month, ..., Today]
-          const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-          const current = new Date(firstDay);
-
-          while (current <= today) {
-              dates.push(formatDate(current));
-              current.setDate(current.getDate() + 1);
-          }
+      // Generate last 31 days (Oldest to Today)
+      for (let i = 30; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
+          dates.push(formatDate(d));
       }
       return dates;
   };
-
-  const gridDates = generateDates(viewMode);
 
   // Helper to get emoji for seedId
   const getSeedEmoji = (seedId: number) => {
@@ -210,6 +201,11 @@ export default function FarmCaster() {
           default: return "🌱";
       }
   };
+
+  // Only render content when mounted to prevent hydration mismatch
+  if (!isMounted) return null;
+
+  const gridDates = generateDates();
 
   return (
     <main className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-emerald-500 selection:text-white pb-24">
@@ -233,19 +229,8 @@ export default function FarmCaster() {
         <section className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
           <div className="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
             <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Planting History</h2>
-            <div className="flex items-center gap-2">
-                 <button
-                    onClick={() => setViewMode('7d')}
-                    className={`text-xs px-2 py-1 rounded ${viewMode === '7d' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                 >
-                     7 Days
-                 </button>
-                 <button
-                    onClick={() => setViewMode('month')}
-                    className={`text-xs px-2 py-1 rounded ${viewMode === 'month' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                 >
-                     This Month
-                 </button>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              Last 31 Days
             </div>
           </div>
           <div className="flex flex-col">
@@ -276,7 +261,7 @@ export default function FarmCaster() {
                                     : 'bg-slate-800 border-slate-700 text-slate-600'}
                             `}
                          >
-                           {hasLog && seedId !== null && seedId !== undefined ? getSeedEmoji(seedId) : ''}
+                           {hasLog && seedId !== null && seedId !== undefined ? getSeedEmoji(seedId) : <span className="text-slate-700">·</span>}
                          </div>
                      );
                    })}
