@@ -30,13 +30,22 @@ const CHAIN_IDS: Record<string, number> = {
   monad: 10143, hyper: 999, celo: 42220
 };
 
+// Helper for date formatting DD/MM/YYYY
+const formatDate = (date: Date) => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 export default function FarmCaster() {
   const [selectedSeed, setSelectedSeed] = useState(SEEDS[0]);
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
 
   // Data Viz State
-  const [viewMode, setViewMode] = useState<7 | 31>(7);
-  const [plantingHistory, setPlantingHistory] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'7d' | 'month'>('7d');
+  // Map date string (DD/MM/YYYY) -> seedId (number)
+  const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
 
   const { address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -73,7 +82,7 @@ export default function FarmCaster() {
     let isMounted = true;
 
     // Clear history when switching networks to avoid stale data
-    setPlantingHistory(new Set());
+    setPlantingHistory(new Map());
 
     async function fetchHistory() {
         if (!address || !publicClient) return;
@@ -101,14 +110,25 @@ export default function FarmCaster() {
 
             if (!isMounted) return;
 
-            const historySet = new Set<string>();
-            for (const block of blocks) {
+            const historyMap = new Map<string, number>();
+
+            // Iterate logs and blocks together.
+            // Logs are returned in chronological order by default from getLogs (by block number, then log index).
+            // So processing them in order ensures the last one overwrites previous ones for the same day.
+            for (let i = 0; i < logs.length; i++) {
+                const log = logs[i];
+                const block = blocks[i];
+                if (!block) continue;
+
                 const date = new Date(Number(block.timestamp) * 1000);
-                const dateStr = date.toISOString().split('T')[0];
-                historySet.add(dateStr);
+                const dateStr = formatDate(date);
+
+                // log.args.seedId is a bigint
+                const seedId = Number(log.args.seedId);
+                historyMap.set(dateStr, seedId);
             }
 
-            setPlantingHistory(historySet);
+            setPlantingHistory(historyMap);
         } catch (e) {
             console.error("Error fetching history:", e);
         }
@@ -154,18 +174,42 @@ export default function FarmCaster() {
   };
 
   // Generate date list for grid
-  const generateDates = (days: number) => {
+  const generateDates = (mode: '7d' | 'month') => {
       const dates = [];
       const today = new Date();
-      for (let i = 0; i < days; i++) {
-          const d = new Date(today);
-          d.setDate(today.getDate() - i);
-          dates.push(d.toISOString().split('T')[0]);
+
+      if (mode === '7d') {
+          // [Today - 6, ..., Today] -> Left is Oldest
+          for (let i = 6; i >= 0; i--) {
+              const d = new Date(today);
+              d.setDate(today.getDate() - i);
+              dates.push(formatDate(d));
+          }
+      } else {
+          // [1st Day of Month, ..., Today]
+          const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+          const current = new Date(firstDay);
+
+          while (current <= today) {
+              dates.push(formatDate(current));
+              current.setDate(current.getDate() + 1);
+          }
       }
-      return dates; // [Today, Yesterday, ...]
+      return dates;
   };
 
   const gridDates = generateDates(viewMode);
+
+  // Helper to get emoji for seedId
+  const getSeedEmoji = (seedId: number) => {
+      switch (seedId) {
+          case 0: return "🌱";
+          case 1: return "🍒";
+          case 2: return "🌻";
+          case 3: return "🌳";
+          default: return "🌱";
+      }
+  };
 
   return (
     <main className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-emerald-500 selection:text-white pb-24">
@@ -191,16 +235,16 @@ export default function FarmCaster() {
             <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Planting History</h2>
             <div className="flex items-center gap-2">
                  <button
-                    onClick={() => setViewMode(7)}
-                    className={`text-xs px-2 py-1 rounded ${viewMode === 7 ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                    onClick={() => setViewMode('7d')}
+                    className={`text-xs px-2 py-1 rounded ${viewMode === '7d' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
                  >
                      7 Days
                  </button>
                  <button
-                    onClick={() => setViewMode(31)}
-                    className={`text-xs px-2 py-1 rounded ${viewMode === 31 ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                    onClick={() => setViewMode('month')}
+                    className={`text-xs px-2 py-1 rounded ${viewMode === 'month' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}
                  >
-                     31 Days
+                     This Month
                  </button>
             </div>
           </div>
@@ -217,23 +261,22 @@ export default function FarmCaster() {
                   </span>
                 </div>
                 <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-3 px-4 mask-linear-fade">
-                   {gridDates.map((dateStr, i) => {
-                     const isActive = selectedNetwork.id === net.id && plantingHistory.has(dateStr);
+                   {gridDates.map((dateStr) => {
+                     const isNetworkSelected = selectedNetwork.id === net.id;
+                     const hasLog = isNetworkSelected && plantingHistory.has(dateStr);
+                     const seedId = hasLog ? plantingHistory.get(dateStr) : null;
+
                      return (
                          <div
                             key={dateStr}
                             title={dateStr}
-                            className={`w-10 h-10 flex-shrink-0 border rounded-lg flex items-center justify-center text-xs font-medium transition-all cursor-default
-                                ${isActive
-                                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                            className={`w-10 h-10 flex-shrink-0 border rounded-lg flex items-center justify-center text-lg transition-all cursor-default
+                                ${hasLog
+                                    ? 'bg-emerald-500/20 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
                                     : 'bg-slate-800 border-slate-700 text-slate-600'}
                             `}
                          >
-                           {/* Show Day Number relative to Today (e.g. 1 is Today, 2 is Yesterday...) or just the day of month?
-                               Requirements say: "list of dates ... [Today, Yesterday, ...]"
-                               Let's display the day of the month for clarity.
-                           */}
-                           {new Date(dateStr).getDate()}
+                           {hasLog && seedId !== null && seedId !== undefined ? getSeedEmoji(seedId) : ''}
                          </div>
                      );
                    })}
