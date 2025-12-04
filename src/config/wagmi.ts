@@ -1,12 +1,7 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { defineChain } from 'viem';
-import {
-  arbitrum,
-  base,
-  bsc,
-  celo,
-  mainnet,
-} from 'wagmi/chains';
+import { http, createConfig } from "wagmi";
+import { base, mainnet, arbitrum, celo, bsc } from "wagmi/chains";
+import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
+import { defineChain } from "viem";
 
 const monadTestnet = defineChain({
   id: 10143,
@@ -26,22 +21,23 @@ const hyperEvmTestnet = defineChain({
   name: 'HyperEVM Testnet',
   nativeCurrency: { name: 'Hyper', symbol: 'HYPE', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.hyper-evm.example.com'] }, // Placeholder
+    default: { http: ['https://rpc.hyper-evm.example.com'] },
   },
   testnet: true,
 });
 
-export const config = getDefaultConfig({
-  appName: 'Farmcaster',
-  projectId: 'YOUR_PROJECT_ID',
-  chains: [
-    mainnet,
-    base,
-    bsc,
-    arbitrum,
-    celo,
-    monadTestnet,
-    hyperEvmTestnet,
+export const config = createConfig({
+  chains: [mainnet, base, bsc, arbitrum, celo, monadTestnet, hyperEvmTestnet],
+  transports: {
+    [mainnet.id]: http(),
+    [base.id]: http(),
+    [bsc.id]: http(),
+    [arbitrum.id]: http(),
+    [celo.id]: http(),
+    [monadTestnet.id]: http(),
+    [hyperEvmTestnet.id]: http(),
+  },
+  connectors: [
+    farcasterMiniApp(),
   ],
-  ssr: true, // If your dApp uses server side rendering (SSR)
 });
