@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useWriteContract, useAccount, useSwitchChain, useReadContract } from "wagmi";
+import { useWriteContract, useAccount, useSwitchChain, useReadContract, useEnsName } from "wagmi";
 import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/contracts";
 import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
 import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
@@ -29,7 +29,7 @@ const THEMES: Record<string, Theme> = {
         primary: "border-blue-500",
         secondary: "bg-blue-900/20",
         badge: "bg-blue-600 text-white",
-        button: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400",
+        button: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white",
         shadow: "shadow-blue-500/20 shadow-lg",
         today: "border-blue-400",
         text: "text-blue-500"
@@ -49,7 +49,7 @@ const THEMES: Record<string, Theme> = {
         primary: "border-cyan-500",
         secondary: "bg-cyan-900/20",
         badge: "bg-cyan-600 text-white",
-        button: "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400",
+        button: "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white",
         shadow: "shadow-cyan-500/20 shadow-lg",
         today: "border-cyan-400",
         text: "text-cyan-500"
@@ -59,7 +59,7 @@ const THEMES: Record<string, Theme> = {
         primary: "border-slate-500",
         secondary: "bg-slate-800",
         badge: "bg-slate-600 text-white",
-        button: "bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-500 hover:to-slate-400",
+        button: "bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-500 hover:to-slate-400 text-white",
         shadow: "shadow-slate-500/20 shadow-lg",
         today: "border-slate-400",
         text: "text-slate-400"
@@ -69,7 +69,7 @@ const THEMES: Record<string, Theme> = {
         primary: "border-green-500",
         secondary: "bg-green-900/20",
         badge: "bg-green-600 text-white",
-        button: "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400",
+        button: "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white",
         shadow: "shadow-green-500/20 shadow-lg",
         today: "border-green-400",
         text: "text-green-500"
@@ -79,7 +79,7 @@ const THEMES: Record<string, Theme> = {
         primary: "border-purple-500",
         secondary: "bg-purple-900/20",
         badge: "bg-purple-600 text-white",
-        button: "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400",
+        button: "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white",
         shadow: "shadow-purple-500/20 shadow-lg",
         today: "border-purple-400",
         text: "text-purple-500"
@@ -89,7 +89,7 @@ const THEMES: Record<string, Theme> = {
         primary: "border-pink-500",
         secondary: "bg-pink-900/20",
         badge: "bg-pink-600 text-white",
-        button: "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400",
+        button: "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 text-white",
         shadow: "shadow-pink-500/20 shadow-lg",
         today: "border-pink-400",
         text: "text-pink-500"
@@ -123,6 +123,20 @@ const formatDate = (date: Date) => {
 
 type TabType = 'gm' | 'deploy' | 'launch' | 'donate';
 
+const TAB_LABELS: Record<TabType, string> = {
+    gm: "🌱 Beginner / Gm",
+    deploy: "💐 Pre-Intermediate / Deploy",
+    launch: "🎄 Intermediate / Launch",
+    donate: "🍒 Advanced / Donate"
+};
+
+const TAB_PRICES: Record<TabType, string> = {
+    gm: "Free",
+    deploy: "$0.10",
+    launch: "$0.15",
+    donate: "$0.20"
+};
+
 export default function FarmCaster() {
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
   const [isMounted, setIsMounted] = useState(false);
@@ -133,6 +147,7 @@ export default function FarmCaster() {
   const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
 
   const { address, chain } = useAccount();
+  const { data: ensName } = useEnsName({ address, chainId: mainnet.id });
   const { switchChain } = useSwitchChain();
   const { writeContract, isPending, error: writeError } = useWriteContract();
 
@@ -261,40 +276,103 @@ export default function FarmCaster() {
   // Only render content when mounted to prevent hydration mismatch
   if (!isMounted) return null;
 
-  const getPrice = () => {
-      switch(activeTab) {
-          case 'gm': return 'Free';
-          case 'deploy': return '~$0.10';
-          case 'launch': return '~$0.15';
-          case 'donate': return '~$0.20';
-          default: return 'Free';
-      }
-  }
-
   return (
     <main className="min-h-screen bg-[#0f0a06] text-[#e7dac7] font-sans pb-10">
 
-      {/* SECTION 1: Network Tabs (The Header) */}
+      {/* SECTION 1: Header & Network Tabs */}
       <div className="sticky top-0 z-10 bg-[#0f0a06]/95 backdrop-blur-sm border-b border-[#3d2b20] pt-4 pb-2">
         <div className="max-w-3xl mx-auto px-4">
             <div className="flex justify-between items-center mb-4">
-                <h1 className="text-xl font-bold tracking-tight">FarmCaster</h1>
-                {/* Wallet / XP Info */}
-                <div className="flex items-center gap-4 text-xs">
-                    <div className="text-[#8c7e73]">
-                         {address ? (
-                             <span className="flex items-center gap-1">
-                                 <span className={`w-2 h-2 rounded-full ${chain?.id === CHAIN_IDS[selectedNetwork.id] ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                 {address.slice(0,6)}...
-                             </span>
-                         ) : (
-                             <span>Not Connected</span>
-                         )}
-                    </div>
-                    <div className={`font-bold ${currentTheme.text}`}>
-                        {userXP ? Number(userXP).toLocaleString() : '0'} XP
-                    </div>
+                {/* Left: Farmer Identity */}
+                <div className="flex items-center gap-3">
+                     <div className="bg-[#1e140f] p-2 rounded-full border border-[#3d2b20] flex items-center justify-center w-10 h-10">
+                        🚜
+                     </div>
+                     <div>
+                        <div className="text-[10px] text-[#8c7e73] font-bold uppercase tracking-widest">Farmer</div>
+                        <div className="font-bold text-[#e7dac7] text-sm leading-tight">
+                            {address ? (ensName || `${address.slice(0,6)}...${address.slice(-4)}`) : "(Guest)"}
+                        </div>
+                     </div>
                 </div>
+
+                {/* Right: Action / Connect Button */}
+                <ConnectButton.Custom>
+                  {({
+                    account,
+                    chain,
+                    openAccountModal,
+                    openChainModal,
+                    openConnectModal,
+                    authenticationStatus,
+                    mounted,
+                  }) => {
+                    const ready = mounted && authenticationStatus !== 'loading';
+                    const connected =
+                      ready &&
+                      account &&
+                      chain &&
+                      (!authenticationStatus ||
+                        authenticationStatus === 'authenticated');
+
+                    return (
+                      <div
+                        {...(!ready && {
+                          'aria-hidden': true,
+                          'style': {
+                            opacity: 0,
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                          },
+                        })}
+                      >
+                        {(() => {
+                          if (!connected) {
+                            return (
+                              <button
+                                onClick={openConnectModal}
+                                type="button"
+                                className="px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20"
+                              >
+                                Connect Wallet
+                              </button>
+                            );
+                          }
+
+                          if (chain.unsupported) {
+                            return (
+                              <button
+                                onClick={openChainModal}
+                                type="button"
+                                className="px-4 py-2 rounded-xl font-bold bg-red-600 text-white hover:bg-red-500 transition-all text-sm"
+                              >
+                                Wrong Network
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <button
+                                onClick={handlePlant}
+                                disabled={isPending}
+                                className={clsx(
+                                    "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20",
+                                    isPending && "opacity-70 cursor-wait",
+                                    "disabled:opacity-50 disabled:cursor-not-allowed"
+                                )}
+                            >
+                                {isPending ? (
+                                    <span>Planting...</span>
+                                ) : (
+                                    <span>PLANT SEED {TAB_PRICES[activeTab]}</span>
+                                )}
+                            </button>
+                          );
+                        })()}
+                      </div>
+                    );
+                  }}
+                </ConnectButton.Custom>
             </div>
 
             {/* Scrollable Network List */}
@@ -343,15 +421,25 @@ export default function FarmCaster() {
                             setSelectedSeed(SEED_DATA[tab][0]);
                         }}
                         className={clsx(
-                            "px-6 py-3 font-bold text-sm transition-all uppercase tracking-wide",
+                            "px-6 py-3 font-bold text-sm transition-all whitespace-nowrap",
                             activeTab === tab
                                 ? `border-b-2 ${currentTheme.primary} ${currentTheme.text}`
                                 : "text-[#8c7e73] hover:text-[#b0a090]"
                         )}
                     >
-                        {tab}
+                        {TAB_LABELS[tab]}
                     </button>
                 ))}
+            </div>
+
+            {/* Price Display for current category */}
+            <div className="flex justify-between items-center px-1">
+                <span className="text-xs text-[#8c7e73] uppercase tracking-wider">
+                    Cost: <span className={currentTheme.text}>{TAB_PRICES[activeTab]}</span>
+                </span>
+                <span className="text-xs text-[#8c7e73] uppercase tracking-wider">
+                    {userXP ? Number(userXP).toLocaleString() : '0'} XP Earned
+                </span>
             </div>
 
             {/* SEED MARKET GRID */}
@@ -376,46 +464,11 @@ export default function FarmCaster() {
             </div>
         </div>
 
-        {/* SECTION 4: Action Panel (Bottom) */}
-        <div className={clsx("bg-[#1e140f] border rounded-xl p-6 transition-all duration-300", currentTheme.primary)}>
-            <div className="flex justify-between items-end mb-6">
-                <div>
-                    <h3 className="text-xl font-bold text-[#e7dac7]">
-                        Planting {selectedSeed.icon} <span className={currentTheme.text}>{selectedSeed.name}</span>
-                    </h3>
-                    <p className="text-[#8c7e73] text-sm mt-1">
-                        on {selectedNetwork.name} Chain
-                    </p>
-                </div>
-                <div className="text-right">
-                    <span className={`block text-3xl font-bold ${currentTheme.text}`}>{getPrice()}</span>
-                    <span className="text-xs text-[#8c7e73] uppercase tracking-wider">Estimated Cost</span>
-                </div>
+        {writeError && (
+            <div className="p-3 bg-red-900/20 border border-red-900/50 rounded-lg text-red-400 text-xs text-center">
+            {writeError.message.split('\n')[0]}
             </div>
-
-            <button
-                onClick={handlePlant}
-                disabled={isPending}
-                className={clsx(
-                    "w-full text-white font-bold py-4 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 transform active:scale-[0.99]",
-                    currentTheme.button,
-                    isPending && "opacity-70 cursor-wait",
-                    "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
-            >
-                {isPending ? 'Planting...' : 'PLANT NOW'}
-            </button>
-
-            {writeError && (
-                 <div className="mt-4 p-3 bg-red-900/20 border border-red-900/50 rounded-lg text-red-400 text-xs text-center">
-                    {writeError.message.split('\n')[0]}
-                 </div>
-            )}
-        </div>
-
-        <div className="flex justify-center pt-4 pb-8 opacity-70 hover:opacity-100 transition-opacity">
-             <ConnectButton showBalance={false} chainStatus="none" />
-        </div>
+        )}
 
       </div>
     </main>

@@ -101,7 +101,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-base font-bold text-[#e7dac7]">
-                {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Farm Calendar
             </h2>
 
             <div className="flex items-center gap-1 bg-[#2c1f18] rounded-lg p-1">

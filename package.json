@@ -11,7 +11,7 @@
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.2.1",
     "@farcaster/miniapp-wagmi-connector": "^1.1.0",
-    "@rainbow-me/rainbowkit": "^2.2.9",
+    "@rainbow-me/rainbowkit": "^2.2.10",
     "@tanstack/react-query": "^5.90.11",
     "autoprefixer": "^10.4.22",
     "clsx": "^2.1.1",
