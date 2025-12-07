@@ -50,10 +50,10 @@ export const SEED_DATA = {
 };
 
 export const CATEGORY_LABELS = {
-  gm: "🌱 Beginner / Gm",
-  deploy: "💐 Pre-Intermediate / Deploy",
-  launch: "🎄 Intermediate / Launch",
-  donate: "🍒 Advanced / Donate",
+  gm: "🌱 Seed / Gm",
+  deploy: "💐 Flower / Deploy",
+  launch: "🎄 Tree / Launch",
+  donate: "🍒 Fruit / Donate",
 };
 
 // Helper to find emoji by ID (Used for History Grid)
