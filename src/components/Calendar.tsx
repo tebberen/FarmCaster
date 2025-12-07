@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { getEmojiById } from '../config/emojis';
+import clsx from 'clsx';
 
 // Helper for date formatting YYYY-MM-DD
 const formatDate = (date: Date) => {
@@ -11,15 +11,25 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+interface Theme {
+    primary: string; // Text color, Border color
+    secondary: string; // Background accents
+    badge: string; // Active badge bg
+    button: string; // Main action button
+    shadow: string; // Glow
+    today: string; // Today border
+}
+
 interface CalendarProps {
   history: Map<string, number>;
   networkName: string;
+  theme: Theme;
 }
 
 // Screenshot starts with Sunday: S M T W T F S
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-export const Calendar: React.FC<CalendarProps> = ({ history }) => {
+export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
   // Generate days for Month View
@@ -66,15 +76,14 @@ export const Calendar: React.FC<CalendarProps> = ({ history }) => {
       return (
         <div
             key={dateStr}
-            className={`
-                relative flex items-center justify-center rounded-md transition-all w-9 h-9 text-sm
-                ${hasLog
-                    ? 'bg-[#3d2b20] border border-[#5c4030] text-[#e7dac7]'
+            className={clsx(
+                "relative flex items-center justify-center rounded-md transition-all w-9 h-9 text-sm border",
+                hasLog
+                    ? `bg-[#3d2b20] ${theme.primary} text-[#e7dac7]` // Use theme border for logged days? Or keep standard?
                     : isToday
-                        ? 'bg-[#3d2b20] border border-[#84cc16] text-[#e7dac7]'
-                        : 'bg-[#261a15] text-[#8c7e73]'
-                }
-            `}
+                        ? `bg-[#3d2b20] ${theme.today} text-[#e7dac7]`
+                        : "bg-[#261a15] border-transparent text-[#8c7e73]"
+            )}
         >
             {hasLog && seedId !== undefined ? (
                 <span>{getEmojiById(seedId)}</span>
@@ -88,7 +97,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history }) => {
   };
 
   return (
-    <div className="bg-[#1e140f] border border-[#3d2b20] rounded-2xl overflow-hidden shadow-lg p-4">
+    <div className={clsx("bg-[#1e140f] border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300", theme.primary, theme.shadow)}>
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-base font-bold text-[#e7dac7]">
