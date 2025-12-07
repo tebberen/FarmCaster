@@ -4,6 +4,12 @@ export const SEED_DATA = {
     { id: 1, icon: "🌿", name: "Soft Leaf", desc: "Growing" },
     { id: 2, icon: "🍃", name: "Windy Leaf", desc: "Just checking in" },
     { id: 3, icon: "☘️", name: "Lucky Leaf", desc: "Feeling lucky" },
+    { id: 4, icon: "🍄", name: "Mushroom", desc: "Wild growth" },
+    { id: 5, icon: "🌾", name: "Grass", desc: "Simple life" },
+    { id: 6, icon: "🪴", name: "Potted Plant", desc: "Indoor calm" },
+    { id: 7, icon: "🌵", name: "Tiny Cactus", desc: "Resilient" },
+    { id: 8, icon: "🎋", name: "Bamboo", desc: "Fast growth" },
+    { id: 9, icon: "🍀", name: "Four Leaf", desc: "Super lucky" },
   ],
   deploy: [
     { id: 10, icon: "🌸", name: "Pink Bloom", desc: "Simple deploy" },
@@ -41,6 +47,13 @@ export const SEED_DATA = {
     { id: 38, icon: "🍍", name: "Pineapple", desc: "Big share" },
     { id: 39, icon: "🥭", name: "Mango", desc: "Great feeling" },
   ],
+};
+
+export const CATEGORY_LABELS = {
+  gm: "🌱 Beginner / Gm",
+  deploy: "💐 Pre-Intermediate / Deploy",
+  launch: "🎄 Intermediate / Launch",
+  donate: "🍒 Advanced / Donate",
 };
 
 // Helper to find emoji by ID (Used for History Grid)

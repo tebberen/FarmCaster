@@ -7,7 +7,7 @@ import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/
 import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
 import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
 import { Calendar } from "../components/Calendar";
-import { SEED_DATA } from "../config/emojis";
+import { SEED_DATA, CATEGORY_LABELS } from "../config/emojis";
 import { parseEther } from "viem";
 import clsx from "clsx";
 
@@ -99,13 +99,6 @@ const formatDate = (date: Date) => {
 
 type TabType = 'gm' | 'deploy' | 'launch' | 'donate';
 
-const TAB_LABELS: Record<TabType, string> = {
-    gm: "🌱 Seed / Gm",
-    deploy: "💐 Flower / Deploy",
-    launch: "🎄 Tree / Launch",
-    donate: "🍒 Fruit / Donate"
-};
-
 const TAB_PRICES: Record<TabType, string> = {
     gm: "Free",
     deploy: "$0.10",
@@ -117,7 +110,6 @@ export default function FarmCaster() {
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('gm');
-  const [selectedSeed, setSelectedSeed] = useState(SEED_DATA.gm[0]);
 
   // Map date string (YYYY-MM-DD) -> seedId (number)
   const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
@@ -166,6 +158,9 @@ export default function FarmCaster() {
     if (historyData && Array.isArray(historyData)) {
       const newHistory = new Map<string, number>();
 
+      // First pass: Group by date and find max seedType
+      const dailyMaxSeed = new Map<string, number>();
+
       historyData.forEach((record: any) => {
         // Record structure: [timestamp, seedType, actionType]
         const timestamp = Number(record.timestamp);
@@ -174,10 +169,13 @@ export default function FarmCaster() {
         const date = new Date(timestamp * 1000);
         const dateStr = formatDate(date);
 
-        newHistory.set(dateStr, seedType);
+        const currentMax = dailyMaxSeed.get(dateStr) || -1;
+        if (seedType > currentMax) {
+          dailyMaxSeed.set(dateStr, seedType);
+        }
       });
 
-      setPlantingHistory(newHistory);
+      setPlantingHistory(dailyMaxSeed);
     } else {
         // Clear history when switching networks if no data
         setPlantingHistory(new Map());
@@ -194,7 +192,7 @@ export default function FarmCaster() {
   }, [chain]);
 
 
-  const handlePlant = () => {
+  const handlePlant = (seedId: number) => {
     if (!chain) return alert("Please connect wallet first");
 
     const targetChainId = CHAIN_IDS[selectedNetwork.id];
@@ -211,42 +209,48 @@ export default function FarmCaster() {
 
     let value = 0n;
 
-    if (activeTab === 'gm') {
+    // Logic: 0-9 gm, 10-19 deploy, 20-29 launch, 30-39 donate
+    if (seedId >= 0 && seedId <= 9) {
       value = 0n;
       writeContract({
         address: contractAddress,
         abi: GARDEN_ABI,
         functionName: 'gm',
-        args: [selectedSeed.id],
+        args: [seedId],
       });
-    } else if (activeTab === 'deploy') {
+    } else if (seedId >= 10 && seedId <= 19) {
       value = parseEther("0.00003");
       writeContract({
         address: contractAddress,
         abi: GARDEN_ABI,
         functionName: 'deploy',
-        args: [selectedSeed.id],
+        args: [seedId],
         value,
       });
-    } else if (activeTab === 'launch') {
+    } else if (seedId >= 20 && seedId <= 29) {
       value = parseEther("0.000045");
       writeContract({
         address: contractAddress,
         abi: GARDEN_ABI,
         functionName: 'launch',
-        args: [selectedSeed.id],
+        args: [seedId],
         value,
       });
-    } else if (activeTab === 'donate') {
+    } else if (seedId >= 30 && seedId <= 39) {
       value = parseEther("0.00006");
       writeContract({
         address: contractAddress,
         abi: GARDEN_ABI,
         functionName: 'donate',
-        args: [selectedSeed.id],
+        args: [seedId],
         value,
       });
     }
+  };
+
+  const handleWaterFarm = () => {
+      // Calls gm(0)
+      handlePlant(0);
   };
 
   // Only render content when mounted to prevent hydration mismatch
@@ -256,17 +260,17 @@ export default function FarmCaster() {
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-10">
 
       {/* SECTION 1: Header & Network Tabs */}
-      <div className="sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800 pt-4 pb-2">
+      <div className={clsx("sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b pt-4 pb-2", currentTheme.border)}>
         <div className="max-w-3xl mx-auto px-4">
             <div className="flex justify-between items-center mb-4">
                 {/* Left: Farmer Identity */}
                 <div className="flex items-center gap-3">
-                     <div className="bg-slate-900 p-2 rounded-full border border-slate-800 flex items-center justify-center w-10 h-10">
+                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10", currentTheme.bg, "border-transparent text-white")}>
                         🚜
                      </div>
                      <div>
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Farmer</div>
-                        <div className="font-bold text-slate-200 text-sm leading-tight">
+                        <div className={clsx("font-bold text-sm leading-tight", currentTheme.accent)}>
                             {address ? (ensName || `${address.slice(0,6)}...${address.slice(-4)}`) : "(Guest)"}
                         </div>
                      </div>
@@ -331,22 +335,23 @@ export default function FarmCaster() {
                             );
                           }
 
+                          // "WATER FARM" Button
                           return (
                             <button
-                                onClick={handlePlant}
+                                onClick={handleWaterFarm}
                                 disabled={isPending}
                                 className={clsx(
                                     "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2",
-                                    currentTheme.button,
-                                    currentTheme.glow,
+                                    "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400", // Distinct Cyan/Blue gradient
+                                    "shadow-[0_0_15px_rgba(6,182,212,0.5)]", // Cyan glow
                                     isPending && "opacity-70 cursor-wait",
                                     "disabled:opacity-50 disabled:cursor-not-allowed"
                                 )}
                             >
                                 {isPending ? (
-                                    <span>Planting...</span>
+                                    <span>Watering...</span>
                                 ) : (
-                                    <span>PLANT SEED {TAB_PRICES[activeTab]}</span>
+                                    <span>💧 WATER FARM</span>
                                 )}
                             </button>
                           );
@@ -400,7 +405,6 @@ export default function FarmCaster() {
                         key={tab}
                         onClick={() => {
                             setActiveTab(tab);
-                            setSelectedSeed(SEED_DATA[tab][0]);
                         }}
                         className={clsx(
                             "px-6 py-3 font-bold text-sm transition-all whitespace-nowrap border-b-2",
@@ -409,7 +413,7 @@ export default function FarmCaster() {
                                 : "text-slate-500 border-transparent hover:text-slate-400"
                         )}
                     >
-                        {TAB_LABELS[tab]}
+                        {CATEGORY_LABELS[tab]}
                     </button>
                 ))}
             </div>
@@ -429,12 +433,11 @@ export default function FarmCaster() {
                 {SEED_DATA[activeTab].map((seed) => (
                     <button
                         key={seed.id}
-                        onClick={() => setSelectedSeed(seed)}
+                        onClick={() => handlePlant(seed.id)}
                         className={clsx(
-                            "bg-slate-900 border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all",
-                            selectedSeed.id === seed.id
-                                ? `${currentTheme.border} ${currentTheme.glow} shadow-md`
-                                : "border-slate-800 hover:border-slate-600"
+                            "bg-slate-900 border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all hover:bg-slate-800",
+                            currentTheme.border, // Apply theme border
+                            "shadow-sm hover:shadow-md"
                         )}
                     >
                         <span className="text-3xl filter drop-shadow-md">{seed.icon}</span>
