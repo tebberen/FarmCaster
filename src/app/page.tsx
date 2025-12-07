@@ -4,13 +4,12 @@ import React, { useState, useEffect } from "react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWriteContract, useAccount, useSwitchChain, useReadContract } from "wagmi";
 import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/contracts";
-import { AVERAGE_BLOCK_TIMES } from "../config/chainParams";
-import { createPublicClient, http, parseAbiItem } from "viem";
 import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
 import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
 import { Calendar } from "../components/Calendar";
+import { getEmojiById } from "../config/emojis";
 
-// Define Network list (Prioritize Base, Arb, Celo as per screenshot)
+// Define Network list (Prioritize Base, Arb, Celo)
 const NETWORKS = [
   { id: "base", name: "Base", chain: base },
   { id: "arb", name: "Arbitrum", chain: arbitrum },
@@ -23,10 +22,10 @@ const NETWORKS = [
 ];
 
 const SEEDS = [
-  { id: "starter", name: "Start", sub: "Ücretsiz", priceWei: 0n, seedId: 0n, icon: "🌱", color: "text-green-500" },
-  { id: "flowers", name: "Advanced", sub: "0,10 $", priceWei: 45000000000000n, seedId: 2n, icon: "🌻", color: "text-yellow-400" },
-  { id: "trees", name: "Professional", sub: "0,25 $", priceWei: 60000000000000n, seedId: 3n, icon: "🌳", color: "text-green-700" },
-  { id: "fruits", name: "Gelişmiş", sub: "0,50 $", priceWei: 30000000000000n, seedId: 1n, icon: "🍒", color: "text-red-500" },
+  { id: "starter", name: "Start", sub: "Free", priceWei: 0n, seedId: 0, icon: "🌱", color: "text-green-500" }, // gm
+  { id: "deploy", name: "Deploy", sub: "0.00003 ETH", priceWei: 30000000000000n, seedId: 10, icon: "🌸", color: "text-pink-500" }, // deploy
+  { id: "launch", name: "Launch", sub: "0.000045 ETH", priceWei: 45000000000000n, seedId: 20, icon: "🌲", color: "text-green-700" }, // launch
+  { id: "donate", name: "Donate", sub: "0.00006 ETH", priceWei: 60000000000000n, seedId: 30, icon: "🍒", color: "text-red-500" }, // donate
 ];
 
 // Map network IDs to Chain IDs
@@ -72,6 +71,41 @@ export default function FarmCaster() {
     }
   });
 
+  // Fetch History via useReadContract
+  const { data: historyData } = useReadContract({
+    address: GARDEN_CONTRACTS[selectedNetwork.id],
+    abi: GARDEN_ABI,
+    functionName: "getUserHistory",
+    args: address ? [address] : undefined,
+    chainId: CHAIN_IDS[selectedNetwork.id],
+    query: {
+      enabled: !!address && isMounted,
+      refetchInterval: 10000 // Poll every 10 seconds
+    }
+  });
+
+  // Process history data
+  useEffect(() => {
+    if (historyData && Array.isArray(historyData)) {
+      const newHistory = new Map<string, number>();
+
+      historyData.forEach((record: any) => {
+        // Record structure: [timestamp, seedType, actionType]
+        const timestamp = Number(record.timestamp);
+        const seedType = Number(record.seedType);
+
+        const date = new Date(timestamp * 1000);
+        const dateStr = formatDate(date);
+
+        // If multiple on same day, this overwrites, which is expected for calendar view usually
+        newHistory.set(dateStr, seedType);
+      });
+
+      setPlantingHistory(newHistory);
+    }
+  }, [historyData]);
+
+
   // 1. AUTO-SYNC: If wallet changes network, update UI
   useEffect(() => {
     if (chain) {
@@ -79,118 +113,6 @@ export default function FarmCaster() {
       if (match) setSelectedNetwork(match);
     }
   }, [chain]);
-
-  // Fetch History Logs from SELECTED network
-  useEffect(() => {
-    let active = true;
-
-    async function fetchHistory() {
-        if (!address || !isMounted) return;
-
-        setPlantingHistory(new Map()); // Clear previous history
-
-        const year = new Date().getFullYear();
-        // Target: December 1st of the current year
-        const targetDate = new Date(year, 11, 1); // Month is 0-indexed (11 = Dec)
-        const now = new Date();
-
-        if (now < targetDate) {
-           targetDate.setFullYear(year - 1);
-        }
-
-        const net = selectedNetwork;
-        const contractAddress = GARDEN_CONTRACTS[net.id];
-        if (!contractAddress) return;
-
-        try {
-            const publicClient = createPublicClient({
-                chain: net.chain,
-                transport: http()
-            });
-
-            const currentBlock = await publicClient.getBlockNumber();
-            const avgBlockTime = AVERAGE_BLOCK_TIMES[net.id] || 2;
-            const secondsDiff = (now.getTime() - targetDate.getTime()) / 1000;
-            const blocksToFetch = BigInt(Math.ceil(secondsDiff / avgBlockTime));
-
-            // Ensure we don't go below 0
-            const startBlock = currentBlock - blocksToFetch > 0n ? currentBlock - blocksToFetch : 0n;
-
-            const CHUNK_SIZE = 20000n;
-            const chunks = [];
-
-            for (let i = currentBlock; i > startBlock; i -= CHUNK_SIZE) {
-                const to = i;
-                const chunkFrom = i - CHUNK_SIZE > startBlock ? i - CHUNK_SIZE : startBlock;
-                chunks.push({ from: chunkFrom, to });
-            }
-
-            // Limit parallelism to avoid overwhelming the browser/RPC
-            const logs = [];
-            // Process chunks in batches of 5
-            for (let i = 0; i < chunks.length; i += 5) {
-                const batch = chunks.slice(i, i + 5);
-                const batchResults = await Promise.all(batch.map(({ from, to }) =>
-                    publicClient.getLogs({
-                        address: contractAddress,
-                        event: parseAbiItem('event SeedPlanted(address indexed user, uint256 indexed seedId, uint256 pricePaid)'),
-                        args: { user: address },
-                        fromBlock: from,
-                        toBlock: to
-                    }).catch(e => {
-                        console.warn(`Failed to fetch logs for ${net.name} chunk ${from}-${to}`, e);
-                        return [];
-                    })
-                ));
-                logs.push(...batchResults.flat());
-            }
-
-            // Fetch timestamps for logs
-            // Optimization: Group by blockNumber to avoid duplicate getBlock
-            const uniqueBlockNumbers = [...new Set(logs.map(l => l.blockNumber))];
-
-            // Fetch blocks in batches
-            const blockMap = new Map<bigint, any>();
-            for (let i = 0; i < uniqueBlockNumbers.length; i += 20) {
-                  const batch = uniqueBlockNumbers.slice(i, i + 20);
-                  const blocks = await Promise.all(batch.map(bn =>
-                      publicClient.getBlock({ blockNumber: bn }).catch(() => null)
-                  ));
-                  blocks.forEach((b, idx) => {
-                      if (b) blockMap.set(batch[idx], b);
-                  });
-            }
-
-            // Process entries
-            const newHistory = new Map<string, number>();
-            logs.forEach(log => {
-                const block = blockMap.get(log.blockNumber);
-                if (block) {
-                    const date = new Date(Number(block.timestamp) * 1000);
-                    const dateStr = formatDate(date);
-                    const dTime = new Date(dateStr).getTime();
-                    const tTime = new Date(formatDate(targetDate)).getTime();
-
-                    if (dTime >= tTime) {
-                        const seedId = Number(log.args.seedId);
-                        newHistory.set(dateStr, seedId);
-                    }
-                }
-            });
-
-            if (active) {
-                setPlantingHistory(newHistory);
-            }
-
-        } catch (e) {
-            console.error(`Error fetching history for ${net.name}:`, e);
-        }
-    }
-
-    fetchHistory();
-
-    return () => { active = false; };
-  }, [address, isMounted, selectedNetwork]);
 
 
   const handlePlant = (seed: typeof SEEDS[0]) => {
@@ -208,13 +130,39 @@ export default function FarmCaster() {
     const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
     if (!contractAddress) return alert("Contract not defined");
 
-    writeContract({
-      address: contractAddress,
-      abi: GARDEN_ABI,
-      functionName: 'plant',
-      args: [seed.seedId],
-      value: seed.priceWei,
-    });
+    let functionName: "gm" | "deploy" | "launch" | "donate" = 'gm';
+    let value = 0n;
+
+    if (seed.seedId < 10) {
+      functionName = 'gm';
+      value = 0n;
+    } else if (seed.seedId >= 10 && seed.seedId < 20) {
+      functionName = 'deploy';
+      value = 30000000000000n; // 0.00003 ETH
+    } else if (seed.seedId >= 20 && seed.seedId < 30) {
+      functionName = 'launch';
+      value = 45000000000000n; // 0.000045 ETH
+    } else if (seed.seedId >= 30) {
+      functionName = 'donate';
+      value = 60000000000000n; // 0.00006 ETH
+    }
+
+    if (functionName === 'gm') {
+      writeContract({
+        address: contractAddress,
+        abi: GARDEN_ABI,
+        functionName: 'gm',
+        args: [seed.seedId],
+      });
+    } else {
+      writeContract({
+        address: contractAddress,
+        abi: GARDEN_ABI,
+        functionName: functionName,
+        args: [seed.seedId],
+        value: value,
+      });
+    }
   };
 
   // Only render content when mounted to prevent hydration mismatch
