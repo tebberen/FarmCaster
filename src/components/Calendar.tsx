@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getEmojiById } from '../config/emojis';
 import clsx from 'clsx';
+import { Theme } from '../app/page';
 
 // Helper for date formatting YYYY-MM-DD
 const formatDate = (date: Date) => {
@@ -10,15 +11,6 @@ const formatDate = (date: Date) => {
   const year = date.getFullYear();
   return `${year}-${month}-${day}`;
 };
-
-interface Theme {
-    primary: string; // Text color, Border color
-    secondary: string; // Background accents
-    badge: string; // Active badge bg
-    button: string; // Main action button
-    shadow: string; // Glow
-    today: string; // Today border
-}
 
 interface CalendarProps {
   history: Map<string, number>;
@@ -79,10 +71,10 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
             className={clsx(
                 "relative flex items-center justify-center rounded-md transition-all w-9 h-9 text-sm border",
                 hasLog
-                    ? `bg-[#3d2b20] ${theme.primary} text-[#e7dac7]` // Use theme border for logged days? Or keep standard?
+                    ? `${theme.bg} border-transparent text-white`
                     : isToday
-                        ? `bg-[#3d2b20] ${theme.today} text-[#e7dac7]`
-                        : "bg-[#261a15] border-transparent text-[#8c7e73]"
+                        ? `bg-slate-800 ${theme.border} text-slate-200`
+                        : "bg-slate-900 border-transparent text-slate-500"
             )}
         >
             {hasLog && seedId !== undefined ? (
@@ -97,18 +89,18 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
   };
 
   return (
-    <div className={clsx("bg-[#1e140f] border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300", theme.primary, theme.shadow)}>
+    <div className={clsx("bg-slate-900 border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300", theme.border)}>
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-bold text-[#e7dac7]">
+            <h2 className={clsx("text-base font-bold", theme.accent)}>
                 {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Farm Calendar
             </h2>
 
-            <div className="flex items-center gap-1 bg-[#2c1f18] rounded-lg p-1">
-                 <button onClick={prevMonth} className="p-1 hover:bg-[#3d2b20] rounded text-[#8c7e73] hover:text-[#e7dac7] transition-colors">
+            <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
+                 <button onClick={prevMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
                     <ChevronLeft size={16} />
                  </button>
-                 <button onClick={nextMonth} className="p-1 hover:bg-[#3d2b20] rounded text-[#8c7e73] hover:text-[#e7dac7] transition-colors">
+                 <button onClick={nextMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
                     <ChevronRight size={16} />
                  </button>
             </div>
@@ -118,7 +110,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
         <div className="grid grid-cols-7 gap-y-3 gap-x-1 justify-items-center">
             {/* Weekday Headers */}
             {WEEKDAYS.map((d, i) => (
-                <div key={i} className="text-xs font-bold text-[#6b5d54] mb-1">{d}</div>
+                <div key={i} className="text-xs font-bold text-slate-500 mb-1">{d}</div>
             ))}
 
             {/* Days */}
