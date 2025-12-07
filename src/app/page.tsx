@@ -7,7 +7,9 @@ import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/
 import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
 import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
 import { Calendar } from "../components/Calendar";
-import { getEmojiById } from "../config/emojis";
+import { SEED_DATA } from "../config/emojis";
+import { parseEther } from "viem";
+import clsx from "clsx";
 
 // Define Network list (Prioritize Base, Arb, Celo)
 const NETWORKS = [
@@ -19,13 +21,6 @@ const NETWORKS = [
   { id: "eth", name: "Ethereum", chain: mainnet },
   { id: "monad", name: "Monad", chain: monadTestnet },
   { id: "hyper", name: "HyperEVM", chain: hyperEvmTestnet },
-];
-
-const SEEDS = [
-  { id: "starter", name: "Start", sub: "Free", priceWei: 0n, seedId: 0, icon: "🌱", color: "text-green-500" }, // gm
-  { id: "deploy", name: "Deploy", sub: "0.00003 ETH", priceWei: 30000000000000n, seedId: 10, icon: "🌸", color: "text-pink-500" }, // deploy
-  { id: "launch", name: "Launch", sub: "0.000045 ETH", priceWei: 45000000000000n, seedId: 20, icon: "🌲", color: "text-green-700" }, // launch
-  { id: "donate", name: "Donate", sub: "0.00006 ETH", priceWei: 60000000000000n, seedId: 30, icon: "🍒", color: "text-red-500" }, // donate
 ];
 
 // Map network IDs to Chain IDs
@@ -42,9 +37,13 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+type TabType = 'gm' | 'deploy' | 'launch' | 'donate';
+
 export default function FarmCaster() {
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
   const [isMounted, setIsMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('gm');
+  const [selectedSeed, setSelectedSeed] = useState(SEED_DATA.gm[0]);
 
   // Map date string (YYYY-MM-DD) -> seedId (number)
   const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
@@ -115,7 +114,7 @@ export default function FarmCaster() {
   }, [chain]);
 
 
-  const handlePlant = (seed: typeof SEEDS[0]) => {
+  const handlePlant = () => {
     if (!chain) return alert("Please connect wallet first");
 
     const targetChainId = CHAIN_IDS[selectedNetwork.id];
@@ -130,43 +129,58 @@ export default function FarmCaster() {
     const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
     if (!contractAddress) return alert("Contract not defined");
 
-    let functionName: "gm" | "deploy" | "launch" | "donate" = 'gm';
     let value = 0n;
 
-    if (seed.seedId < 10) {
-      functionName = 'gm';
+    if (activeTab === 'gm') {
       value = 0n;
-    } else if (seed.seedId >= 10 && seed.seedId < 20) {
-      functionName = 'deploy';
-      value = 30000000000000n; // 0.00003 ETH
-    } else if (seed.seedId >= 20 && seed.seedId < 30) {
-      functionName = 'launch';
-      value = 45000000000000n; // 0.000045 ETH
-    } else if (seed.seedId >= 30) {
-      functionName = 'donate';
-      value = 60000000000000n; // 0.00006 ETH
-    }
-
-    if (functionName === 'gm') {
       writeContract({
         address: contractAddress,
         abi: GARDEN_ABI,
         functionName: 'gm',
-        args: [seed.seedId],
+        args: [selectedSeed.id],
       });
-    } else {
+    } else if (activeTab === 'deploy') {
+      value = parseEther("0.00003");
       writeContract({
         address: contractAddress,
         abi: GARDEN_ABI,
-        functionName: functionName,
-        args: [seed.seedId],
-        value: value,
+        functionName: 'deploy',
+        args: [selectedSeed.id],
+        value,
+      });
+    } else if (activeTab === 'launch') {
+      value = parseEther("0.000045");
+      writeContract({
+        address: contractAddress,
+        abi: GARDEN_ABI,
+        functionName: 'launch',
+        args: [selectedSeed.id],
+        value,
+      });
+    } else if (activeTab === 'donate') {
+      value = parseEther("0.00006");
+      writeContract({
+        address: contractAddress,
+        abi: GARDEN_ABI,
+        functionName: 'donate',
+        args: [selectedSeed.id],
+        value,
       });
     }
   };
 
   // Only render content when mounted to prevent hydration mismatch
   if (!isMounted) return null;
+
+  const getPrice = () => {
+      switch(activeTab) {
+          case 'gm': return 'Free';
+          case 'deploy': return '~$0.10';
+          case 'launch': return '~$0.15';
+          case 'donate': return '~$0.20';
+          default: return 'Free';
+      }
+  }
 
   return (
     <main className="min-h-screen bg-[#0f0a06] text-[#e7dac7] font-sans pb-10">
@@ -214,38 +228,84 @@ export default function FarmCaster() {
             networkName={selectedNetwork.name}
         />
 
-        {/* SEED MARKET GRID (2x2) */}
-        <div className="grid grid-cols-2 gap-3">
-            {SEEDS.map((seed) => (
+        {/* TABS */}
+        <div className="flex gap-2 border-b border-[#3d2b20] pb-2 overflow-x-auto">
+            {(['gm', 'deploy', 'launch', 'donate'] as const).map((tab) => (
                 <button
-                    key={seed.id}
-                    onClick={() => handlePlant(seed)}
-                    disabled={isPending}
-                    className="bg-[#1e140f] border border-[#3d2b20] rounded-xl p-4 flex flex-col items-start gap-1 relative overflow-hidden active:scale-95 transition-transform"
+                    key={tab}
+                    onClick={() => {
+                        setActiveTab(tab);
+                        setSelectedSeed(SEED_DATA[tab][0]);
+                    }}
+                    className={clsx(
+                        "px-4 py-2 rounded-t-lg font-bold text-sm transition-colors uppercase",
+                        activeTab === tab
+                            ? "text-emerald-500 border-b-2 border-emerald-500"
+                            : "text-[#8c7e73] hover:text-[#b0a090]"
+                    )}
                 >
-                    <div className="flex justify-between w-full mb-1">
-                        <span className="text-2xl">{seed.icon}</span>
-                        {/* Fake 'Signal' icon or similar decor from screenshot if needed, ignoring for now */}
-                    </div>
-
-                    <span className="text-sm font-bold text-[#e7dac7]">{seed.name}</span>
-                    <span className="text-xs text-[#8c7e73]">{seed.sub}</span>
-
-                    {/* Hover/Active Effect */}
-                    <div className="absolute inset-0 bg-white/5 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+                    {tab}
                 </button>
             ))}
+        </div>
+
+        {/* SEED MARKET GRID */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {SEED_DATA[activeTab].map((seed) => (
+                <button
+                    key={seed.id}
+                    onClick={() => setSelectedSeed(seed)}
+                    className={clsx(
+                        "bg-[#1e140f] border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all",
+                        selectedSeed.id === seed.id
+                            ? "border-emerald-500 bg-[#2a1d15]"
+                            : "border-[#3d2b20] hover:border-[#5c4030]"
+                    )}
+                >
+                    <span className="text-3xl">{seed.icon}</span>
+                    <div className="text-center">
+                        <span className="block text-sm font-bold text-[#e7dac7]">{seed.name}</span>
+                        {/* Optional: <span className="block text-xs text-[#8c7e73]">{seed.desc}</span> */}
+                    </div>
+                </button>
+            ))}
+        </div>
+
+        {/* ACTION PANEL */}
+        <div className="bg-[#1e140f] border border-[#3d2b20] rounded-xl p-6">
+            <div className="flex justify-between items-end mb-4">
+                <div>
+                    <h3 className="text-lg font-bold text-[#e7dac7]">
+                        Planting {selectedSeed.icon} {selectedSeed.name}
+                    </h3>
+                    <p className="text-[#8c7e73] text-sm mt-1">
+                        on {selectedNetwork.name}
+                    </p>
+                </div>
+                <div className="text-right">
+                    <span className="block text-2xl font-bold text-emerald-500">{getPrice()}</span>
+                    <span className="text-xs text-[#8c7e73]">Est. cost</span>
+                </div>
+            </div>
+
+            <button
+                onClick={handlePlant}
+                disabled={isPending}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-colors flex justify-center items-center gap-2"
+            >
+                {isPending ? 'Planting...' : 'Plant Now'}
+            </button>
+
+            {writeError && (
+                 <div className="mt-4 p-3 bg-red-900/20 border border-red-900/50 rounded-lg text-red-400 text-xs text-center">
+                    {writeError.message.split('\n')[0]}
+                 </div>
+            )}
         </div>
 
         <div className="flex justify-center mt-8">
              <ConnectButton />
         </div>
-
-        {writeError && (
-             <div className="p-4 bg-red-900/20 border border-red-900/50 rounded-lg text-red-400 text-xs text-center">
-                {writeError.message.split('\n')[0]}
-             </div>
-        )}
 
       </div>
     </main>
