@@ -28,5 +28,6 @@ export const GARDEN_ABI = [
 
 export const HUB_ABI = [
   { inputs: [{ name: "user", type: "address" }], name: "userXP", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-  { inputs: [{ name: "user", type: "address" }], name: "userStreak", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" }
+  { inputs: [{ name: "user", type: "address" }], name: "userStreak", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "getAllUsers", outputs: [{ name: "", type: "address[]" }], stateMutability: "view", type: "function" }
 ] as const;
