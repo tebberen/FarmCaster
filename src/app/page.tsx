@@ -12,87 +12,63 @@ import { parseEther } from "viem";
 import clsx from "clsx";
 
 // --- THEME DEFINITIONS ---
-interface Theme {
-    id: string;
-    primary: string;    // Border color, Text color for active states
-    secondary: string;  // Background accents
-    badge: string;      // Active badge background
-    button: string;     // Main action button gradient/color
-    shadow: string;     // Glow/Shadow color
-    today: string;      // Calendar today border
-    text: string;       // Text color
+export interface Theme {
+    accent: string;
+    border: string;
+    bg: string;
+    button: string;
+    glow: string;
 }
 
 const THEMES: Record<string, Theme> = {
     base: {
-        id: 'base',
-        primary: "border-blue-500",
-        secondary: "bg-blue-900/20",
-        badge: "bg-blue-600 text-white",
-        button: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white",
-        shadow: "shadow-blue-500/20 shadow-lg",
-        today: "border-blue-400",
-        text: "text-blue-500"
+        accent: "text-blue-400",
+        border: "border-blue-500/50",
+        bg: "bg-blue-500",
+        button: "bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 text-white",
+        glow: "shadow-[0_0_20px_rgba(59,130,246,0.3)]"
     },
     bsc: {
-        id: 'bsc',
-        primary: "border-yellow-500",
-        secondary: "bg-yellow-900/20",
-        badge: "bg-yellow-500 text-black",
-        button: "bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-black",
-        shadow: "shadow-yellow-500/20 shadow-lg",
-        today: "border-yellow-400",
-        text: "text-yellow-500"
+        accent: "text-yellow-400",
+        border: "border-yellow-500/50",
+        bg: "bg-yellow-500",
+        button: "bg-gradient-to-r from-yellow-600 to-yellow-400 hover:from-yellow-500 hover:to-yellow-300 text-black",
+        glow: "shadow-[0_0_20px_rgba(234,179,8,0.3)]"
     },
     arb: {
-        id: 'arb',
-        primary: "border-cyan-500",
-        secondary: "bg-cyan-900/20",
-        badge: "bg-cyan-600 text-white",
-        button: "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white",
-        shadow: "shadow-cyan-500/20 shadow-lg",
-        today: "border-cyan-400",
-        text: "text-cyan-500"
-    },
-    eth: {
-        id: 'eth',
-        primary: "border-slate-500",
-        secondary: "bg-slate-800",
-        badge: "bg-slate-600 text-white",
-        button: "bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-500 hover:to-slate-400 text-white",
-        shadow: "shadow-slate-500/20 shadow-lg",
-        today: "border-slate-400",
-        text: "text-slate-400"
+        accent: "text-cyan-400",
+        border: "border-cyan-500/50",
+        bg: "bg-cyan-500",
+        button: "bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 text-white",
+        glow: "shadow-[0_0_20px_rgba(34,211,238,0.3)]"
     },
     celo: {
-        id: 'celo',
-        primary: "border-green-500",
-        secondary: "bg-green-900/20",
-        badge: "bg-green-600 text-white",
-        button: "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white",
-        shadow: "shadow-green-500/20 shadow-lg",
-        today: "border-green-400",
-        text: "text-green-500"
+        accent: "text-green-400",
+        border: "border-green-500/50",
+        bg: "bg-green-500",
+        button: "bg-gradient-to-r from-green-600 to-green-400 hover:from-green-500 hover:to-green-300 text-white",
+        glow: "shadow-[0_0_20px_rgba(74,222,128,0.3)]"
     },
     monad: {
-        id: 'monad',
-        primary: "border-purple-500",
-        secondary: "bg-purple-900/20",
-        badge: "bg-purple-600 text-white",
-        button: "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white",
-        shadow: "shadow-purple-500/20 shadow-lg",
-        today: "border-purple-400",
-        text: "text-purple-500"
+        accent: "text-purple-400",
+        border: "border-purple-500/50",
+        bg: "bg-purple-500",
+        button: "bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-500 hover:to-purple-300 text-white",
+        glow: "shadow-[0_0_20px_rgba(168,85,247,0.3)]"
     },
     hyper: {
-        id: 'hyper',
-        primary: "border-pink-500",
-        secondary: "bg-pink-900/20",
-        badge: "bg-pink-600 text-white",
-        button: "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 text-white",
-        shadow: "shadow-pink-500/20 shadow-lg",
-        today: "border-pink-400",
-        text: "text-pink-500"
+        accent: "text-pink-400",
+        border: "border-pink-500/50",
+        bg: "bg-pink-500",
+        button: "bg-gradient-to-r from-pink-600 to-pink-400 hover:from-pink-500 hover:to-pink-300 text-white",
+        glow: "shadow-[0_0_20px_rgba(236,72,153,0.3)]"
+    },
+    eth: {
+        accent: "text-slate-200",
+        border: "border-slate-500/50",
+        bg: "bg-slate-500",
+        button: "bg-gradient-to-r from-slate-600 to-slate-400 hover:from-slate-500 hover:to-slate-300 text-white",
+        glow: "shadow-[0_0_20px_rgba(148,163,184,0.3)]"
     }
 };
 
@@ -124,10 +100,10 @@ const formatDate = (date: Date) => {
 type TabType = 'gm' | 'deploy' | 'launch' | 'donate';
 
 const TAB_LABELS: Record<TabType, string> = {
-    gm: "🌱 Beginner / Gm",
-    deploy: "💐 Pre-Intermediate / Deploy",
-    launch: "🎄 Intermediate / Launch",
-    donate: "🍒 Advanced / Donate"
+    gm: "🌱 Seed / Gm",
+    deploy: "💐 Flower / Deploy",
+    launch: "🎄 Tree / Launch",
+    donate: "🍒 Fruit / Donate"
 };
 
 const TAB_PRICES: Record<TabType, string> = {
@@ -277,20 +253,20 @@ export default function FarmCaster() {
   if (!isMounted) return null;
 
   return (
-    <main className="min-h-screen bg-[#0f0a06] text-[#e7dac7] font-sans pb-10">
+    <main className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-10">
 
       {/* SECTION 1: Header & Network Tabs */}
-      <div className="sticky top-0 z-10 bg-[#0f0a06]/95 backdrop-blur-sm border-b border-[#3d2b20] pt-4 pb-2">
+      <div className="sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800 pt-4 pb-2">
         <div className="max-w-3xl mx-auto px-4">
             <div className="flex justify-between items-center mb-4">
                 {/* Left: Farmer Identity */}
                 <div className="flex items-center gap-3">
-                     <div className="bg-[#1e140f] p-2 rounded-full border border-[#3d2b20] flex items-center justify-center w-10 h-10">
+                     <div className="bg-slate-900 p-2 rounded-full border border-slate-800 flex items-center justify-center w-10 h-10">
                         🚜
                      </div>
                      <div>
-                        <div className="text-[10px] text-[#8c7e73] font-bold uppercase tracking-widest">Farmer</div>
-                        <div className="font-bold text-[#e7dac7] text-sm leading-tight">
+                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Farmer</div>
+                        <div className="font-bold text-slate-200 text-sm leading-tight">
                             {address ? (ensName || `${address.slice(0,6)}...${address.slice(-4)}`) : "(Guest)"}
                         </div>
                      </div>
@@ -332,7 +308,11 @@ export default function FarmCaster() {
                               <button
                                 onClick={openConnectModal}
                                 type="button"
-                                className="px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20"
+                                className={clsx(
+                                    "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm",
+                                    currentTheme.button,
+                                    currentTheme.glow
+                                )}
                               >
                                 Connect Wallet
                               </button>
@@ -356,7 +336,9 @@ export default function FarmCaster() {
                                 onClick={handlePlant}
                                 disabled={isPending}
                                 className={clsx(
-                                    "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-500/20",
+                                    "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2",
+                                    currentTheme.button,
+                                    currentTheme.glow,
                                     isPending && "opacity-70 cursor-wait",
                                     "disabled:opacity-50 disabled:cursor-not-allowed"
                                 )}
@@ -387,8 +369,8 @@ export default function FarmCaster() {
                             className={clsx(
                                 "whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border",
                                 isActive
-                                ? `${theme.badge} border-transparent shadow-sm`
-                                : "bg-[#1e140f] border-[#3d2b20] text-[#8c7e73] hover:text-[#b0a090] hover:border-[#5c4030]"
+                                ? `${theme.bg} ${theme.glow} text-white border-transparent shadow-sm`
+                                : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600"
                             )}
                         >
                             {net.name}
@@ -412,7 +394,7 @@ export default function FarmCaster() {
 
         {/* SECTION 3: Seed Market (Tabs) */}
         <div className="space-y-4">
-            <div className="flex gap-2 border-b border-[#3d2b20] pb-0 overflow-x-auto">
+            <div className="flex gap-2 border-b border-slate-800 pb-0 overflow-x-auto">
                 {(['gm', 'deploy', 'launch', 'donate'] as const).map((tab) => (
                     <button
                         key={tab}
@@ -421,10 +403,10 @@ export default function FarmCaster() {
                             setSelectedSeed(SEED_DATA[tab][0]);
                         }}
                         className={clsx(
-                            "px-6 py-3 font-bold text-sm transition-all whitespace-nowrap",
+                            "px-6 py-3 font-bold text-sm transition-all whitespace-nowrap border-b-2",
                             activeTab === tab
-                                ? `border-b-2 ${currentTheme.primary} ${currentTheme.text}`
-                                : "text-[#8c7e73] hover:text-[#b0a090]"
+                                ? `${currentTheme.accent} border-current`
+                                : "text-slate-500 border-transparent hover:text-slate-400"
                         )}
                     >
                         {TAB_LABELS[tab]}
@@ -434,10 +416,10 @@ export default function FarmCaster() {
 
             {/* Price Display for current category */}
             <div className="flex justify-between items-center px-1">
-                <span className="text-xs text-[#8c7e73] uppercase tracking-wider">
-                    Cost: <span className={currentTheme.text}>{TAB_PRICES[activeTab]}</span>
+                <span className="text-xs text-slate-500 uppercase tracking-wider">
+                    Cost: <span className={currentTheme.accent}>{TAB_PRICES[activeTab]}</span>
                 </span>
-                <span className="text-xs text-[#8c7e73] uppercase tracking-wider">
+                <span className="text-xs text-slate-500 uppercase tracking-wider">
                     {userXP ? Number(userXP).toLocaleString() : '0'} XP Earned
                 </span>
             </div>
@@ -449,15 +431,15 @@ export default function FarmCaster() {
                         key={seed.id}
                         onClick={() => setSelectedSeed(seed)}
                         className={clsx(
-                            "bg-[#1e140f] border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all",
+                            "bg-slate-900 border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all",
                             selectedSeed.id === seed.id
-                                ? `${currentTheme.primary} ${currentTheme.secondary}`
-                                : "border-[#3d2b20] hover:border-[#5c4030]"
+                                ? `${currentTheme.border} ${currentTheme.glow} shadow-md`
+                                : "border-slate-800 hover:border-slate-600"
                         )}
                     >
                         <span className="text-3xl filter drop-shadow-md">{seed.icon}</span>
                         <div className="text-center">
-                            <span className="block text-sm font-bold text-[#e7dac7]">{seed.name}</span>
+                            <span className="block text-sm font-bold text-slate-200">{seed.name}</span>
                         </div>
                     </button>
                 ))}
