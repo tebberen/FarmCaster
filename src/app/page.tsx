@@ -7,7 +7,9 @@ import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/
 import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
 import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
 import { Calendar } from "../components/Calendar";
-import { SEED_DATA, CATEGORY_LABELS } from "../config/emojis";
+import { SEED_DATA, CATEGORY_LABELS, getEmojiById } from "../config/emojis";
+import { LeaderboardModal } from "../components/LeaderboardModal";
+import { SuccessModal } from "../components/SuccessModal";
 import { parseEther } from "viem";
 import clsx from "clsx";
 
@@ -110,6 +112,9 @@ export default function FarmCaster() {
   const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('gm');
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [lastPlantedSeedId, setLastPlantedSeedId] = useState<number | null>(null);
 
   // Map date string (YYYY-MM-DD) -> seedId (number)
   const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
@@ -117,7 +122,7 @@ export default function FarmCaster() {
   const { address, chain } = useAccount();
   const { data: ensName } = useEnsName({ address, chainId: mainnet.id });
   const { switchChain } = useSwitchChain();
-  const { writeContract, isPending, error: writeError } = useWriteContract();
+  const { writeContract, isPending, isSuccess, error: writeError } = useWriteContract();
 
   // Get current theme based on selected network
   const currentTheme = THEMES[selectedNetwork.id] || THEMES.base;
@@ -191,6 +196,12 @@ export default function FarmCaster() {
     }
   }, [chain]);
 
+  // Handle Transaction Success
+  useEffect(() => {
+    if (isSuccess) {
+      setSuccessModalOpen(true);
+    }
+  }, [isSuccess]);
 
   const handlePlant = (seedId: number) => {
     if (!chain) return alert("Please connect wallet first");
@@ -206,6 +217,8 @@ export default function FarmCaster() {
 
     const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
     if (!contractAddress) return alert("Contract not defined");
+
+    setLastPlantedSeedId(seedId);
 
     let value = 0n;
 
@@ -259,6 +272,24 @@ export default function FarmCaster() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-10">
 
+      {/* MODALS */}
+      <LeaderboardModal
+        isOpen={leaderboardOpen}
+        onClose={() => setLeaderboardOpen(false)}
+        networkId={selectedNetwork.id}
+        chainId={CHAIN_IDS[selectedNetwork.id]}
+        theme={currentTheme}
+      />
+
+      <SuccessModal
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        theme={currentTheme}
+        emoji={lastPlantedSeedId !== null ? getEmojiById(lastPlantedSeedId) : null}
+        networkName={selectedNetwork.name}
+        xpEarned={userXP ? Number(userXP).toLocaleString() : '0'}
+      />
+
       {/* SECTION 1: Header & Network Tabs */}
       <div className={clsx("sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b pt-4 pb-2", currentTheme.border)}>
         <div className="max-w-3xl mx-auto px-4">
@@ -277,89 +308,102 @@ export default function FarmCaster() {
                 </div>
 
                 {/* Right: Action / Connect Button */}
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openChainModal,
-                    openConnectModal,
-                    authenticationStatus,
-                    mounted,
-                  }) => {
-                    const ready = mounted && authenticationStatus !== 'loading';
-                    const connected =
-                      ready &&
-                      account &&
-                      chain &&
-                      (!authenticationStatus ||
-                        authenticationStatus === 'authenticated');
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setLeaderboardOpen(true)}
+                        className={clsx(
+                            "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all shadow-lg active:scale-95 bg-slate-800 border border-slate-700 hover:bg-slate-700"
+                        )}
+                        title="Leaderboard"
+                        aria-label="Leaderboard"
+                    >
+                        🏆
+                    </button>
 
-                    return (
-                      <div
-                        {...(!ready && {
-                          'aria-hidden': true,
-                          'style': {
-                            opacity: 0,
-                            pointerEvents: 'none',
-                            userSelect: 'none',
-                          },
-                        })}
-                      >
-                        {(() => {
-                          if (!connected) {
-                            return (
-                              <button
-                                onClick={openConnectModal}
-                                type="button"
-                                className={clsx(
-                                    "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm",
-                                    currentTheme.button,
-                                    currentTheme.glow
-                                )}
-                              >
-                                Connect Wallet
-                              </button>
-                            );
-                          }
+                    <ConnectButton.Custom>
+                      {({
+                        account,
+                        chain,
+                        openAccountModal,
+                        openChainModal,
+                        openConnectModal,
+                        authenticationStatus,
+                        mounted,
+                      }) => {
+                        const ready = mounted && authenticationStatus !== 'loading';
+                        const connected =
+                          ready &&
+                          account &&
+                          chain &&
+                          (!authenticationStatus ||
+                            authenticationStatus === 'authenticated');
 
-                          if (chain.unsupported) {
-                            return (
-                              <button
-                                onClick={openChainModal}
-                                type="button"
-                                className="px-4 py-2 rounded-xl font-bold bg-red-600 text-white hover:bg-red-500 transition-all text-sm"
-                              >
-                                Wrong Network
-                              </button>
-                            );
-                          }
+                        return (
+                          <div
+                            {...(!ready && {
+                              'aria-hidden': true,
+                              'style': {
+                                opacity: 0,
+                                pointerEvents: 'none',
+                                userSelect: 'none',
+                              },
+                            })}
+                          >
+                            {(() => {
+                              if (!connected) {
+                                return (
+                                  <button
+                                    onClick={openConnectModal}
+                                    type="button"
+                                    className={clsx(
+                                        "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm",
+                                        currentTheme.button,
+                                        currentTheme.glow
+                                    )}
+                                  >
+                                    Connect Wallet
+                                  </button>
+                                );
+                              }
 
-                          // "WATER FARM" Button
-                          return (
-                            <button
-                                onClick={handleWaterFarm}
-                                disabled={isPending}
-                                className={clsx(
-                                    "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2",
-                                    "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400", // Distinct Cyan/Blue gradient
-                                    "shadow-[0_0_15px_rgba(6,182,212,0.5)]", // Cyan glow
-                                    isPending && "opacity-70 cursor-wait",
-                                    "disabled:opacity-50 disabled:cursor-not-allowed"
-                                )}
-                            >
-                                {isPending ? (
-                                    <span>Watering...</span>
-                                ) : (
-                                    <span>💧 WATER FARM</span>
-                                )}
-                            </button>
-                          );
-                        })()}
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
+                              if (chain.unsupported) {
+                                return (
+                                  <button
+                                    onClick={openChainModal}
+                                    type="button"
+                                    className="px-4 py-2 rounded-xl font-bold bg-red-600 text-white hover:bg-red-500 transition-all text-sm"
+                                  >
+                                    Wrong Network
+                                  </button>
+                                );
+                              }
+
+                              // ACTION: Water Farm
+                              return (
+                                <button
+                                    onClick={handleWaterFarm}
+                                    disabled={isPending}
+                                    className={clsx(
+                                        "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2",
+                                        "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400", // Distinct Cyan/Blue gradient
+                                        "shadow-[0_0_15px_rgba(6,182,212,0.5)]", // Cyan glow
+                                        isPending && "opacity-70 cursor-wait",
+                                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                                    )}
+                                >
+                                    {isPending ? (
+                                        <span>Watering...</span>
+                                    ) : (
+                                        <span>💧 WATER FARM</span>
+                                    )}
+                                </button>
+                              );
+                            })()}
+                          </div>
+                        );
+                      }}
+                    </ConnectButton.Custom>
+                </div>
             </div>
 
             {/* Scrollable Network List */}
