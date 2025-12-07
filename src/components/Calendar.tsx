@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getEmojiById } from '../config/emojis';
 
 // Helper for date formatting YYYY-MM-DD
 const formatDate = (date: Date) => {
@@ -20,17 +21,6 @@ const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export const Calendar: React.FC<CalendarProps> = ({ history }) => {
   const [currentDate, setCurrentDate] = React.useState(new Date());
-
-  // Helper to get emoji for seedId
-  const getSeedEmoji = (seedId: number) => {
-    switch (seedId) {
-        case 0: return "🌱";
-        case 1: return "🍒";
-        case 2: return "🌻";
-        case 3: return "🌳";
-        default: return "🌱";
-    }
-  };
 
   // Generate days for Month View
   const getMonthDays = () => {
@@ -87,7 +77,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history }) => {
             `}
         >
             {hasLog && seedId !== undefined ? (
-                <span>{getSeedEmoji(seedId)}</span>
+                <span>{getEmojiById(seedId)}</span>
             ) : (
                 <span className="font-medium">
                     {date.getDate()}

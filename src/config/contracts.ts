@@ -1,5 +1,5 @@
 export const GARDEN_CONTRACTS: Record<string, `0x${string}`> = {
-  base: "0xb3fa8EcC4b73DA8fd4281Ac37D539ac53DE0663c",
+  base: "0xC699DaF3f7D757d5FCf3912b1A08Af1eea250ACd",
   bsc: "0x63487E1a96Fd4877a38805F933d682881B6c16CA",
   arb: "0x93A42B500C00876139a5B9DE8387484CA92924eB",
   celo: "0x0473F3566434e1b08A48ca8a27d4371402eB0776",
@@ -9,7 +9,7 @@ export const GARDEN_CONTRACTS: Record<string, `0x${string}`> = {
 };
 
 export const HUB_CONTRACTS: Record<string, `0x${string}`> = {
-  base: "0xdC0AB65C6de75D0A14bE498C21b7DAa5fc7a2548",
+  base: "0xE77d1E8225921E3E7EFBC1E02713e1FAfbD1c6ea",
   bsc: "0x69a9632Bd2385F5863CCD464f195aaeC8bC18c76",
   arb: "0xe81e5ad7a49b3Ff0F9468d52f0D60fb5ab92C69d",
   celo: "0x50bC8ed78A79CF9e41DA82919F828CBd45765Fc7",
@@ -19,31 +19,14 @@ export const HUB_CONTRACTS: Record<string, `0x${string}`> = {
 };
 
 export const GARDEN_ABI = [
-  {
-    "inputs": [{"internalType": "uint256", "name": "seedId", "type": "uint256"}],
-    "name": "plant",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
-      { "indexed": true, "internalType": "uint256", "name": "seedId", "type": "uint256" },
-      { "indexed": false, "internalType": "uint256", "name": "pricePaid", "type": "uint256" }
-    ],
-    "name": "SeedPlanted",
-    "type": "event"
-  }
+  { inputs: [{ name: "user", type: "address" }], name: "getUserHistory", outputs: [{ components: [{ name: "timestamp", type: "uint32" }, { name: "seedType", type: "uint8" }, { name: "actionType", type: "string" }], name: "", type: "tuple[]" }], stateMutability: "view", type: "function" },
+  { inputs: [{ name: "seedType", type: "uint8" }], name: "gm", outputs: [], stateMutability: "nonpayable", type: "function" },
+  { inputs: [{ name: "seedType", type: "uint8" }], name: "deploy", outputs: [], stateMutability: "payable", type: "function" },
+  { inputs: [{ name: "seedType", type: "uint8" }], name: "launch", outputs: [], stateMutability: "payable", type: "function" },
+  { inputs: [{ name: "seedType", type: "uint8" }], name: "donate", outputs: [], stateMutability: "payable", type: "function" }
 ] as const;
 
 export const HUB_ABI = [
-  {
-    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
-    "name": "userXP",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  }
+  { inputs: [{ name: "user", type: "address" }], name: "userXP", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" },
+  { inputs: [{ name: "user", type: "address" }], name: "userStreak", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" }
 ] as const;
