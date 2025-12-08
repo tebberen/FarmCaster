@@ -25,52 +25,52 @@ export interface Theme {
 const THEMES: Record<string, Theme> = {
     base: {
         accent: "text-blue-400",
-        border: "border-blue-500/50",
-        bg: "bg-blue-500",
+        border: "border-blue-500",
+        bg: "bg-blue-500/10",
         button: "bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 text-white",
-        glow: "shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+        glow: "shadow-[0_0_15px_rgba(59,130,246,0.2)]"
     },
     bsc: {
         accent: "text-yellow-400",
-        border: "border-yellow-500/50",
-        bg: "bg-yellow-500",
+        border: "border-yellow-500",
+        bg: "bg-yellow-500/10",
         button: "bg-gradient-to-r from-yellow-600 to-yellow-400 hover:from-yellow-500 hover:to-yellow-300 text-black",
-        glow: "shadow-[0_0_20px_rgba(234,179,8,0.3)]"
+        glow: "shadow-[0_0_15px_rgba(234,179,8,0.2)]"
     },
     arb: {
         accent: "text-cyan-400",
-        border: "border-cyan-500/50",
-        bg: "bg-cyan-500",
+        border: "border-cyan-500",
+        bg: "bg-cyan-500/10",
         button: "bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 text-white",
-        glow: "shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+        glow: "shadow-[0_0_15px_rgba(34,211,238,0.2)]"
     },
     celo: {
         accent: "text-green-400",
-        border: "border-green-500/50",
-        bg: "bg-green-500",
+        border: "border-green-500",
+        bg: "bg-green-500/10",
         button: "bg-gradient-to-r from-green-600 to-green-400 hover:from-green-500 hover:to-green-300 text-white",
-        glow: "shadow-[0_0_20px_rgba(74,222,128,0.3)]"
+        glow: "shadow-[0_0_15px_rgba(74,222,128,0.2)]"
     },
     monad: {
         accent: "text-purple-400",
-        border: "border-purple-500/50",
-        bg: "bg-purple-500",
+        border: "border-purple-500",
+        bg: "bg-purple-500/10",
         button: "bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-500 hover:to-purple-300 text-white",
-        glow: "shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+        glow: "shadow-[0_0_15px_rgba(168,85,247,0.2)]"
     },
     hyper: {
         accent: "text-pink-400",
-        border: "border-pink-500/50",
-        bg: "bg-pink-500",
+        border: "border-pink-500",
+        bg: "bg-pink-500/10",
         button: "bg-gradient-to-r from-pink-600 to-pink-400 hover:from-pink-500 hover:to-pink-300 text-white",
-        glow: "shadow-[0_0_20px_rgba(236,72,153,0.3)]"
+        glow: "shadow-[0_0_15px_rgba(236,72,153,0.2)]"
     },
     eth: {
         accent: "text-slate-200",
-        border: "border-slate-500/50",
-        bg: "bg-slate-500",
+        border: "border-slate-500",
+        bg: "bg-slate-500/10",
         button: "bg-gradient-to-r from-slate-600 to-slate-400 hover:from-slate-500 hover:to-slate-300 text-white",
-        glow: "shadow-[0_0_20px_rgba(148,163,184,0.3)]"
+        glow: "shadow-[0_0_15px_rgba(148,163,184,0.2)]"
     }
 };
 
