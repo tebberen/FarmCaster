@@ -59,7 +59,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
   };
 
   return (
-    <div className={clsx("bg-slate-900 border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300", theme.border)}>
+    <div className={clsx("bg-slate-900 border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300 max-w-lg mx-auto", theme.border)}>
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
             <h2 className={clsx("text-base font-bold", theme.accent)}>
@@ -84,10 +84,10 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
         </div>
 
         {/* Month Grid */}
-        <div className="grid grid-cols-7 gap-y-3 gap-x-1 justify-items-center">
+        <div className="grid grid-cols-7 gap-1 justify-items-center">
             {/* Weekday Headers */}
             {WEEKDAYS.map((d, i) => (
-                <div key={i} className={clsx("text-xs font-bold mb-1", theme.accent)}>{d}</div>
+                <div key={i} className={clsx("text-[10px] font-bold mb-1 opacity-70", theme.accent)}>{d}</div>
             ))}
 
             {/* Days */}
@@ -99,7 +99,6 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
                 const hasLog = history.has(dateStr);
                 const seedId = history.get(dateStr);
                 const matchedLog = hasLog ? { seedType: seedId! } : null;
-                const currentTheme = theme;
 
                 return (
                   <div
@@ -107,23 +106,23 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
                     title={dateStr} // Tooltip
                     className={`
                       relative flex flex-col items-center justify-center
-                      aspect-square rounded-xl border transition-all duration-300
+                      aspect-square rounded-lg border transition-all duration-300
                       w-full
                       ${
                         hasLog
-                          ? `${currentTheme.bg} ${currentTheme.border} ${currentTheme.glow}`
+                          ? `${theme.bg} ${theme.border} ${theme.glow}`
                           : "bg-slate-900/30 border-slate-800/50"
                       }
                     `}
                   >
                     {/* 1. DATE NUMBER (Always Visible - Top Right) */}
-                    <span className={`absolute top-1.5 right-2 text-[10px] font-mono ${hasLog ? 'opacity-80' : 'opacity-30'}`}>
+                    <span className={clsx("absolute top-1 right-1.5 text-[10px] font-bold", theme.accent, hasLog ? "opacity-100" : "opacity-60")}>
                       {dayDate.getDate()}
                     </span>
 
                     {/* 2. EMOJI CONTENT (Centered) */}
                     {hasLog && matchedLog ? (
-                      <span className="text-2xl sm:text-3xl filter drop-shadow-md animate-in zoom-in duration-300">
+                      <span className="text-xl sm:text-2xl filter drop-shadow-md animate-in zoom-in duration-300">
                         {getEmojiById(matchedLog.seedType).icon}
                       </span>
                     ) : (
