@@ -310,14 +310,11 @@ export default function FarmCaster() {
                 {/* Right: Action / Connect Button */}
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setLeaderboardOpen(true)}
-                        className={clsx(
-                            "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all shadow-lg active:scale-95 bg-slate-800 border border-slate-700 hover:bg-slate-700"
-                        )}
-                        title="Leaderboard"
-                        aria-label="Leaderboard"
+                      onClick={() => setLeaderboardOpen(true)}
+                      className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl font-bold transition-all"
                     >
-                        🏆
+                      <span>🏆</span>
+                      <span>Leaderboard</span>
                     </button>
 
                     <ConnectButton.Custom>
