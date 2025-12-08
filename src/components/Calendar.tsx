@@ -16,12 +16,13 @@ interface CalendarProps {
   history: Map<string, number>;
   networkName: string;
   theme: Theme;
+  userXP?: string;
 }
 
 // Screenshot starts with Sunday: S M T W T F S
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
+export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) => {
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
   // Generate days for Month View
@@ -96,13 +97,20 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
                 {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Farm Calendar
             </h2>
 
-            <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
-                 <button onClick={prevMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
-                    <ChevronLeft size={16} />
-                 </button>
-                 <button onClick={nextMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
-                    <ChevronRight size={16} />
-                 </button>
+            <div className="flex items-center gap-2">
+                {userXP && (
+                    <div className="bg-slate-800 px-2 py-1 rounded text-emerald-400 text-xs font-bold">
+                        {userXP} XP
+                    </div>
+                )}
+                <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
+                    <button onClick={prevMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
+                        <ChevronLeft size={16} />
+                    </button>
+                    <button onClick={nextMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -110,7 +118,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
         <div className="grid grid-cols-7 gap-y-3 gap-x-1 justify-items-center">
             {/* Weekday Headers */}
             {WEEKDAYS.map((d, i) => (
-                <div key={i} className="text-xs font-bold text-slate-500 mb-1">{d}</div>
+                <div key={i} className={clsx("text-xs font-bold mb-1", theme.accent)}>{d}</div>
             ))}
 
             {/* Days */}
