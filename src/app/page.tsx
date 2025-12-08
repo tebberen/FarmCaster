@@ -10,8 +10,10 @@ import { Calendar } from "../components/Calendar";
 import { SEED_DATA, CATEGORY_LABELS, getEmojiById } from "../config/emojis";
 import { LeaderboardModal } from "../components/LeaderboardModal";
 import { SuccessModal } from "../components/SuccessModal";
+import { OnboardingModal } from "../components/OnboardingModal";
 import { parseEther } from "viem";
 import clsx from "clsx";
+import { HelpCircle } from "lucide-react";
 
 // --- THEME DEFINITIONS ---
 export interface Theme {
@@ -114,6 +116,7 @@ export default function FarmCaster() {
   const [activeTab, setActiveTab] = useState<TabType>('gm');
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [lastPlantedSeedId, setLastPlantedSeedId] = useState<number | null>(null);
 
   // Map date string (YYYY-MM-DD) -> seedId (number)
@@ -130,7 +133,18 @@ export default function FarmCaster() {
   // Handle Hydration
   useEffect(() => {
     setIsMounted(true);
+
+    // Check onboarding
+    const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
+    if (!hasSeen) {
+      setShowOnboarding(true);
+    }
   }, []);
+
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('farmcaster_onboarding_v1', 'true');
+  };
 
   // Fetch XP
   const { data: userXP } = useReadContract({
@@ -290,6 +304,11 @@ export default function FarmCaster() {
         xpEarned={userXP ? Number(userXP).toLocaleString() : '0'}
       />
 
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={handleCloseOnboarding}
+      />
+
       {/* SECTION 1: Header & Network Tabs */}
       <div className={clsx("sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b pt-4 pb-2", currentTheme.border)}>
         <div className="max-w-3xl mx-auto px-4">
@@ -309,6 +328,14 @@ export default function FarmCaster() {
 
                 {/* Right: Action / Connect Button */}
                 <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowOnboarding(true)}
+                      className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
+                      title="Help & Guide"
+                    >
+                        <HelpCircle size={20} />
+                    </button>
+
                     <button
                       onClick={() => setLeaderboardOpen(true)}
                       className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl font-bold transition-all"
