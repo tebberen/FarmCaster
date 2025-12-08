@@ -443,7 +443,7 @@ export default function FarmCaster() {
 
         {/* SECTION 3: Seed Market (Tabs) */}
         <div className="space-y-4">
-            <div className="flex gap-2 border-b border-slate-800 pb-0 overflow-x-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {(['gm', 'deploy', 'launch', 'donate'] as const).map((tab) => (
                     <button
                         key={tab}
@@ -451,10 +451,10 @@ export default function FarmCaster() {
                             setActiveTab(tab);
                         }}
                         className={clsx(
-                            "px-6 py-3 font-bold text-sm transition-all whitespace-nowrap border-b-2",
+                            "flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm border transition-all duration-200",
                             activeTab === tab
-                                ? `${currentTheme.accent} border-current`
-                                : "text-slate-500 border-transparent hover:text-slate-400"
+                                ? `${currentTheme.bg} ${currentTheme.border} ${currentTheme.accent} ${currentTheme.glow}`
+                                : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:border-slate-700"
                         )}
                     >
                         {CATEGORY_LABELS[tab]}
