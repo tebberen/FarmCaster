@@ -71,14 +71,14 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
             className={clsx(
                 "relative flex items-center justify-center rounded-md transition-all w-9 h-9 text-sm border",
                 hasLog
-                    ? `${theme.bg} border-transparent text-white`
+                    ? `${theme.bg} ${theme.border} ${theme.glow}`
                     : isToday
                         ? `bg-slate-800 ${theme.border} text-slate-200`
-                        : "bg-slate-900 border-transparent text-slate-500"
+                        : "bg-slate-900/50 border-slate-800 text-slate-500"
             )}
         >
             {hasLog && seedId !== undefined ? (
-                <span>{getEmojiById(seedId).icon}</span>
+                <span className="text-2xl filter drop-shadow-md">{getEmojiById(seedId).icon}</span>
             ) : (
                 <span className="font-medium">
                     {date.getDate()}
