@@ -78,7 +78,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme }) => {
             )}
         >
             {hasLog && seedId !== undefined ? (
-                <span>{getEmojiById(seedId)}</span>
+                <span>{getEmojiById(seedId).icon}</span>
             ) : (
                 <span className="font-medium">
                     {date.getDate()}

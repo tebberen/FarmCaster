@@ -1,21 +1,21 @@
-export const GARDEN_CONTRACTS: Record<string, `0x${string}`> = {
-  base: "0xC699DaF3f7D757d5FCf3912b1A08Af1eea250ACd",
-  bsc: "0x63487E1a96Fd4877a38805F933d682881B6c16CA",
-  arb: "0x93A42B500C00876139a5B9DE8387484CA92924eB",
-  celo: "0x0473F3566434e1b08A48ca8a27d4371402eB0776",
-  eth: "0xF8e54Bb2D4743A4eFBFA8912376BC2e1CB0fCD4c",
-  monad: "0x1a7E946B4f6F4D49aDc073C30972494e3f9bd7Dc",
-  hyper: "0xc124Ab91A2C3B83519056485d4521f23043b7a53",
-};
-
 export const HUB_CONTRACTS: Record<string, `0x${string}`> = {
   base: "0xE77d1E8225921E3E7EFBC1E02713e1FAfbD1c6ea",
-  bsc: "0x69a9632Bd2385F5863CCD464f195aaeC8bC18c76",
-  arb: "0xe81e5ad7a49b3Ff0F9468d52f0D60fb5ab92C69d",
-  celo: "0x50bC8ed78A79CF9e41DA82919F828CBd45765Fc7",
-  eth: "0x706778CdAAA8CfbaA49E0A931266E71C87Ea30Ef",
-  monad: "0x9002634d00c91f7773e95a10d9D20a5e94263F61",
-  hyper: "0xbab962Cd818FC1f6246e2dA406DB2B3c324c608B",
+  bsc: "0xD429dc75BD30490b03b2878E1d2Cd21f4109ADD7",
+  arb: "0x43087619F1D8b3680e6e9971D9cEF82c66d1D0de",
+  celo: "0x8e352435Deeff7e9fd72C90C5843A2D449d9416c",
+  monad: "0xaDA5213c387f0679Ed3f6331a00ba2b598FaD5c8",
+  hyper: "0xf8BaC9c6902c96CeC31988dfb9ba89A51dd750Fa",
+  eth: "0x26ffb261F790511D9077F23D1fEFA0694c478C5D", // Ethereum Mainnet
+};
+
+export const GARDEN_CONTRACTS: Record<string, `0x${string}`> = {
+  base: "0xC699DaF3f7D757d5FCf3912b1A08Af1eea250ACd",
+  bsc: "0x27436DAB07b951c9C3Bf49187063b962E0e68cD6",
+  arb: "0xAe41c2Be134B3B9Ef50fcCc2a4369fe1f8016260",
+  celo: "0x101FaEbD9891EEB7c85281519A22d6b144f8100E",
+  monad: "0x10d0c4511341EdAB5AE25919EcC86Bf5c54C28c9",
+  hyper: "0xD6b62609ec7B67532A126D6315410b8d6b7dB03e",
+  eth: "0x6567Db0507bFF4add7fd065495447001911cbff6", // Ethereum Mainnet
 };
 
 export const GARDEN_ABI = [
@@ -29,5 +29,6 @@ export const GARDEN_ABI = [
 export const HUB_ABI = [
   { inputs: [{ name: "user", type: "address" }], name: "userXP", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ name: "user", type: "address" }], name: "userStreak", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-  { inputs: [], name: "getAllUsers", outputs: [{ name: "", type: "address[]" }], stateMutability: "view", type: "function" }
+  { inputs: [], name: "getAllUsers", outputs: [{ name: "", type: "address[]" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "getUserCount", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" }
 ] as const;

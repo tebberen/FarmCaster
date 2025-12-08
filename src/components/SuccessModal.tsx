@@ -16,7 +16,8 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
     if (!isOpen) return null;
 
     const handleShare = () => {
-        const text = `Just planted a ${emoji || '🌱'} on ${networkName} with FarmCaster! 🚜\n\nTotal XP: ${xpEarned || 'Unknown'}\n\n#FarmCaster #BuildOn${networkName.replace(/\s/g, '')}`;
+        // "Just planted [Emoji] on [Network]! #FarmCaster"
+        const text = `Just planted ${emoji || '🌱'} on ${networkName}! #FarmCaster`;
         const encodedText = encodeURIComponent(text);
         const url = `https://warpcast.com/~/compose?text=${encodedText}`;
         window.open(url, '_blank');
@@ -41,6 +42,12 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
                     <p className="text-slate-400">Your crops are growing nicely.</p>
                 </div>
 
+                {xpEarned && (
+                     <div className={clsx("px-4 py-2 rounded-lg bg-slate-950 border", theme.border)}>
+                        <span className={clsx("font-bold text-lg", theme.accent)}>+{xpEarned} XP</span>
+                    </div>
+                )}
+
                 <button
                     onClick={handleShare}
                     className={clsx(
@@ -49,7 +56,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
                     )}
                 >
                     <Share2 size={18} />
-                    <span>Cast on Warpcast</span>
+                    <span>Share on Warpcast</span>
                 </button>
 
             </div>

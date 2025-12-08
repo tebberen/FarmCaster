@@ -285,7 +285,7 @@ export default function FarmCaster() {
         isOpen={successModalOpen}
         onClose={() => setSuccessModalOpen(false)}
         theme={currentTheme}
-        emoji={lastPlantedSeedId !== null ? getEmojiById(lastPlantedSeedId) : null}
+        emoji={lastPlantedSeedId !== null ? getEmojiById(lastPlantedSeedId).icon : null}
         networkName={selectedNetwork.name}
         xpEarned={userXP ? Number(userXP).toLocaleString() : '0'}
       />
