@@ -438,6 +438,7 @@ export default function FarmCaster() {
                 history={plantingHistory}
                 networkName={selectedNetwork.name}
                 theme={currentTheme}
+                userXP={userXP ? Number(userXP).toLocaleString() : '0'}
             />
         </div>
 
@@ -451,25 +452,18 @@ export default function FarmCaster() {
                             setActiveTab(tab);
                         }}
                         className={clsx(
-                            "flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm border transition-all duration-200",
+                            "flex flex-col items-center justify-center gap-1 py-3 px-4 rounded-xl font-bold text-sm border transition-all duration-200",
                             activeTab === tab
                                 ? `${currentTheme.bg} ${currentTheme.border} ${currentTheme.accent} ${currentTheme.glow}`
                                 : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:border-slate-700"
                         )}
                     >
-                        {CATEGORY_LABELS[tab]}
+                        <span>{CATEGORY_LABELS[tab]}</span>
+                        <span className="text-[10px] font-normal opacity-70">
+                            {TAB_PRICES[tab]}
+                        </span>
                     </button>
                 ))}
-            </div>
-
-            {/* Price Display for current category */}
-            <div className="flex justify-between items-center px-1">
-                <span className="text-xs text-slate-500 uppercase tracking-wider">
-                    Cost: <span className={currentTheme.accent}>{TAB_PRICES[activeTab]}</span>
-                </span>
-                <span className="text-xs text-slate-500 uppercase tracking-wider">
-                    {userXP ? Number(userXP).toLocaleString() : '0'} XP Earned
-                </span>
             </div>
 
             {/* SEED MARKET GRID */}
