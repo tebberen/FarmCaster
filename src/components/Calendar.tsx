@@ -58,37 +58,6 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  const renderCell = (date: Date | null, index: number) => {
-      if (!date) return <div key={`empty-${index}`} className="w-9 h-9" />;
-
-      const dateStr = formatDate(date);
-      const hasLog = history.has(dateStr);
-      const seedId = history.get(dateStr);
-      const isToday = formatDate(new Date()) === dateStr;
-
-      return (
-        <div
-            key={dateStr}
-            className={clsx(
-                "relative flex items-center justify-center rounded-md transition-all w-9 h-9 text-sm border",
-                hasLog
-                    ? `${theme.bg} ${theme.border} ${theme.glow}`
-                    : isToday
-                        ? `bg-slate-800 ${theme.border} text-slate-200`
-                        : "bg-slate-900/50 border-slate-800 text-slate-500"
-            )}
-        >
-            {hasLog && seedId !== undefined ? (
-                <span className="text-2xl filter drop-shadow-md">{getEmojiById(seedId).icon}</span>
-            ) : (
-                <span className="font-medium">
-                    {date.getDate()}
-                </span>
-            )}
-        </div>
-      );
-  };
-
   return (
     <div className={clsx("bg-slate-900 border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300", theme.border)}>
         {/* Header */}
@@ -122,7 +91,48 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
             ))}
 
             {/* Days */}
-            {getMonthDays().map((date, i) => renderCell(date, i))}
+            {getMonthDays().map((date, i) => {
+                if (!date) return <div key={`empty-${i}`} className="aspect-square" />;
+
+                const dayDate = date;
+                const dateStr = formatDate(dayDate);
+                const hasLog = history.has(dateStr);
+                const seedId = history.get(dateStr);
+                const matchedLog = hasLog ? { seedType: seedId! } : null;
+                const currentTheme = theme;
+
+                return (
+                  <div
+                    key={i}
+                    title={dateStr} // Tooltip
+                    className={`
+                      relative flex flex-col items-center justify-center
+                      aspect-square rounded-xl border transition-all duration-300
+                      w-full
+                      ${
+                        hasLog
+                          ? `${currentTheme.bg} ${currentTheme.border} ${currentTheme.glow}`
+                          : "bg-slate-900/30 border-slate-800/50"
+                      }
+                    `}
+                  >
+                    {/* 1. DATE NUMBER (Always Visible - Top Right) */}
+                    <span className={`absolute top-1.5 right-2 text-[10px] font-mono ${hasLog ? 'opacity-80' : 'opacity-30'}`}>
+                      {dayDate.getDate()}
+                    </span>
+
+                    {/* 2. EMOJI CONTENT (Centered) */}
+                    {hasLog && matchedLog ? (
+                      <span className="text-2xl sm:text-3xl filter drop-shadow-md animate-in zoom-in duration-300">
+                        {getEmojiById(matchedLog.seedType).icon}
+                      </span>
+                    ) : (
+                      // Optional: Tiny dot for empty days to keep grid structure visible
+                      <span className="w-1 h-1 rounded-full bg-slate-800" />
+                    )}
+                  </div>
+                );
+            })}
         </div>
     </div>
   );
