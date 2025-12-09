@@ -309,10 +309,14 @@ export default function FarmCaster() {
         onClose={handleCloseOnboarding}
       />
 
-      {/* SECTION 1: Header & Network Tabs */}
-      <div className={clsx("sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b pt-4 pb-2", currentTheme.border)}>
-        <div className="max-w-3xl mx-auto px-4">
-            <div className="flex justify-between items-center mb-4">
+      {/* Main Layout Container */}
+      <div className="w-full max-w-lg mx-auto px-4 space-y-6">
+
+        {/* SECTION 1: Header & Network Tabs */}
+        {/* Sticky Header */}
+        <div className={clsx("sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b pt-4 pb-2", currentTheme.border)}>
+             {/* Header Content */}
+             <div className="flex justify-between items-center mb-4">
                 {/* Left: Farmer Identity */}
                 <div className="flex items-center gap-3">
                      <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10", currentTheme.bg, "border-transparent text-white")}>
@@ -428,10 +432,10 @@ export default function FarmCaster() {
                       }}
                     </ConnectButton.Custom>
                 </div>
-            </div>
+             </div>
 
-            {/* Scrollable Network List */}
-            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+             {/* Network Tabs */}
+             <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide w-full">
                 {NETWORKS.map(net => {
                     const isActive = selectedNetwork.id === net.id;
                     const theme = THEMES[net.id] || THEMES.base;
@@ -450,14 +454,11 @@ export default function FarmCaster() {
                         </button>
                     )
                 })}
-            </div>
+             </div>
         </div>
-      </div>
 
-      <div className="px-4 max-w-3xl mx-auto space-y-8 mt-6">
-
-        {/* SECTION 2: Single Calendar Grid */}
-        <div className="space-y-2">
+        {/* SECTION 2: Calendar */}
+        <div className="w-full">
              <Calendar
                 history={plantingHistory}
                 networkName={selectedNetwork.name}
@@ -466,9 +467,8 @@ export default function FarmCaster() {
             />
         </div>
 
-        {/* SECTION 3: Seed Market (Tabs) */}
-        <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {/* SECTION 3: Seed Market Categories (Tabs) */}
+        <div className="w-full grid grid-cols-2 gap-3">
                 {(['gm', 'deploy', 'launch', 'donate'] as const).map((tab) => (
                     <button
                         key={tab}
@@ -488,10 +488,10 @@ export default function FarmCaster() {
                         </span>
                     </button>
                 ))}
-            </div>
+        </div>
 
-            {/* SEED MARKET GRID */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {/* SECTION 4: Seed Market Grid */}
+        <div className="w-full grid grid-cols-2 gap-3">
                 {SEED_DATA[activeTab].map((seed) => (
                     <button
                         key={seed.id}
@@ -508,7 +508,6 @@ export default function FarmCaster() {
                         </div>
                     </button>
                 ))}
-            </div>
         </div>
 
         {writeError && (
