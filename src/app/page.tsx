@@ -274,10 +274,10 @@ export default function FarmCaster() {
            <h3 className="font-bold text-lg mb-3 opacity-80">Seed Market</h3>
            <div className="grid grid-cols-2 gap-3 mb-6">
               {[
-                { id: 'gm', label: '🌱 Seed / Gm', price: 'Free' },
-                { id: 'deploy', label: '💐 Flower / Deploy', price: '$0.10' },
-                { id: 'launch', label: '🎄 Tree / Launch', price: '$0.15' },
-                { id: 'donate', label: '🍒 Fruit / Donate', price: '$0.20' }
+                { id: 'gm', label: '🌱 Seed / Gm', price: 'Free', xp: '1 XP' },
+                { id: 'deploy', label: '💐 Flower / Deploy', price: '$0.10', xp: '2 XP' },
+                { id: 'launch', label: '🎄 Tree / Launch', price: '$0.15', xp: '3 XP' },
+                { id: 'donate', label: '🍒 Fruit / Donate', price: '$0.20', xp: '5 XP' }
               ].map((cat) => (
                 <button
                   key={cat.id}
@@ -288,8 +288,19 @@ export default function FarmCaster() {
                       : `bg-white/50 ${currentTheme.border} ${currentTheme.text} hover:bg-white`}
                   `}
                 >
-                  <span className="font-bold text-sm">{cat.label}</span>
-                  <span className="text-xs opacity-80 font-mono mt-1">{cat.price}</span>
+                  <div className="flex flex-col items-center">
+                    <span className="font-bold text-lg">{cat.label}</span>
+
+                    <div className="flex items-center gap-2 mt-1">
+                       {/* Price */}
+                       <span className="text-xs opacity-80 font-mono">{cat.price}</span>
+
+                       {/* XP Badge */}
+                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold bg-black/10 ${currentTheme.text}`}>
+                         +{cat.xp}
+                       </span>
+                    </div>
+                  </div>
                 </button>
               ))}
            </div>
