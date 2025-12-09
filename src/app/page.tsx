@@ -17,63 +17,79 @@ import { HelpCircle } from "lucide-react";
 
 // --- THEME DEFINITIONS ---
 export interface Theme {
-    accent: string;
-    border: string;
+    id: string;
     bg: string;
-    button: string;
-    glow: string;
+    accent: string;
+    text: string;
+    border: string;
+    ring: string;
+    lightButton: string;
 }
 
 const THEMES: Record<string, Theme> = {
-    base: {
-        accent: "text-blue-400",
-        border: "border-blue-500",
-        bg: "bg-blue-500/10",
-        button: "bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 text-white",
-        glow: "shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-    },
-    bsc: {
-        accent: "text-yellow-400",
-        border: "border-yellow-500",
-        bg: "bg-yellow-500/10",
-        button: "bg-gradient-to-r from-yellow-600 to-yellow-400 hover:from-yellow-500 hover:to-yellow-300 text-black",
-        glow: "shadow-[0_0_15px_rgba(234,179,8,0.2)]"
-    },
-    arb: {
-        accent: "text-cyan-400",
-        border: "border-cyan-500",
-        bg: "bg-cyan-500/10",
-        button: "bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 text-white",
-        glow: "shadow-[0_0_15px_rgba(34,211,238,0.2)]"
-    },
-    celo: {
-        accent: "text-green-400",
-        border: "border-green-500",
-        bg: "bg-green-500/10",
-        button: "bg-gradient-to-r from-green-600 to-green-400 hover:from-green-500 hover:to-green-300 text-white",
-        glow: "shadow-[0_0_15px_rgba(74,222,128,0.2)]"
-    },
-    monad: {
-        accent: "text-purple-400",
-        border: "border-purple-500",
-        bg: "bg-purple-500/10",
-        button: "bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-500 hover:to-purple-300 text-white",
-        glow: "shadow-[0_0_15px_rgba(168,85,247,0.2)]"
-    },
-    hyper: {
-        accent: "text-pink-400",
-        border: "border-pink-500",
-        bg: "bg-pink-500/10",
-        button: "bg-gradient-to-r from-pink-600 to-pink-400 hover:from-pink-500 hover:to-pink-300 text-white",
-        glow: "shadow-[0_0_15px_rgba(236,72,153,0.2)]"
-    },
-    eth: {
-        accent: "text-slate-200",
-        border: "border-slate-500",
-        bg: "bg-slate-500/10",
-        button: "bg-gradient-to-r from-slate-600 to-slate-400 hover:from-slate-500 hover:to-slate-300 text-white",
-        glow: "shadow-[0_0_15px_rgba(148,163,184,0.2)]"
-    }
+  base: {
+    id: 'base',
+    bg: "bg-blue-50", // Light Pastel Blue
+    accent: "bg-blue-600 hover:bg-blue-700 text-white",
+    text: "text-blue-900",
+    border: "border-blue-200",
+    ring: "ring-blue-500",
+    lightButton: "bg-white text-blue-700 hover:bg-blue-50 border border-blue-200"
+  },
+  bsc: {
+    id: 'bsc',
+    bg: "bg-amber-50", // Light Pastel Yellow/Gold
+    accent: "bg-yellow-500 hover:bg-yellow-600 text-black",
+    text: "text-yellow-900",
+    border: "border-yellow-200",
+    ring: "ring-yellow-500",
+    lightButton: "bg-white text-yellow-700 hover:bg-yellow-50 border border-yellow-200"
+  },
+  arb: {
+    id: 'arb',
+    bg: "bg-cyan-50", // Light Pastel Cyan
+    accent: "bg-cyan-600 hover:bg-cyan-700 text-white",
+    text: "text-cyan-900",
+    border: "border-cyan-200",
+    ring: "ring-cyan-500",
+    lightButton: "bg-white text-cyan-700 hover:bg-cyan-50 border border-cyan-200"
+  },
+  celo: {
+    id: 'celo',
+    bg: "bg-lime-50", // Light Pastel Lime/Green
+    accent: "bg-lime-600 hover:bg-lime-700 text-white",
+    text: "text-lime-900",
+    border: "border-lime-200",
+    ring: "ring-lime-500",
+    lightButton: "bg-white text-lime-700 hover:bg-lime-50 border border-lime-200"
+  },
+  eth: {
+    id: 'eth',
+    bg: "bg-slate-50", // Light Pastel Gray
+    accent: "bg-slate-800 hover:bg-slate-900 text-white",
+    text: "text-slate-900",
+    border: "border-slate-200",
+    ring: "ring-slate-500",
+    lightButton: "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
+  },
+  monad: {
+    id: 'monad',
+    bg: "bg-violet-50", // Light Pastel Purple
+    accent: "bg-violet-600 hover:bg-violet-700 text-white",
+    text: "text-violet-900",
+    border: "border-violet-200",
+    ring: "ring-violet-500",
+    lightButton: "bg-white text-violet-700 hover:bg-violet-50 border border-violet-200"
+  },
+  hyper: {
+    id: 'hyper',
+    bg: "bg-rose-50", // Light Pastel Pink
+    accent: "bg-rose-500 hover:bg-rose-600 text-white",
+    text: "text-rose-900",
+    border: "border-rose-200",
+    ring: "ring-rose-500",
+    lightButton: "bg-white text-rose-700 hover:bg-rose-50 border border-rose-200"
+  }
 };
 
 // Define Network list (Prioritize Base, Arb, Celo)
@@ -284,7 +300,7 @@ export default function FarmCaster() {
   if (!isMounted) return null;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-10">
+    <main className={clsx("min-h-screen transition-colors duration-500 font-sans pb-10", currentTheme.bg, currentTheme.text)}>
 
       {/* MODALS */}
       <LeaderboardModal
@@ -314,17 +330,17 @@ export default function FarmCaster() {
 
         {/* SECTION 1: Header & Network Tabs */}
         {/* Sticky Header */}
-        <div className={clsx("sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b pt-4 pb-2", currentTheme.border)}>
+        <div className={clsx("sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b pt-4 pb-2 transition-colors", currentTheme.border)}>
              {/* Header Content */}
              <div className="flex justify-between items-center mb-4">
                 {/* Left: Farmer Identity */}
                 <div className="flex items-center gap-3">
-                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10", currentTheme.bg, "border-transparent text-white")}>
+                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10 bg-white", currentTheme.border)}>
                         🚜
                      </div>
                      <div>
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Farmer</div>
-                        <div className={clsx("font-bold text-sm leading-tight", currentTheme.accent)}>
+                        <div className={clsx("font-bold text-sm leading-tight", currentTheme.text)}>
                             {address ? (ensName || `${address.slice(0,6)}...${address.slice(-4)}`) : "(Guest)"}
                         </div>
                      </div>
@@ -334,7 +350,7 @@ export default function FarmCaster() {
                 <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowOnboarding(true)}
-                      className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
+                      className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
                       title="Help & Guide"
                     >
                         <HelpCircle size={20} />
@@ -342,10 +358,13 @@ export default function FarmCaster() {
 
                     <button
                       onClick={() => setLeaderboardOpen(true)}
-                      className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl font-bold transition-all"
+                      className={clsx(
+                          "flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all shadow-sm",
+                          currentTheme.lightButton
+                      )}
                     >
                       <span>🏆</span>
-                      <span>Leaderboard</span>
+                      <span className="hidden sm:inline">Leaderboard</span>
                     </button>
 
                     <ConnectButton.Custom>
@@ -385,11 +404,10 @@ export default function FarmCaster() {
                                     type="button"
                                     className={clsx(
                                         "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm",
-                                        currentTheme.button,
-                                        currentTheme.glow
+                                        currentTheme.accent
                                     )}
                                   >
-                                    Connect Wallet
+                                    Connect
                                   </button>
                                 );
                               }
@@ -413,8 +431,7 @@ export default function FarmCaster() {
                                     disabled={isPending}
                                     className={clsx(
                                         "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2",
-                                        "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400", // Distinct Cyan/Blue gradient
-                                        "shadow-[0_0_15px_rgba(6,182,212,0.5)]", // Cyan glow
+                                        currentTheme.accent,
                                         isPending && "opacity-70 cursor-wait",
                                         "disabled:opacity-50 disabled:cursor-not-allowed"
                                     )}
@@ -422,7 +439,7 @@ export default function FarmCaster() {
                                     {isPending ? (
                                         <span>Watering...</span>
                                     ) : (
-                                        <span>💧 WATER FARM</span>
+                                        <span>💧 WATER</span>
                                     )}
                                 </button>
                               );
@@ -438,7 +455,6 @@ export default function FarmCaster() {
              <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide w-full">
                 {NETWORKS.map(net => {
                     const isActive = selectedNetwork.id === net.id;
-                    const theme = THEMES[net.id] || THEMES.base;
                     return (
                         <button
                             key={net.id}
@@ -446,8 +462,8 @@ export default function FarmCaster() {
                             className={clsx(
                                 "whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border",
                                 isActive
-                                ? `${theme.bg} ${theme.glow} text-white border-transparent shadow-sm`
-                                : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600"
+                                ? clsx(currentTheme.accent, "border-transparent shadow-sm")
+                                : "bg-white border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
                             )}
                         >
                             {net.name}
@@ -478,8 +494,8 @@ export default function FarmCaster() {
                         className={clsx(
                             "flex flex-col items-center justify-center gap-1 py-3 px-4 rounded-xl font-bold text-sm border transition-all duration-200",
                             activeTab === tab
-                                ? `${currentTheme.bg} ${currentTheme.border} ${currentTheme.accent} ${currentTheme.glow}`
-                                : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:border-slate-700"
+                                ? clsx(currentTheme.bg, "ring-2 ring-inset", currentTheme.ring, currentTheme.text, "border-transparent")
+                                : "bg-white shadow-sm border-transparent text-slate-500 hover:bg-slate-50"
                         )}
                     >
                         <span>{CATEGORY_LABELS[tab]}</span>
@@ -497,21 +513,21 @@ export default function FarmCaster() {
                         key={seed.id}
                         onClick={() => handlePlant(seed.id)}
                         className={clsx(
-                            "bg-slate-900 border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all hover:bg-slate-800",
+                            "bg-white border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all hover:bg-slate-50",
                             currentTheme.border, // Apply theme border
                             "shadow-sm hover:shadow-md"
                         )}
                     >
-                        <span className="text-3xl filter drop-shadow-md">{seed.icon}</span>
+                        <span className="text-3xl filter drop-shadow-sm">{seed.icon}</span>
                         <div className="text-center">
-                            <span className="block text-sm font-bold text-slate-200">{seed.name}</span>
+                            <span className="block text-sm font-bold text-slate-800">{seed.name}</span>
                         </div>
                     </button>
                 ))}
         </div>
 
         {writeError && (
-            <div className="p-3 bg-red-900/20 border border-red-900/50 rounded-lg text-red-400 text-xs text-center">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs text-center">
             {writeError.message.split('\n')[0]}
             </div>
         )}

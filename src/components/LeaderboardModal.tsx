@@ -73,29 +73,29 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onCl
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
 
                 {/* Header */}
-                <div className={clsx("p-4 border-b flex justify-between items-center bg-slate-950/50", theme.border)}>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <div className={clsx("p-4 border-b flex justify-between items-center bg-slate-50", theme.border)}>
+                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                         <span className="text-2xl">🏆</span> Top 100 Farmers
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-400 hover:text-slate-600">
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* List */}
-                <div className="overflow-y-auto flex-1 p-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                <div className="overflow-y-auto flex-1 p-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                     {leaderboard.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500">
+                        <div className="text-center py-10 text-slate-400">
                             No farmers found yet.
                         </div>
                     ) : (
                         leaderboard.map((entry, index) => {
                             const isCurrentUser = connectedAddress && entry.address.toLowerCase() === connectedAddress.toLowerCase();
 
-                            let rankIcon = <span className="font-mono text-slate-500 w-6 text-center">{index + 1}</span>;
+                            let rankIcon = <span className="font-mono text-slate-400 w-6 text-center font-bold">{index + 1}</span>;
                             if (index === 0) rankIcon = <span className="text-xl w-6 text-center">🥇</span>;
                             if (index === 1) rankIcon = <span className="text-xl w-6 text-center">🥈</span>;
                             if (index === 2) rankIcon = <span className="text-xl w-6 text-center">🥉</span>;
@@ -106,21 +106,21 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onCl
                                     className={clsx(
                                         "flex items-center justify-between p-3 rounded-xl transition-colors border",
                                         isCurrentUser
-                                            ? `${theme.bg} bg-opacity-10 ${theme.border} border-opacity-50`
-                                            : "bg-slate-950 border-transparent hover:bg-slate-800"
+                                            ? `${theme.bg} ${theme.border}`
+                                            : "bg-white border-transparent hover:bg-slate-50"
                                     )}
                                 >
                                     <div className="flex items-center gap-3">
                                         {rankIcon}
                                         <div className="flex flex-col">
-                                            <span className={clsx("font-bold font-mono", isCurrentUser ? "text-white" : "text-slate-300")}>
+                                            <span className={clsx("font-bold font-mono", isCurrentUser ? theme.text : "text-slate-600")}>
                                                 {entry.address.slice(0, 6)}...{entry.address.slice(-4)}
                                             </span>
-                                            {isCurrentUser && <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">You</span>}
+                                            {isCurrentUser && <span className={clsx("text-[10px] uppercase font-bold tracking-wider opacity-70", theme.text)}>You</span>}
                                         </div>
                                     </div>
 
-                                    <div className={clsx("font-bold", theme.accent)}>
+                                    <div className={clsx("font-bold", theme.text)}>
                                         {entry.xp.toLocaleString()} XP
                                     </div>
                                 </div>
