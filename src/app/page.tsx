@@ -18,9 +18,9 @@ import { HelpCircle } from "lucide-react";
 // --- THEME DEFINITIONS ---
 export interface Theme {
     id: string;
-    pageBg: string; // New: Page Background (Gradient)
-    cardBg: string; // New: Card Background (Semi-transparent)
-    bg: string;     // Keep for legacy or specific element backgrounds if needed, or remove if unused. Keeping for compatibility.
+    pageBg: string; // New: Page Background (Solid or Gradient)
+    cardBg: string; // New: Card Background
+    bg: string;     // Legacy support (optional, can be mapped to pageBg)
     accent: string;
     text: string;
     border: string;
@@ -29,82 +29,82 @@ export interface Theme {
 }
 
 const THEMES: Record<string, Theme> = {
+  celo: {
+    id: 'celo',
+    pageBg: "bg-[#FFF9E5]", // Creamy Yellow/Beige
+    cardBg: "bg-[#FFECC2]", // Darker Cream
+    bg: "bg-[#FFF9E5]",
+    accent: "bg-[#FACC15] text-black hover:bg-[#EAB308]", // Golden Yellow
+    text: "text-[#422006]", // Dark Brown
+    border: "border-[#FDE047]",
+    ring: "ring-[#FACC15]",
+    lightButton: "bg-white/50 text-[#422006] hover:bg-white border border-[#FDE047]"
+  },
   base: {
     id: 'base',
-    pageBg: "bg-gradient-to-b from-blue-50 to-white",
-    cardBg: "bg-white/60 backdrop-blur-sm",
-    bg: "bg-blue-50",
-    accent: "bg-blue-600 hover:bg-blue-700 text-white",
-    text: "text-blue-900",
-    border: "border-blue-200",
-    ring: "ring-blue-500",
-    lightButton: "bg-white/50 text-blue-700 hover:bg-white border border-blue-200"
+    pageBg: "bg-[#EFF6FF]", // Very Pale Blue
+    cardBg: "bg-[#DBEAFE]", // Pale Blue
+    bg: "bg-[#EFF6FF]",
+    accent: "bg-[#3B82F6] text-white hover:bg-[#2563EB]",
+    text: "text-[#1E3A8A]", // Dark Blue
+    border: "border-[#93C5FD]",
+    ring: "ring-[#3B82F6]",
+    lightButton: "bg-white/50 text-[#1E3A8A] hover:bg-white border border-[#93C5FD]"
   },
   bsc: {
     id: 'bsc',
-    pageBg: "bg-gradient-to-b from-amber-50 to-white",
-    cardBg: "bg-white/60 backdrop-blur-sm",
-    bg: "bg-amber-50",
-    accent: "bg-yellow-500 hover:bg-yellow-600 text-black",
-    text: "text-yellow-900",
-    border: "border-yellow-200",
-    ring: "ring-yellow-500",
-    lightButton: "bg-white/50 text-yellow-700 hover:bg-white border border-yellow-200"
+    pageBg: "bg-[#FEFCE8]", // Pale Yellow
+    cardBg: "bg-[#FEF08A]", // Yellow-200
+    bg: "bg-[#FEFCE8]",
+    accent: "bg-[#CA8A04] text-white hover:bg-[#A16207]",
+    text: "text-[#422006]", // Dark Brown
+    border: "border-[#FDE047]",
+    ring: "ring-[#CA8A04]",
+    lightButton: "bg-white/50 text-[#422006] hover:bg-white border border-[#FDE047]"
   },
   arb: {
     id: 'arb',
-    pageBg: "bg-gradient-to-b from-cyan-50 to-white",
-    cardBg: "bg-white/60 backdrop-blur-sm",
-    bg: "bg-cyan-50",
-    accent: "bg-cyan-600 hover:bg-cyan-700 text-white",
-    text: "text-cyan-900",
-    border: "border-cyan-200",
-    ring: "ring-cyan-500",
-    lightButton: "bg-white/50 text-cyan-700 hover:bg-white border border-cyan-200"
-  },
-  celo: {
-    id: 'celo',
-    pageBg: "bg-gradient-to-b from-lime-50 to-white",
-    cardBg: "bg-white/60 backdrop-blur-sm",
-    bg: "bg-lime-50",
-    accent: "bg-lime-600 hover:bg-lime-700 text-white",
-    text: "text-lime-900",
-    border: "border-lime-200",
-    ring: "ring-lime-500",
-    lightButton: "bg-white/50 text-lime-700 hover:bg-white border border-lime-200"
-  },
-  eth: {
-    id: 'eth',
-    pageBg: "bg-gradient-to-b from-slate-50 to-white",
-    cardBg: "bg-white/60 backdrop-blur-sm",
-    bg: "bg-slate-50",
-    accent: "bg-slate-800 hover:bg-slate-900 text-white",
-    text: "text-slate-900",
-    border: "border-slate-200",
-    ring: "ring-slate-500",
-    lightButton: "bg-white/50 text-slate-700 hover:bg-white border border-slate-200"
+    pageBg: "bg-[#ECFEFF]", // Cyan-50
+    cardBg: "bg-[#CFFAFE]", // Cyan-100
+    bg: "bg-[#ECFEFF]",
+    accent: "bg-[#06B6D4] text-white hover:bg-[#0891B2]",
+    text: "text-[#164E63]", // Cyan-900
+    border: "border-[#67E8F9]",
+    ring: "ring-[#06B6D4]",
+    lightButton: "bg-white/50 text-[#164E63] hover:bg-white border border-[#67E8F9]"
   },
   monad: {
     id: 'monad',
-    pageBg: "bg-gradient-to-b from-violet-50 to-white",
-    cardBg: "bg-white/60 backdrop-blur-sm",
-    bg: "bg-violet-50",
-    accent: "bg-violet-600 hover:bg-violet-700 text-white",
-    text: "text-violet-900",
-    border: "border-violet-200",
-    ring: "ring-violet-500",
-    lightButton: "bg-white/50 text-violet-700 hover:bg-white border border-violet-200"
+    pageBg: "bg-[#F5F3FF]", // Violet-50
+    cardBg: "bg-[#EDE9FE]", // Violet-100
+    bg: "bg-[#F5F3FF]",
+    accent: "bg-[#8B5CF6] text-white hover:bg-[#7C3AED]",
+    text: "text-[#4C1D95]", // Violet-900
+    border: "border-[#C4B5FD]",
+    ring: "ring-[#8B5CF6]",
+    lightButton: "bg-white/50 text-[#4C1D95] hover:bg-white border border-[#C4B5FD]"
   },
   hyper: {
     id: 'hyper',
-    pageBg: "bg-gradient-to-b from-rose-50 to-white",
-    cardBg: "bg-white/60 backdrop-blur-sm",
-    bg: "bg-rose-50",
-    accent: "bg-rose-500 hover:bg-rose-600 text-white",
-    text: "text-rose-900",
-    border: "border-rose-200",
-    ring: "ring-rose-500",
-    lightButton: "bg-white/50 text-rose-700 hover:bg-white border border-rose-200"
+    pageBg: "bg-[#FDF2F8]", // Pink-50
+    cardBg: "bg-[#FCE7F3]", // Pink-100
+    bg: "bg-[#FDF2F8]",
+    accent: "bg-[#EC4899] text-white hover:bg-[#DB2777]",
+    text: "text-[#831843]", // Pink-900
+    border: "border-[#F9A8D4]",
+    ring: "ring-[#EC4899]",
+    lightButton: "bg-white/50 text-[#831843] hover:bg-white border border-[#F9A8D4]"
+  },
+  eth: {
+    id: 'eth',
+    pageBg: "bg-[#FAFAF9]", // Stone-50
+    cardBg: "bg-[#E7E5E4]", // Stone-200
+    bg: "bg-[#FAFAF9]",
+    accent: "bg-[#57534E] text-white hover:bg-[#44403C]",
+    text: "text-[#292524]", // Stone-800
+    border: "border-[#D6D3D1]",
+    ring: "ring-[#57534E]",
+    lightButton: "bg-white/50 text-[#292524] hover:bg-white border border-[#D6D3D1]"
   }
 };
 
@@ -345,17 +345,17 @@ export default function FarmCaster() {
       <div className="w-full max-w-lg mx-auto px-4 space-y-6">
 
         {/* SECTION 1: Header & Network Tabs */}
-        {/* Sticky Header - Updated to be transparent/blur instead of white/80 */}
+        {/* Sticky Header - Transparent to blend with background */}
         <div className={clsx("sticky top-0 z-10 bg-transparent backdrop-blur-md pt-4 pb-2 transition-colors", "border-b-0")}>
              {/* Header Content */}
              <div className="flex justify-between items-center mb-4">
                 {/* Left: Farmer Identity */}
                 <div className="flex items-center gap-3">
-                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10", currentTheme.cardBg, currentTheme.border)}>
+                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10 shadow-sm", currentTheme.cardBg, currentTheme.border)}>
                         🚜
                      </div>
                      <div>
-                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Farmer</div>
+                        <div className="text-[10px] opacity-70 font-bold uppercase tracking-widest">Farmer</div>
                         <div className={clsx("font-bold text-sm leading-tight", currentTheme.text)}>
                             {address ? (ensName || `${address.slice(0,6)}...${address.slice(-4)}`) : "(Guest)"}
                         </div>
@@ -366,7 +366,7 @@ export default function FarmCaster() {
                 <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowOnboarding(true)}
-                      className="p-2 hover:bg-white/50 rounded-lg transition-colors text-slate-500 hover:text-slate-700"
+                      className={clsx("p-2 rounded-lg transition-colors hover:bg-white/40", currentTheme.text)}
                       title="Help & Guide"
                     >
                         <HelpCircle size={20} />
@@ -479,7 +479,7 @@ export default function FarmCaster() {
                                 "whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border",
                                 isActive
                                 ? clsx(currentTheme.accent, "border-transparent shadow-sm")
-                                : clsx(currentTheme.cardBg, "border-transparent text-slate-500 hover:text-slate-800 hover:bg-white")
+                                : clsx(currentTheme.cardBg, "border-transparent text-slate-500 hover:text-slate-800 hover:bg-white/60")
                             )}
                         >
                             {net.name}
@@ -537,7 +537,7 @@ export default function FarmCaster() {
                     >
                         <span className="text-3xl filter drop-shadow-sm">{seed.icon}</span>
                         <div className="text-center">
-                            <span className="block text-sm font-bold text-slate-800">{seed.name}</span>
+                            <span className="block text-sm font-bold opacity-90" style={{ color: 'inherit' }}>{seed.name}</span>
                         </div>
                     </button>
                 ))}
