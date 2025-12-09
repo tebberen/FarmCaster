@@ -7,6 +7,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Trophy, Droplets, HelpCircle, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { HUB_CONTRACTS, GARDEN_CONTRACTS, HUB_ABI, GARDEN_ABI } from "../config/contracts";
 import { SEED_DATA, getEmojiById } from "../config/emojis";
+import { OnboardingModal } from "../components/OnboardingModal";
 
 // --- THEME CONFIG (Pastel Tone-on-Tone) ---
 export interface Theme {
@@ -16,6 +17,7 @@ export interface Theme {
   cardBg: string;
   accent: string;
   text: string;
+  strongText: string;
   border: string;
   ring?: string;
   activeBox: string;
@@ -30,6 +32,7 @@ const THEMES: Record<string, Theme> = {
     cardBg: "bg-[#DBEAFE]", // Pale Blue
     accent: "bg-blue-600 hover:bg-blue-700 text-white",
     text: "text-blue-900",
+    strongText: "text-blue-600",
     border: "border-blue-300",
     ring: "ring-blue-500",
     activeBox: "bg-white shadow-blue-200",
@@ -42,6 +45,7 @@ const THEMES: Record<string, Theme> = {
     cardBg: "bg-[#FEF3C7]", // Pale Gold
     accent: "bg-amber-500 hover:bg-amber-600 text-white",
     text: "text-amber-900",
+    strongText: "text-amber-600",
     border: "border-amber-300",
     ring: "ring-amber-500",
     activeBox: "bg-white shadow-amber-200",
@@ -54,6 +58,7 @@ const THEMES: Record<string, Theme> = {
     cardBg: "bg-[#FEF9C3]", // Light Yellow
     accent: "bg-[#EAB308] hover:bg-[#CA8A04] text-[#422006]", // Golden Button
     text: "text-[#422006]", // Dark Brown Text
+    strongText: "text-green-600",
     border: "border-[#FDE047]",
     ring: "ring-yellow-400",
     activeBox: "bg-white shadow-yellow-200",
@@ -66,15 +71,16 @@ const THEMES: Record<string, Theme> = {
     cardBg: "bg-[#CFFAFE]",
     accent: "bg-cyan-600 hover:bg-cyan-700 text-white",
     text: "text-cyan-900",
+    strongText: "text-cyan-600",
     border: "border-cyan-300",
     ring: "ring-cyan-500",
     activeBox: "bg-white shadow-cyan-200",
     bg: "bg-[#CFFAFE]"
   },
   // Add defaults for others to prevent crash
-  eth: { id: 'eth', name: 'Ethereum', pageBg: 'bg-slate-50', cardBg: 'bg-slate-200', accent: 'bg-slate-800 text-white', text: 'text-slate-900', border: 'border-slate-300', activeBox: 'bg-white', bg: 'bg-slate-200' },
-  monad: { id: 'monad', name: 'Monad', pageBg: 'bg-purple-50', cardBg: 'bg-purple-200', accent: 'bg-purple-600 text-white', text: 'text-purple-900', border: 'border-purple-300', activeBox: 'bg-white', bg: 'bg-purple-200' },
-  hyper: { id: 'hyper', name: 'Hyper', pageBg: 'bg-pink-50', cardBg: 'bg-pink-200', accent: 'bg-pink-500 text-white', text: 'text-pink-900', border: 'border-pink-300', activeBox: 'bg-white', bg: 'bg-pink-200' }
+  eth: { id: 'eth', name: 'Ethereum', pageBg: 'bg-slate-50', cardBg: 'bg-slate-200', accent: 'bg-slate-800 text-white', text: 'text-slate-900', strongText: 'text-slate-600', border: 'border-slate-300', activeBox: 'bg-white', bg: 'bg-slate-200' },
+  monad: { id: 'monad', name: 'Monad', pageBg: 'bg-purple-50', cardBg: 'bg-purple-200', accent: 'bg-purple-600 text-white', text: 'text-purple-900', strongText: 'text-purple-600', border: 'border-purple-300', activeBox: 'bg-white', bg: 'bg-purple-200' },
+  hyper: { id: 'hyper', name: 'Hyper', pageBg: 'bg-pink-50', cardBg: 'bg-pink-200', accent: 'bg-pink-500 text-white', text: 'text-pink-900', strongText: 'text-pink-600', border: 'border-pink-300', activeBox: 'bg-white', bg: 'bg-pink-200' }
 };
 
 const CHAIN_IDS: Record<string, number> = {
@@ -89,6 +95,7 @@ export default function FarmCaster() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Derive Current Theme
   const currentTheme = React.useMemo(() => {
@@ -97,8 +104,18 @@ export default function FarmCaster() {
     return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // Fix Hydration
-  useEffect(() => { setIsMounted(true); }, []);
+  // Fix Hydration & Check Onboarding
+  useEffect(() => {
+      setIsMounted(true);
+      const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
+      if (!hasSeen) setShowOnboarding(true);
+  }, []);
+
+  // Update localStorage when closing onboarding
+  const handleCloseOnboarding = () => {
+      setShowOnboarding(false);
+      localStorage.setItem('farmcaster_onboarding_v1', 'true');
+  };
 
   // --- DATA FETCHING (V4) ---
   const gardenAddress = GARDEN_CONTRACTS[currentTheme.id] || GARDEN_CONTRACTS.base;
@@ -164,14 +181,22 @@ export default function FarmCaster() {
 
   return (
     <main className={`min-h-screen transition-colors duration-500 pb-20 ${currentTheme.pageBg} ${currentTheme.text} font-sans`}>
+      <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
 
       {/* 1. HEADER */}
-      <header className={`sticky top-0 z-50 backdrop-blur-md border-b ${currentTheme.border} px-4 py-3 flex justify-between items-center`}>
+      <header className={`sticky top-0 z-50 backdrop-blur-md border-b ${currentTheme.border} h-16 flex justify-between items-center px-4`}>
         <div className="flex items-center gap-2">
           <div className={`p-2 rounded-full ${currentTheme.accent}`}>🚜</div>
           <span className="font-bold text-lg">Farmer {address?.slice(0,6)}...</span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+           <button
+             onClick={() => setShowOnboarding(true)}
+             className={`p-2 rounded-full hover:bg-black/5 transition-colors ${currentTheme.strongText}`}
+             title="How to Play"
+           >
+             <HelpCircle size={24} />
+           </button>
            <button className={`px-3 py-2 rounded-xl font-bold flex items-center gap-2 border ${currentTheme.border} bg-white/50`}>
              🏆 Leaderboard
            </button>
@@ -210,7 +235,7 @@ export default function FarmCaster() {
            </div>
 
            {/* Grid Header */}
-           <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold opacity-60">
+           <div className={`grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold ${currentTheme.strongText}`}>
              {['S','M','T','W','T','F','S'].map(d => <div key={d}>{d}</div>)}
            </div>
 
@@ -224,7 +249,7 @@ export default function FarmCaster() {
 
                  return (
                    <div key={dayNum} className={`relative aspect-square rounded-xl border flex items-center justify-center transition-all ${emoji ? currentTheme.activeBox : 'bg-white/30 border-transparent'}`}>
-                      <span className="absolute top-1 right-1 text-[9px] opacity-40 font-mono">{dayNum}</span>
+                      <span className={`absolute top-1.5 right-2 text-xs font-bold ${currentTheme.strongText}`}>{dayNum}</span>
                       {emoji && <span className="text-2xl">{emoji}</span>}
                    </div>
                  )
