@@ -8,6 +8,7 @@ import { Trophy, Droplets, HelpCircle, Share2, ChevronLeft, ChevronRight } from 
 import { HUB_CONTRACTS, GARDEN_CONTRACTS, HUB_ABI, GARDEN_ABI } from "../config/contracts";
 import { SEED_DATA, getEmojiById } from "../config/emojis";
 import { OnboardingModal } from "../components/OnboardingModal";
+import { LeaderboardModal } from "../components/LeaderboardModal";
 
 // --- THEME CONFIG (Pastel Tone-on-Tone) ---
 export interface Theme {
@@ -96,6 +97,7 @@ export default function FarmCaster() {
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
   // Derive Current Theme
   const currentTheme = React.useMemo(() => {
@@ -182,6 +184,13 @@ export default function FarmCaster() {
   return (
     <main className={`min-h-screen transition-colors duration-500 pb-20 ${currentTheme.pageBg} ${currentTheme.text} font-sans`}>
       <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
+      <LeaderboardModal
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+        networkId={currentTheme.id}
+        chainId={CHAIN_IDS[currentTheme.id]}
+        theme={currentTheme}
+      />
 
       {/* 1. HEADER */}
       <header className={`sticky top-0 z-50 backdrop-blur-md border-b ${currentTheme.border} h-16 flex justify-between items-center px-4`}>
@@ -197,7 +206,10 @@ export default function FarmCaster() {
            >
              <HelpCircle size={24} />
            </button>
-           <button className={`px-3 py-2 rounded-xl font-bold flex items-center gap-2 border ${currentTheme.border} bg-white/50`}>
+           <button
+             onClick={() => setIsLeaderboardOpen(true)}
+             className={`px-3 py-2 rounded-xl font-bold flex items-center gap-2 border ${currentTheme.border} bg-white/50 hover:bg-white transition-colors`}
+           >
              🏆 Leaderboard
            </button>
            <button
@@ -249,8 +261,8 @@ export default function FarmCaster() {
 
                  return (
                    <div key={dayNum} className={`relative aspect-square rounded-xl border flex items-center justify-center transition-all ${emoji ? currentTheme.activeBox : 'bg-white/30 border-transparent'}`}>
-                      <span className={`absolute top-1.5 right-2 text-xs font-bold ${currentTheme.strongText}`}>{dayNum}</span>
-                      {emoji && <span className="text-2xl">{emoji}</span>}
+                      <span className={`absolute top-0.5 right-1 text-[9px] font-bold ${currentTheme.strongText}`}>{dayNum}</span>
+                      {emoji && <span className="text-xl">{emoji}</span>}
                    </div>
                  )
               })}
