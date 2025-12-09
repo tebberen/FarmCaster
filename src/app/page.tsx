@@ -1,647 +1,275 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useWriteContract, useAccount, useSwitchChain, useReadContract, useEnsName } from "wagmi";
-import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/contracts";
-import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
-import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
-import { SEED_DATA, CATEGORY_LABELS, getEmojiById } from "../config/emojis";
-import { LeaderboardModal } from "../components/LeaderboardModal";
-import { SuccessModal } from "../components/SuccessModal";
-import { OnboardingModal } from "../components/OnboardingModal";
+import { useAccount, useReadContract, useWriteContract, useSwitchChain, usePublicClient } from "wagmi";
 import { parseEther } from "viem";
-import clsx from "clsx";
-import { HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { Trophy, Droplets, HelpCircle, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { HUB_CONTRACTS, GARDEN_CONTRACTS, HUB_ABI, GARDEN_ABI } from "../config/contracts";
+import { SEED_DATA, getEmojiById } from "../config/emojis";
 
-// --- THEME DEFINITIONS ---
+// --- THEME CONFIG (Pastel Tone-on-Tone) ---
 export interface Theme {
-    id: string;
-    pageBg: string; // New: Page Background (Solid or Gradient)
-    cardBg: string; // New: Card Background
-    bg: string;     // Legacy support (optional, can be mapped to pageBg)
-    accent: string;
-    text: string;
-    border: string;
-    ring: string;
-    lightButton: string;
+  id: string;
+  name: string;
+  pageBg: string;
+  cardBg: string;
+  accent: string;
+  text: string;
+  border: string;
+  ring?: string;
+  activeBox: string;
+  bg?: string;
 }
 
 const THEMES: Record<string, Theme> = {
-  celo: {
-    id: 'celo',
-    pageBg: "bg-[#FFF9E5]", // Creamy Yellow/Beige
-    cardBg: "bg-[#FFECC2]", // Darker Cream
-    bg: "bg-[#FFF9E5]",
-    accent: "bg-[#FACC15] text-black hover:bg-[#EAB308]", // Golden Yellow
-    text: "text-[#422006]", // Dark Brown
-    border: "border-[#FDE047]",
-    ring: "ring-[#FACC15]",
-    lightButton: "bg-white/50 text-[#422006] hover:bg-white border border-[#FDE047]"
-  },
   base: {
     id: 'base',
-    pageBg: "bg-[#EFF6FF]", // Very Pale Blue
+    name: 'Base',
+    pageBg: "bg-[#EFF6FF]", // Ice Blue
     cardBg: "bg-[#DBEAFE]", // Pale Blue
-    bg: "bg-[#EFF6FF]",
-    accent: "bg-[#3B82F6] text-white hover:bg-[#2563EB]",
-    text: "text-[#1E3A8A]", // Dark Blue
-    border: "border-[#93C5FD]",
-    ring: "ring-[#3B82F6]",
-    lightButton: "bg-white/50 text-[#1E3A8A] hover:bg-white border border-[#93C5FD]"
+    accent: "bg-blue-600 hover:bg-blue-700 text-white",
+    text: "text-blue-900",
+    border: "border-blue-300",
+    ring: "ring-blue-500",
+    activeBox: "bg-white shadow-blue-200",
+    bg: "bg-[#DBEAFE]"
   },
   bsc: {
     id: 'bsc',
-    pageBg: "bg-[#FEFCE8]", // Pale Yellow
-    cardBg: "bg-[#FEF08A]", // Yellow-200
-    bg: "bg-[#FEFCE8]",
-    accent: "bg-[#CA8A04] text-white hover:bg-[#A16207]",
-    text: "text-[#422006]", // Dark Brown
+    name: 'BSC',
+    pageBg: "bg-[#FFFBEB]", // Cream
+    cardBg: "bg-[#FEF3C7]", // Pale Gold
+    accent: "bg-amber-500 hover:bg-amber-600 text-white",
+    text: "text-amber-900",
+    border: "border-amber-300",
+    ring: "ring-amber-500",
+    activeBox: "bg-white shadow-amber-200",
+    bg: "bg-[#FEF3C7]"
+  },
+  celo: {
+    id: 'celo',
+    name: 'Celo',
+    pageBg: "bg-[#FFFFF0]", // Ivory/Cream (Like reference)
+    cardBg: "bg-[#FEF9C3]", // Light Yellow
+    accent: "bg-[#EAB308] hover:bg-[#CA8A04] text-[#422006]", // Golden Button
+    text: "text-[#422006]", // Dark Brown Text
     border: "border-[#FDE047]",
-    ring: "ring-[#CA8A04]",
-    lightButton: "bg-white/50 text-[#422006] hover:bg-white border border-[#FDE047]"
+    ring: "ring-yellow-400",
+    activeBox: "bg-white shadow-yellow-200",
+    bg: "bg-[#FEF9C3]"
   },
   arb: {
     id: 'arb',
-    pageBg: "bg-[#ECFEFF]", // Cyan-50
-    cardBg: "bg-[#CFFAFE]", // Cyan-100
-    bg: "bg-[#ECFEFF]",
-    accent: "bg-[#06B6D4] text-white hover:bg-[#0891B2]",
-    text: "text-[#164E63]", // Cyan-900
-    border: "border-[#67E8F9]",
-    ring: "ring-[#06B6D4]",
-    lightButton: "bg-white/50 text-[#164E63] hover:bg-white border border-[#67E8F9]"
+    name: 'Arbitrum',
+    pageBg: "bg-[#ECFEFF]", // Cyan Tint
+    cardBg: "bg-[#CFFAFE]",
+    accent: "bg-cyan-600 hover:bg-cyan-700 text-white",
+    text: "text-cyan-900",
+    border: "border-cyan-300",
+    ring: "ring-cyan-500",
+    activeBox: "bg-white shadow-cyan-200",
+    bg: "bg-[#CFFAFE]"
   },
-  monad: {
-    id: 'monad',
-    pageBg: "bg-[#F5F3FF]", // Violet-50
-    cardBg: "bg-[#EDE9FE]", // Violet-100
-    bg: "bg-[#F5F3FF]",
-    accent: "bg-[#8B5CF6] text-white hover:bg-[#7C3AED]",
-    text: "text-[#4C1D95]", // Violet-900
-    border: "border-[#C4B5FD]",
-    ring: "ring-[#8B5CF6]",
-    lightButton: "bg-white/50 text-[#4C1D95] hover:bg-white border border-[#C4B5FD]"
-  },
-  hyper: {
-    id: 'hyper',
-    pageBg: "bg-[#FDF2F8]", // Pink-50
-    cardBg: "bg-[#FCE7F3]", // Pink-100
-    bg: "bg-[#FDF2F8]",
-    accent: "bg-[#EC4899] text-white hover:bg-[#DB2777]",
-    text: "text-[#831843]", // Pink-900
-    border: "border-[#F9A8D4]",
-    ring: "ring-[#EC4899]",
-    lightButton: "bg-white/50 text-[#831843] hover:bg-white border border-[#F9A8D4]"
-  },
-  eth: {
-    id: 'eth',
-    pageBg: "bg-[#FAFAF9]", // Stone-50
-    cardBg: "bg-[#E7E5E4]", // Stone-200
-    bg: "bg-[#FAFAF9]",
-    accent: "bg-[#57534E] text-white hover:bg-[#44403C]",
-    text: "text-[#292524]", // Stone-800
-    border: "border-[#D6D3D1]",
-    ring: "ring-[#57534E]",
-    lightButton: "bg-white/50 text-[#292524] hover:bg-white border border-[#D6D3D1]"
-  }
+  // Add defaults for others to prevent crash
+  eth: { id: 'eth', name: 'Ethereum', pageBg: 'bg-slate-50', cardBg: 'bg-slate-200', accent: 'bg-slate-800 text-white', text: 'text-slate-900', border: 'border-slate-300', activeBox: 'bg-white', bg: 'bg-slate-200' },
+  monad: { id: 'monad', name: 'Monad', pageBg: 'bg-purple-50', cardBg: 'bg-purple-200', accent: 'bg-purple-600 text-white', text: 'text-purple-900', border: 'border-purple-300', activeBox: 'bg-white', bg: 'bg-purple-200' },
+  hyper: { id: 'hyper', name: 'Hyper', pageBg: 'bg-pink-50', cardBg: 'bg-pink-200', accent: 'bg-pink-500 text-white', text: 'text-pink-900', border: 'border-pink-300', activeBox: 'bg-white', bg: 'bg-pink-200' }
 };
 
-// Define Network list (Prioritize Base, Arb, Celo)
-const NETWORKS = [
-  { id: "base", name: "Base", chain: base },
-  { id: "bsc", name: "BSC", chain: bsc },
-  { id: "arb", name: "Arbitrum", chain: arbitrum },
-  { id: "celo", name: "Celo", chain: celo },
-  { id: "eth", name: "Ethereum", chain: mainnet },
-  { id: "monad", name: "Monad", chain: monadTestnet },
-  { id: "hyper", name: "HyperEVM", chain: hyperEvmTestnet },
-];
-
-// Map network IDs to Chain IDs
 const CHAIN_IDS: Record<string, number> = {
-  base: 8453, bsc: 56, eth: 1, arb: 42161,
-  monad: 10143, hyper: 999, celo: 42220
-};
-
-// Helper for date formatting YYYY-MM-DD
-const formatDate = (date: Date) => {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${year}-${month}-${day}`;
-};
-
-type TabType = 'gm' | 'deploy' | 'launch' | 'donate';
-
-const TAB_PRICES: Record<TabType, string> = {
-    gm: "Free",
-    deploy: "$0.10",
-    launch: "$0.15",
-    donate: "$0.20"
+  base: 8453, bsc: 56, celo: 42220, arb: 42161, eth: 1, monad: 10143, hyper: 999
 };
 
 export default function FarmCaster() {
-  const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS[0]);
-  const [isMounted, setIsMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>('gm');
-  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-  const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [lastPlantedSeedId, setLastPlantedSeedId] = useState<number | null>(null);
+  const { address, chain } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const { writeContract, isPending, isSuccess } = useWriteContract();
 
-  // Calendar State
+  const [isMounted, setIsMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
 
-  // Map date string (YYYY-MM-DD) -> seedId (number)
-  const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
-
-  const { address, chain } = useAccount();
-  const { data: ensName } = useEnsName({ address, chainId: mainnet.id });
-  const { switchChain } = useSwitchChain();
-  const { writeContract, isPending, isSuccess, error: writeError } = useWriteContract();
-
-  // Get current theme based on selected network
-  const currentTheme = THEMES[selectedNetwork.id] || THEMES.base;
-
-  // Calendar Helpers
-  const nextMonth = () => {
-    setViewDate(prev => {
-        const d = new Date(prev);
-        d.setMonth(d.getMonth() + 1);
-        return d;
-    });
-  };
-
-  const prevMonth = () => {
-    setViewDate(prev => {
-        const d = new Date(prev);
-        d.setMonth(d.getMonth() - 1);
-        return d;
-    });
-  };
-
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const startDayOffset = new Date(year, month, 1).getDay();
-  const monthName = viewDate.toLocaleString('default', { month: 'long' });
-
-  // Handle Hydration
-  useEffect(() => {
-    setIsMounted(true);
-    // Ensure viewDate is consistent with client if needed, though new Date() usually fine
-    setViewDate(new Date());
-
-    // Check onboarding
-    const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
-    if (!hasSeen) {
-      setShowOnboarding(true);
-    }
-  }, []);
-
-  const handleCloseOnboarding = () => {
-    setShowOnboarding(false);
-    localStorage.setItem('farmcaster_onboarding_v1', 'true');
-  };
-
-  // Fetch XP
-  const { data: userXP } = useReadContract({
-    address: HUB_CONTRACTS[selectedNetwork.id],
-    abi: HUB_ABI,
-    functionName: "userXP",
-    args: address ? [address] : undefined,
-    chainId: CHAIN_IDS[selectedNetwork.id],
-    query: {
-        enabled: !!address && isMounted,
-        refetchInterval: 5000
-    }
-  });
-
-  // Fetch History via useReadContract
-  const { data: historyData } = useReadContract({
-    address: GARDEN_CONTRACTS[selectedNetwork.id],
-    abi: GARDEN_ABI,
-    functionName: "getUserHistory",
-    args: address ? [address] : undefined,
-    chainId: CHAIN_IDS[selectedNetwork.id],
-    query: {
-      enabled: !!address && isMounted,
-      refetchInterval: 10000 // Poll every 10 seconds
-    }
-  });
-
-  // Process history data
-  useEffect(() => {
-    if (historyData && Array.isArray(historyData)) {
-      const newHistory = new Map<string, number>();
-
-      // First pass: Group by date and find max seedType
-      const dailyMaxSeed = new Map<string, number>();
-
-      historyData.forEach((record: any) => {
-        // Record structure: [timestamp, seedType, actionType]
-        const timestamp = Number(record.timestamp);
-        const seedType = Number(record.seedType);
-
-        const date = new Date(timestamp * 1000);
-        const dateStr = formatDate(date);
-
-        const currentMax = dailyMaxSeed.get(dateStr) || -1;
-        if (seedType > currentMax) {
-          dailyMaxSeed.set(dateStr, seedType);
-        }
-      });
-
-      setPlantingHistory(dailyMaxSeed);
-    } else {
-        // Clear history when switching networks if no data
-        setPlantingHistory(new Map());
-    }
-  }, [historyData, selectedNetwork.id]);
-
-
-  // 1. AUTO-SYNC: If wallet changes network, update UI
-  useEffect(() => {
-    if (chain) {
-      const match = NETWORKS.find(n => CHAIN_IDS[n.id] === chain.id);
-      if (match) setSelectedNetwork(match);
-    }
+  // Derive Current Theme
+  const currentTheme = React.useMemo(() => {
+    if (!chain) return THEMES.base;
+    const themeId = Object.keys(CHAIN_IDS).find((k) => CHAIN_IDS[k] === chain.id);
+    return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // Handle Transaction Success
-  useEffect(() => {
-    if (isSuccess) {
-      setSuccessModalOpen(true);
-    }
-  }, [isSuccess]);
+  // Fix Hydration
+  useEffect(() => { setIsMounted(true); }, []);
 
-  const handlePlant = (seedId: number) => {
-    if (!chain) return alert("Please connect wallet first");
+  // --- DATA FETCHING (V4) ---
+  const gardenAddress = GARDEN_CONTRACTS[currentTheme.id] || GARDEN_CONTRACTS.base;
+  const { data: historyData } = useReadContract({
+    address: gardenAddress,
+    abi: GARDEN_ABI,
+    functionName: 'getUserHistory',
+    args: [address!],
+    query: { enabled: !!address }
+  });
 
-    const targetChainId = CHAIN_IDS[selectedNetwork.id];
+  const historyMap = React.useMemo(() => {
+    if (!historyData) return {};
+    const map: Record<string, number> = {};
+    historyData.forEach((item) => {
+       const d = new Date(Number(item.timestamp) * 1000);
+       const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+       const sid = Number(item.seedType);
+       if (map[key] === undefined || sid > map[key]) map[key] = sid;
+    });
+    return Object.fromEntries(Object.entries(map).map(([k,v]) => [k, getEmojiById(v)?.icon || '']));
+  }, [historyData]);
 
-    if (chain.id !== targetChainId) {
-      if (confirm(`Wrong Network! Switch to ${selectedNetwork.name}?`)) {
-        switchChain({ chainId: targetChainId });
-      }
-      return;
-    }
+  // --- CALENDAR LOGIC ---
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const days = new Date(year, month + 1, 0).getDate();
+    const startDay = new Date(year, month, 1).getDay();
+    return { days, startDay, monthName: date.toLocaleString('default', { month: 'long' }), year };
+  };
 
-    const contractAddress = GARDEN_CONTRACTS[selectedNetwork.id];
-    if (!contractAddress) return alert("Contract not defined");
+  const { days, startDay, monthName, year } = getDaysInMonth(viewDate);
 
-    setLastPlantedSeedId(seedId);
+  // --- ACTION ---
+  const handlePlant = (id: number) => {
+    if (!chain) return alert("Connect Wallet!");
+    let func: 'gm' | 'deploy' | 'launch' | 'donate' = 'gm';
+    let val = 0n;
+    if (id >= 10 && id < 20) { func = 'deploy'; val = 30000000000000n; }
+    else if (id >= 20 && id < 30) { func = 'launch'; val = 45000000000000n; }
+    else if (id >= 30) { func = 'donate'; val = 60000000000000n; }
 
-    let value = 0n;
-
-    // Logic: 0-9 gm, 10-19 deploy, 20-29 launch, 30-39 donate
-    if (seedId >= 0 && seedId <= 9) {
-      value = 0n;
+    if (func === 'gm') {
       writeContract({
-        address: contractAddress,
+        address: gardenAddress,
         abi: GARDEN_ABI,
         functionName: 'gm',
-        args: [seedId],
+        args: [id]
       });
-    } else if (seedId >= 10 && seedId <= 19) {
-      value = parseEther("0.00003");
+    } else {
       writeContract({
-        address: contractAddress,
+        address: gardenAddress,
         abi: GARDEN_ABI,
-        functionName: 'deploy',
-        args: [seedId],
-        value,
-      });
-    } else if (seedId >= 20 && seedId <= 29) {
-      value = parseEther("0.000045");
-      writeContract({
-        address: contractAddress,
-        abi: GARDEN_ABI,
-        functionName: 'launch',
-        args: [seedId],
-        value,
-      });
-    } else if (seedId >= 30 && seedId <= 39) {
-      value = parseEther("0.00006");
-      writeContract({
-        address: contractAddress,
-        abi: GARDEN_ABI,
-        functionName: 'donate',
-        args: [seedId],
-        value,
+        functionName: func,
+        args: [id],
+        value: val
       });
     }
   };
 
-  const handleWaterFarm = () => {
-      // Calls gm(0)
-      handlePlant(0);
-  };
-
-  // Only render content when mounted to prevent hydration mismatch
   if (!isMounted) return null;
 
   return (
-    <main className={clsx("min-h-screen transition-colors duration-500 font-sans pb-10", currentTheme.pageBg, currentTheme.text)}>
+    <main className={`min-h-screen transition-colors duration-500 pb-20 ${currentTheme.pageBg} ${currentTheme.text} font-sans`}>
 
-      {/* MODALS */}
-      <LeaderboardModal
-        isOpen={leaderboardOpen}
-        onClose={() => setLeaderboardOpen(false)}
-        networkId={selectedNetwork.id}
-        chainId={CHAIN_IDS[selectedNetwork.id]}
-        theme={currentTheme}
-      />
-
-      <SuccessModal
-        isOpen={successModalOpen}
-        onClose={() => setSuccessModalOpen(false)}
-        theme={currentTheme}
-        emoji={lastPlantedSeedId !== null ? getEmojiById(lastPlantedSeedId).icon : null}
-        networkName={selectedNetwork.name}
-        xpEarned={userXP ? Number(userXP).toLocaleString() : '0'}
-      />
-
-      <OnboardingModal
-        isOpen={showOnboarding}
-        onClose={handleCloseOnboarding}
-      />
-
-      {/* Main Layout Container */}
-      <div className="w-full max-w-lg mx-auto px-4 space-y-6">
-
-        {/* SECTION 1: Header & Network Tabs */}
-        {/* Sticky Header - Transparent to blend with background */}
-        <div className={clsx("sticky top-0 z-10 bg-transparent backdrop-blur-md pt-4 pb-2 transition-colors", "border-b-0")}>
-             {/* Header Content */}
-             <div className="flex justify-between items-center mb-4">
-                {/* Left: Farmer Identity */}
-                <div className="flex items-center gap-3">
-                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10 shadow-sm", currentTheme.cardBg, currentTheme.border)}>
-                        🚜
-                     </div>
-                     <div>
-                        <div className="text-[10px] opacity-70 font-bold uppercase tracking-widest">Farmer</div>
-                        <div className={clsx("font-bold text-sm leading-tight", currentTheme.text)}>
-                            {address ? (ensName || `${address.slice(0,6)}...${address.slice(-4)}`) : "(Guest)"}
-                        </div>
-                     </div>
-                </div>
-
-                {/* Right: Action / Connect Button */}
-                <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowOnboarding(true)}
-                      className={clsx("p-2 rounded-lg transition-colors hover:bg-white/40", currentTheme.text)}
-                      title="Help & Guide"
-                    >
-                        <HelpCircle size={20} />
-                    </button>
-
-                    <button
-                      onClick={() => setLeaderboardOpen(true)}
-                      className={clsx(
-                          "flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all shadow-sm",
-                          currentTheme.lightButton
-                      )}
-                    >
-                      <span>🏆</span>
-                      <span className="hidden sm:inline">Leaderboard</span>
-                    </button>
-
-                    <ConnectButton.Custom>
-                      {({
-                        account,
-                        chain,
-                        openAccountModal,
-                        openChainModal,
-                        openConnectModal,
-                        authenticationStatus,
-                        mounted,
-                      }) => {
-                        const ready = mounted && authenticationStatus !== 'loading';
-                        const connected =
-                          ready &&
-                          account &&
-                          chain &&
-                          (!authenticationStatus ||
-                            authenticationStatus === 'authenticated');
-
-                        return (
-                          <div
-                            {...(!ready && {
-                              'aria-hidden': true,
-                              'style': {
-                                opacity: 0,
-                                pointerEvents: 'none',
-                                userSelect: 'none',
-                              },
-                            })}
-                          >
-                            {(() => {
-                              if (!connected) {
-                                return (
-                                  <button
-                                    onClick={openConnectModal}
-                                    type="button"
-                                    className={clsx(
-                                        "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm",
-                                        currentTheme.accent
-                                    )}
-                                  >
-                                    Connect
-                                  </button>
-                                );
-                              }
-
-                              if (chain.unsupported) {
-                                return (
-                                  <button
-                                    onClick={openChainModal}
-                                    type="button"
-                                    className="px-4 py-2 rounded-xl font-bold bg-red-600 text-white hover:bg-red-500 transition-all text-sm"
-                                  >
-                                    Wrong Network
-                                  </button>
-                                );
-                              }
-
-                              // ACTION: Water Farm
-                              return (
-                                <button
-                                    onClick={handleWaterFarm}
-                                    disabled={isPending}
-                                    className={clsx(
-                                        "px-4 py-2 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center gap-2",
-                                        currentTheme.accent,
-                                        isPending && "opacity-70 cursor-wait",
-                                        "disabled:opacity-50 disabled:cursor-not-allowed"
-                                    )}
-                                >
-                                    {isPending ? (
-                                        <span>Watering...</span>
-                                    ) : (
-                                        <span>💧 WATER</span>
-                                    )}
-                                </button>
-                              );
-                            })()}
-                          </div>
-                        );
-                      }}
-                    </ConnectButton.Custom>
-                </div>
-             </div>
-
-             {/* Network Tabs */}
-             <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide w-full">
-                {NETWORKS.map(net => {
-                    const isActive = selectedNetwork.id === net.id;
-                    return (
-                        <button
-                            key={net.id}
-                            onClick={() => setSelectedNetwork(net)}
-                            className={clsx(
-                                "whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border",
-                                isActive
-                                ? clsx(currentTheme.accent, "border-transparent shadow-sm")
-                                : clsx(currentTheme.cardBg, "border-transparent text-slate-500 hover:text-slate-800 hover:bg-white/60")
-                            )}
-                        >
-                            {net.name}
-                        </button>
-                    )
-                })}
-             </div>
+      {/* 1. HEADER */}
+      <header className={`sticky top-0 z-50 backdrop-blur-md border-b ${currentTheme.border} px-4 py-3 flex justify-between items-center`}>
+        <div className="flex items-center gap-2">
+          <div className={`p-2 rounded-full ${currentTheme.accent}`}>🚜</div>
+          <span className="font-bold text-lg">Farmer {address?.slice(0,6)}...</span>
         </div>
-
-        {/* SECTION 2: Calendar (Updated to Month View) */}
-        <div className={clsx(
-            "w-full rounded-3xl p-4 border transition-colors duration-300",
-            currentTheme.cardBg,
-            currentTheme.border
-        )}>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <h2 className={clsx("text-lg font-bold", currentTheme.text)}>
-                    {monthName} {year} Farm Calendar
-                </h2>
-                <div className="flex items-center gap-2">
-                     <button
-                        onClick={prevMonth}
-                        className={clsx("p-1 rounded-lg hover:bg-white/50 transition-colors", currentTheme.text)}
-                     >
-                        <ChevronLeft size={20} />
-                     </button>
-                     <button
-                        onClick={nextMonth}
-                        className={clsx("p-1 rounded-lg hover:bg-white/50 transition-colors", currentTheme.text)}
-                     >
-                        <ChevronRight size={20} />
-                     </button>
-                </div>
-            </div>
-
-            {/* Days Header */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                    <div key={i} className={clsx("text-center text-xs font-bold opacity-60", currentTheme.text)}>
-                        {d}
-                    </div>
-                ))}
-            </div>
-
-            {/* Grid */}
-            <div className="grid grid-cols-7 gap-2">
-                {/* Empty Slots */}
-                {Array.from({ length: startDayOffset }).map((_, i) => (
-                    <div key={`empty-${i}`} />
-                ))}
-
-                {/* Days */}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const dayNum = i + 1;
-                    const date = new Date(year, month, dayNum);
-                    const dateStr = formatDate(date);
-                    const seedId = plantingHistory.get(dateStr);
-                    const emojiInfo = seedId !== undefined ? getEmojiById(seedId) : null;
-                    const hasEmoji = emojiInfo !== null;
-
-                    return (
-                        <div
-                            key={dayNum}
-                            className={clsx(
-                                "aspect-square rounded-xl relative flex items-center justify-center transition-all",
-                                hasEmoji ? "bg-white shadow-md" : "bg-white/40"
-                            )}
-                        >
-                            <span className={clsx(
-                                "absolute top-1 right-1.5 text-[10px] font-bold opacity-50",
-                                currentTheme.text
-                            )}>
-                                {dayNum}
-                            </span>
-                            {hasEmoji && (
-                                <span className="text-2xl filter drop-shadow-sm">
-                                    {emojiInfo?.icon}
-                                </span>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+        <div className="flex gap-2">
+           <button className={`px-3 py-2 rounded-xl font-bold flex items-center gap-2 border ${currentTheme.border} bg-white/50`}>
+             🏆 Leaderboard
+           </button>
+           <button
+             onClick={() => handlePlant(0)}
+             className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform"
+           >
+             💧 WATER FARM
+           </button>
         </div>
+      </header>
 
-        {/* SECTION 3: Seed Market Categories (Tabs) */}
-        <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-3">
-                {(['gm', 'deploy', 'launch', 'donate'] as const).map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => {
-                            setActiveTab(tab);
-                        }}
-                        className={clsx(
-                            "flex flex-col items-center justify-center gap-1 py-6 px-4 min-h-[100px] rounded-xl font-bold border transition-all duration-200",
-                            activeTab === tab
-                                ? clsx(currentTheme.cardBg, "border-4", currentTheme.border, currentTheme.text)
-                                : "bg-white/50 shadow-sm border-transparent text-slate-500 hover:bg-white"
-                        )}
-                    >
-                        <span className="text-xl font-black uppercase">{CATEGORY_LABELS[tab]}</span>
-                        <span className="text-sm font-medium opacity-70">
-                            {TAB_PRICES[tab]}
-                        </span>
-                    </button>
-                ))}
-        </div>
+      {/* 2. NETWORK TABS */}
+      <div className="max-w-lg mx-auto mt-6 px-4 overflow-x-auto flex gap-2 pb-2 no-scrollbar">
+        {Object.values(THEMES).map((t: any) => (
+           <button
+             key={t.id}
+             onClick={() => switchChain({ chainId: CHAIN_IDS[t.id] })}
+             className={`px-4 py-2 rounded-full font-bold whitespace-nowrap transition-all ${currentTheme.id === t.id ? t.accent : 'bg-white/50 border border-transparent'}`}
+           >
+             {t.name}
+           </button>
+        ))}
+      </div>
 
-        {/* SECTION 4: Seed Market Grid */}
-        <div className="w-full grid grid-cols-2 gap-3">
-                {SEED_DATA[activeTab].map((seed) => (
-                    <button
-                        key={seed.id}
-                        onClick={() => handlePlant(seed.id)}
-                        className={clsx(
-                            "border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all",
-                            "bg-white/50 hover:bg-white", // Tactile feel
-                            currentTheme.border, // Apply theme border
-                            "shadow-sm hover:shadow-md"
-                        )}
-                    >
-                        <span className="text-3xl filter drop-shadow-sm">{seed.icon}</span>
-                        <div className="text-center">
-                            <span className="block text-sm font-bold opacity-90" style={{ color: 'inherit' }}>{seed.name}</span>
-                        </div>
-                    </button>
-                ))}
-        </div>
+      <div className="max-w-lg mx-auto px-4 space-y-6 mt-6">
 
-        {writeError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs text-center">
-            {writeError.message.split('\n')[0]}
-            </div>
-        )}
+        {/* 3. WALL CALENDAR */}
+        <section className={`p-6 rounded-3xl ${currentTheme.cardBg} border ${currentTheme.border} shadow-sm`}>
+           <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-black">{monthName} {year}</h2>
+              <div className="flex gap-2">
+                <button onClick={() => setViewDate(new Date(year, viewDate.getMonth()-1, 1))} className={`p-1 rounded hover:bg-black/5`}><ChevronLeft /></button>
+                <button onClick={() => setViewDate(new Date(year, viewDate.getMonth()+1, 1))} className={`p-1 rounded hover:bg-black/5`}><ChevronRight /></button>
+              </div>
+           </div>
+
+           {/* Grid Header */}
+           <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold opacity-60">
+             {['S','M','T','W','T','F','S'].map(d => <div key={d}>{d}</div>)}
+           </div>
+
+           {/* The Grid */}
+           <div className="grid grid-cols-7 gap-2">
+              {[...Array(startDay)].map((_, i) => <div key={`empty-${i}`} />)}
+              {[...Array(days)].map((_, i) => {
+                 const dayNum = i + 1;
+                 const currentDateStr = `${year}-${String(viewDate.getMonth()+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+                 const emoji = historyMap[currentDateStr];
+
+                 return (
+                   <div key={dayNum} className={`relative aspect-square rounded-xl border flex items-center justify-center transition-all ${emoji ? currentTheme.activeBox : 'bg-white/30 border-transparent'}`}>
+                      <span className="absolute top-1 right-1 text-[9px] opacity-40 font-mono">{dayNum}</span>
+                      {emoji && <span className="text-2xl">{emoji}</span>}
+                   </div>
+                 )
+              })}
+           </div>
+        </section>
+
+        {/* 4. SEED MARKET (Big Buttons) */}
+        <section>
+           <h3 className="font-bold text-lg mb-3 opacity-80">Seed Market</h3>
+           <div className="grid grid-cols-2 gap-3 mb-6">
+              {[
+                { id: 'gm', label: '🌱 Seed / Gm', price: 'Free' },
+                { id: 'deploy', label: '💐 Flower / Deploy', price: '$0.10' },
+                { id: 'launch', label: '🎄 Tree / Launch', price: '$0.15' },
+                { id: 'donate', label: '🍒 Fruit / Donate', price: '$0.20' }
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveTab(cat.id as any)}
+                  className={`py-4 px-3 rounded-2xl border-2 flex flex-col items-center justify-center transition-all
+                    ${activeTab === cat.id
+                      ? `${currentTheme.accent} border-transparent shadow-lg scale-[1.02]`
+                      : `bg-white/50 ${currentTheme.border} ${currentTheme.text} hover:bg-white`}
+                  `}
+                >
+                  <span className="font-bold text-sm">{cat.label}</span>
+                  <span className="text-xs opacity-80 font-mono mt-1">{cat.price}</span>
+                </button>
+              ))}
+           </div>
+
+           {/* Emojis Grid */}
+           <div className={`grid grid-cols-4 sm:grid-cols-5 gap-3 p-4 rounded-3xl ${currentTheme.cardBg} border ${currentTheme.border}`}>
+              {SEED_DATA[activeTab].map((seed) => (
+                <button
+                  key={seed.id}
+                  onClick={() => handlePlant(seed.id)}
+                  className="aspect-square bg-white rounded-xl shadow-sm flex items-center justify-center text-3xl hover:scale-110 active:scale-90 transition-transform cursor-pointer"
+                >
+                  {seed.icon}
+                </button>
+              ))}
+           </div>
+        </section>
 
       </div>
     </main>
