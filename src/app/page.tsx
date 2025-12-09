@@ -6,14 +6,13 @@ import { useWriteContract, useAccount, useSwitchChain, useReadContract, useEnsNa
 import { GARDEN_CONTRACTS, GARDEN_ABI, HUB_CONTRACTS, HUB_ABI } from "../config/contracts";
 import { base, bsc, mainnet, arbitrum, celo } from "wagmi/chains";
 import { monadTestnet, hyperEvmTestnet } from "../config/wagmi";
-import { Calendar } from "../components/Calendar";
 import { SEED_DATA, CATEGORY_LABELS, getEmojiById } from "../config/emojis";
 import { LeaderboardModal } from "../components/LeaderboardModal";
 import { SuccessModal } from "../components/SuccessModal";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { parseEther } from "viem";
 import clsx from "clsx";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 // --- THEME DEFINITIONS ---
 export interface Theme {
@@ -151,6 +150,9 @@ export default function FarmCaster() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [lastPlantedSeedId, setLastPlantedSeedId] = useState<number | null>(null);
 
+  // Calendar State
+  const [viewDate, setViewDate] = useState(new Date());
+
   // Map date string (YYYY-MM-DD) -> seedId (number)
   const [plantingHistory, setPlantingHistory] = useState<Map<string, number>>(new Map());
 
@@ -162,9 +164,34 @@ export default function FarmCaster() {
   // Get current theme based on selected network
   const currentTheme = THEMES[selectedNetwork.id] || THEMES.base;
 
+  // Calendar Helpers
+  const nextMonth = () => {
+    setViewDate(prev => {
+        const d = new Date(prev);
+        d.setMonth(d.getMonth() + 1);
+        return d;
+    });
+  };
+
+  const prevMonth = () => {
+    setViewDate(prev => {
+        const d = new Date(prev);
+        d.setMonth(d.getMonth() - 1);
+        return d;
+    });
+  };
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startDayOffset = new Date(year, month, 1).getDay();
+  const monthName = viewDate.toLocaleString('default', { month: 'long' });
+
   // Handle Hydration
   useEffect(() => {
     setIsMounted(true);
+    // Ensure viewDate is consistent with client if needed, though new Date() usually fine
+    setViewDate(new Date());
 
     // Check onboarding
     const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
@@ -489,14 +516,81 @@ export default function FarmCaster() {
              </div>
         </div>
 
-        {/* SECTION 2: Calendar */}
-        <div className="w-full">
-             <Calendar
-                history={plantingHistory}
-                networkName={selectedNetwork.name}
-                theme={currentTheme}
-                userXP={userXP ? Number(userXP).toLocaleString() : '0'}
-            />
+        {/* SECTION 2: Calendar (Updated to Month View) */}
+        <div className={clsx(
+            "w-full rounded-3xl p-4 border transition-colors duration-300",
+            currentTheme.cardBg,
+            currentTheme.border
+        )}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+                <h2 className={clsx("text-lg font-bold", currentTheme.text)}>
+                    {monthName} {year} Farm Calendar
+                </h2>
+                <div className="flex items-center gap-2">
+                     <button
+                        onClick={prevMonth}
+                        className={clsx("p-1 rounded-lg hover:bg-white/50 transition-colors", currentTheme.text)}
+                     >
+                        <ChevronLeft size={20} />
+                     </button>
+                     <button
+                        onClick={nextMonth}
+                        className={clsx("p-1 rounded-lg hover:bg-white/50 transition-colors", currentTheme.text)}
+                     >
+                        <ChevronRight size={20} />
+                     </button>
+                </div>
+            </div>
+
+            {/* Days Header */}
+            <div className="grid grid-cols-7 gap-2 mb-2">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                    <div key={i} className={clsx("text-center text-xs font-bold opacity-60", currentTheme.text)}>
+                        {d}
+                    </div>
+                ))}
+            </div>
+
+            {/* Grid */}
+            <div className="grid grid-cols-7 gap-2">
+                {/* Empty Slots */}
+                {Array.from({ length: startDayOffset }).map((_, i) => (
+                    <div key={`empty-${i}`} />
+                ))}
+
+                {/* Days */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const date = new Date(year, month, dayNum);
+                    const dateStr = formatDate(date);
+                    const seedId = plantingHistory.get(dateStr);
+                    const emojiInfo = seedId !== undefined ? getEmojiById(seedId) : null;
+                    const hasEmoji = emojiInfo !== null;
+
+                    return (
+                        <div
+                            key={dayNum}
+                            className={clsx(
+                                "aspect-square rounded-xl relative flex items-center justify-center transition-all",
+                                hasEmoji ? "bg-white shadow-md" : "bg-white/40"
+                            )}
+                        >
+                            <span className={clsx(
+                                "absolute top-1 right-1.5 text-[10px] font-bold opacity-50",
+                                currentTheme.text
+                            )}>
+                                {dayNum}
+                            </span>
+                            {hasEmoji && (
+                                <span className="text-2xl filter drop-shadow-sm">
+                                    {emojiInfo?.icon}
+                                </span>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
         </div>
 
         {/* SECTION 3: Seed Market Categories (Tabs) */}
