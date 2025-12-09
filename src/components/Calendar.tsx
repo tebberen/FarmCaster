@@ -59,7 +59,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
   };
 
   return (
-    <div className={clsx("bg-white border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300 w-full", theme.border)}>
+    <div className={clsx("rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300 w-full border", theme.cardBg, theme.border)}>
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
             <h2 className={clsx("text-base font-bold text-slate-800")}>
@@ -68,15 +68,15 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
 
             <div className="flex items-center gap-2">
                 {userXP && (
-                    <div className="bg-slate-100 px-2 py-1 rounded text-slate-600 text-xs font-bold border border-slate-200">
+                    <div className="bg-white/50 px-2 py-1 rounded text-slate-600 text-xs font-bold border border-slate-200">
                         {userXP} XP
                     </div>
                 )}
-                <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
-                    <button onClick={prevMonth} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                <div className="flex items-center gap-1 bg-white/50 rounded-lg p-1 border border-slate-200">
+                    <button onClick={prevMonth} className="p-1 hover:bg-white rounded text-slate-400 hover:text-slate-600 transition-colors">
                         <ChevronLeft size={16} />
                     </button>
-                    <button onClick={nextMonth} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                    <button onClick={nextMonth} className="p-1 hover:bg-white rounded text-slate-400 hover:text-slate-600 transition-colors">
                         <ChevronRight size={16} />
                     </button>
                 </div>
@@ -107,8 +107,8 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
                     className={clsx(
                       "relative flex flex-col items-center justify-center aspect-square rounded-lg border transition-all duration-300 w-full",
                       hasLog
-                          ? clsx(theme.bg, theme.border) // Active: Theme BG + Border
-                          : "bg-transparent border-slate-100" // Inactive: Transparent + Light Border
+                          ? clsx("bg-white", theme.border) // Active: White BG to pop + Theme Border
+                          : "bg-slate-50/50 border-slate-100" // Inactive: Transparent/Slate + Light Border
                     )}
                     style={hasLog ? { boxShadow: `0 0 10px -2px var(--tw-shadow-color)` } : undefined} // Soft glow simulation if needed, or rely on ring
                   >
@@ -128,7 +128,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
                       </span>
                     ) : (
                       // Optional: Tiny dot for empty days to keep grid structure visible
-                      <span className="w-1 h-1 rounded-full bg-slate-100" />
+                      <span className="w-1 h-1 rounded-full bg-slate-200" />
                     )}
                   </div>
                 );

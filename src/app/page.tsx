@@ -18,7 +18,9 @@ import { HelpCircle } from "lucide-react";
 // --- THEME DEFINITIONS ---
 export interface Theme {
     id: string;
-    bg: string;
+    pageBg: string; // New: Page Background (Gradient)
+    cardBg: string; // New: Card Background (Semi-transparent)
+    bg: string;     // Keep for legacy or specific element backgrounds if needed, or remove if unused. Keeping for compatibility.
     accent: string;
     text: string;
     border: string;
@@ -29,66 +31,80 @@ export interface Theme {
 const THEMES: Record<string, Theme> = {
   base: {
     id: 'base',
-    bg: "bg-blue-50", // Light Pastel Blue
+    pageBg: "bg-gradient-to-b from-blue-50 to-white",
+    cardBg: "bg-white/60 backdrop-blur-sm",
+    bg: "bg-blue-50",
     accent: "bg-blue-600 hover:bg-blue-700 text-white",
     text: "text-blue-900",
     border: "border-blue-200",
     ring: "ring-blue-500",
-    lightButton: "bg-white text-blue-700 hover:bg-blue-50 border border-blue-200"
+    lightButton: "bg-white/50 text-blue-700 hover:bg-white border border-blue-200"
   },
   bsc: {
     id: 'bsc',
-    bg: "bg-amber-50", // Light Pastel Yellow/Gold
+    pageBg: "bg-gradient-to-b from-amber-50 to-white",
+    cardBg: "bg-white/60 backdrop-blur-sm",
+    bg: "bg-amber-50",
     accent: "bg-yellow-500 hover:bg-yellow-600 text-black",
     text: "text-yellow-900",
     border: "border-yellow-200",
     ring: "ring-yellow-500",
-    lightButton: "bg-white text-yellow-700 hover:bg-yellow-50 border border-yellow-200"
+    lightButton: "bg-white/50 text-yellow-700 hover:bg-white border border-yellow-200"
   },
   arb: {
     id: 'arb',
-    bg: "bg-cyan-50", // Light Pastel Cyan
+    pageBg: "bg-gradient-to-b from-cyan-50 to-white",
+    cardBg: "bg-white/60 backdrop-blur-sm",
+    bg: "bg-cyan-50",
     accent: "bg-cyan-600 hover:bg-cyan-700 text-white",
     text: "text-cyan-900",
     border: "border-cyan-200",
     ring: "ring-cyan-500",
-    lightButton: "bg-white text-cyan-700 hover:bg-cyan-50 border border-cyan-200"
+    lightButton: "bg-white/50 text-cyan-700 hover:bg-white border border-cyan-200"
   },
   celo: {
     id: 'celo',
-    bg: "bg-lime-50", // Light Pastel Lime/Green
+    pageBg: "bg-gradient-to-b from-lime-50 to-white",
+    cardBg: "bg-white/60 backdrop-blur-sm",
+    bg: "bg-lime-50",
     accent: "bg-lime-600 hover:bg-lime-700 text-white",
     text: "text-lime-900",
     border: "border-lime-200",
     ring: "ring-lime-500",
-    lightButton: "bg-white text-lime-700 hover:bg-lime-50 border border-lime-200"
+    lightButton: "bg-white/50 text-lime-700 hover:bg-white border border-lime-200"
   },
   eth: {
     id: 'eth',
-    bg: "bg-slate-50", // Light Pastel Gray
+    pageBg: "bg-gradient-to-b from-slate-50 to-white",
+    cardBg: "bg-white/60 backdrop-blur-sm",
+    bg: "bg-slate-50",
     accent: "bg-slate-800 hover:bg-slate-900 text-white",
     text: "text-slate-900",
     border: "border-slate-200",
     ring: "ring-slate-500",
-    lightButton: "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
+    lightButton: "bg-white/50 text-slate-700 hover:bg-white border border-slate-200"
   },
   monad: {
     id: 'monad',
-    bg: "bg-violet-50", // Light Pastel Purple
+    pageBg: "bg-gradient-to-b from-violet-50 to-white",
+    cardBg: "bg-white/60 backdrop-blur-sm",
+    bg: "bg-violet-50",
     accent: "bg-violet-600 hover:bg-violet-700 text-white",
     text: "text-violet-900",
     border: "border-violet-200",
     ring: "ring-violet-500",
-    lightButton: "bg-white text-violet-700 hover:bg-violet-50 border border-violet-200"
+    lightButton: "bg-white/50 text-violet-700 hover:bg-white border border-violet-200"
   },
   hyper: {
     id: 'hyper',
-    bg: "bg-rose-50", // Light Pastel Pink
+    pageBg: "bg-gradient-to-b from-rose-50 to-white",
+    cardBg: "bg-white/60 backdrop-blur-sm",
+    bg: "bg-rose-50",
     accent: "bg-rose-500 hover:bg-rose-600 text-white",
     text: "text-rose-900",
     border: "border-rose-200",
     ring: "ring-rose-500",
-    lightButton: "bg-white text-rose-700 hover:bg-rose-50 border border-rose-200"
+    lightButton: "bg-white/50 text-rose-700 hover:bg-white border border-rose-200"
   }
 };
 
@@ -300,7 +316,7 @@ export default function FarmCaster() {
   if (!isMounted) return null;
 
   return (
-    <main className={clsx("min-h-screen transition-colors duration-500 font-sans pb-10", currentTheme.bg, currentTheme.text)}>
+    <main className={clsx("min-h-screen transition-colors duration-500 font-sans pb-10", currentTheme.pageBg, currentTheme.text)}>
 
       {/* MODALS */}
       <LeaderboardModal
@@ -329,13 +345,13 @@ export default function FarmCaster() {
       <div className="w-full max-w-lg mx-auto px-4 space-y-6">
 
         {/* SECTION 1: Header & Network Tabs */}
-        {/* Sticky Header */}
-        <div className={clsx("sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b pt-4 pb-2 transition-colors", currentTheme.border)}>
+        {/* Sticky Header - Updated to be transparent/blur instead of white/80 */}
+        <div className={clsx("sticky top-0 z-10 bg-transparent backdrop-blur-md pt-4 pb-2 transition-colors", "border-b-0")}>
              {/* Header Content */}
              <div className="flex justify-between items-center mb-4">
                 {/* Left: Farmer Identity */}
                 <div className="flex items-center gap-3">
-                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10 bg-white", currentTheme.border)}>
+                     <div className={clsx("p-2 rounded-full border flex items-center justify-center w-10 h-10", currentTheme.cardBg, currentTheme.border)}>
                         🚜
                      </div>
                      <div>
@@ -350,7 +366,7 @@ export default function FarmCaster() {
                 <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowOnboarding(true)}
-                      className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
+                      className="p-2 hover:bg-white/50 rounded-lg transition-colors text-slate-500 hover:text-slate-700"
                       title="Help & Guide"
                     >
                         <HelpCircle size={20} />
@@ -463,7 +479,7 @@ export default function FarmCaster() {
                                 "whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border",
                                 isActive
                                 ? clsx(currentTheme.accent, "border-transparent shadow-sm")
-                                : "bg-white border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
+                                : clsx(currentTheme.cardBg, "border-transparent text-slate-500 hover:text-slate-800 hover:bg-white")
                             )}
                         >
                             {net.name}
@@ -494,8 +510,8 @@ export default function FarmCaster() {
                         className={clsx(
                             "flex flex-col items-center justify-center gap-1 py-3 px-4 rounded-xl font-bold text-sm border transition-all duration-200",
                             activeTab === tab
-                                ? clsx(currentTheme.bg, "ring-2 ring-inset", currentTheme.ring, currentTheme.text, "border-transparent")
-                                : "bg-white shadow-sm border-transparent text-slate-500 hover:bg-slate-50"
+                                ? clsx(currentTheme.cardBg, "ring-2 ring-inset", currentTheme.ring, currentTheme.text, "border-transparent")
+                                : "bg-white/50 shadow-sm border-transparent text-slate-500 hover:bg-white"
                         )}
                     >
                         <span>{CATEGORY_LABELS[tab]}</span>
@@ -513,7 +529,8 @@ export default function FarmCaster() {
                         key={seed.id}
                         onClick={() => handlePlant(seed.id)}
                         className={clsx(
-                            "bg-white border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all hover:bg-slate-50",
+                            "border rounded-xl p-4 flex flex-col items-center gap-2 relative overflow-hidden active:scale-95 transition-all",
+                            "bg-white/50 hover:bg-white", // Tactile feel
                             currentTheme.border, // Apply theme border
                             "shadow-sm hover:shadow-md"
                         )}
