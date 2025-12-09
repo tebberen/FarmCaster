@@ -41,11 +41,11 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className={clsx("relative w-full max-w-sm bg-white border rounded-2xl shadow-2xl p-6 flex flex-col items-center gap-6", theme.border)}>
+            <div className={clsx("relative w-full max-w-sm border rounded-2xl shadow-2xl p-6 flex flex-col items-center gap-6", theme.cardBg, theme.border)}>
 
                 <button
                     onClick={onClose}
-                    className="absolute top-3 right-3 p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
+                    className="absolute top-3 right-3 p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
                 >
                     <X size={20} />
                 </button>
@@ -54,7 +54,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
                     <div className="text-6xl animate-bounce filter drop-shadow-md">
                         {emoji || "🌱"}
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800">Planted Successfully!</h2>
+                    <h2 className="text-2xl font-bold text-white">Planted Successfully!</h2>
                     <p className={clsx("font-bold text-lg", theme.strongText)}>Reward: +{xp} XP</p>
                 </div>
 
@@ -71,7 +71,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
 
                 <button
                     onClick={onClose}
-                    className="w-full py-3 px-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+                    className="w-full py-3 px-4 rounded-xl font-bold text-slate-400 hover:bg-white/10 transition-colors"
                 >
                     Close
                 </button>
