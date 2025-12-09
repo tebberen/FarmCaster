@@ -85,7 +85,7 @@ const THEMES: Record<string, Theme> = {
 };
 
 const CHAIN_IDS: Record<string, number> = {
-  base: 8453, bsc: 56, celo: 42220, arb: 42161, eth: 1, monad: 10143, hyper: 999
+  base: 8453, bsc: 56, celo: 42220, arb: 42161, eth: 1, monad: 143, hyper: 999
 };
 
 export default function FarmCaster() {

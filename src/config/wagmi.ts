@@ -3,39 +3,42 @@ import { base, mainnet, arbitrum, celo, bsc } from "wagmi/chains";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { defineChain } from "viem";
 
-export const monadTestnet = defineChain({
-  id: 10143,
-  name: 'Monad Testnet',
+export const monadMainnet = defineChain({
+  id: 143,
+  name: 'Monad Mainnet',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc-devnet.monadinfra.com/rpc/3fe540e310bbb6ed'] },
+    default: { http: ['https://rpc.monad.xyz'] },
   },
   blockExplorers: {
-    default: { name: 'MonadExplorer', url: 'https://explorer.monadinfra.com/' },
+    default: { name: 'MonadVision', url: 'https://monadvision.com' },
   },
-  testnet: true,
+  testnet: false,
 });
 
-export const hyperEvmTestnet = defineChain({
+export const hyperEvmMainnet = defineChain({
   id: 999,
-  name: 'HyperEVM Testnet',
+  name: 'HyperEVM Mainnet',
   nativeCurrency: { name: 'Hyper', symbol: 'HYPE', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.hyper-evm.example.com'] },
+    default: { http: ['https://rpc.hyperliquid.xyz/evm'] },
   },
-  testnet: true,
+  blockExplorers: {
+    default: { name: 'HyperEVMScan', url: 'https://hyperevmscan.io' },
+  },
+  testnet: false,
 });
 
 export const config = createConfig({
-  chains: [mainnet, base, bsc, arbitrum, celo, monadTestnet, hyperEvmTestnet],
+  chains: [mainnet, base, bsc, arbitrum, celo, monadMainnet, hyperEvmMainnet],
   transports: {
     [mainnet.id]: http(),
     [base.id]: http(),
     [bsc.id]: http(),
     [arbitrum.id]: http(),
     [celo.id]: http(),
-    [monadTestnet.id]: http(),
-    [hyperEvmTestnet.id]: http(),
+    [monadMainnet.id]: http(),
+    [hyperEvmMainnet.id]: http(),
   },
   connectors: [
     farcasterMiniApp(),
