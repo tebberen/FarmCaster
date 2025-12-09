@@ -59,24 +59,24 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
   };
 
   return (
-    <div className={clsx("bg-slate-900 border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300 w-full", theme.border)}>
+    <div className={clsx("bg-white border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300 w-full", theme.border)}>
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-            <h2 className={clsx("text-base font-bold", theme.accent)}>
+            <h2 className={clsx("text-base font-bold text-slate-800")}>
                 {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Farm Calendar
             </h2>
 
             <div className="flex items-center gap-2">
                 {userXP && (
-                    <div className="bg-slate-800 px-2 py-1 rounded text-emerald-400 text-xs font-bold">
+                    <div className="bg-slate-100 px-2 py-1 rounded text-slate-600 text-xs font-bold border border-slate-200">
                         {userXP} XP
                     </div>
                 )}
-                <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
-                    <button onClick={prevMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
+                <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
+                    <button onClick={prevMonth} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
                         <ChevronLeft size={16} />
                     </button>
-                    <button onClick={nextMonth} className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-slate-200 transition-colors">
+                    <button onClick={nextMonth} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 transition-colors">
                         <ChevronRight size={16} />
                     </button>
                 </div>
@@ -87,7 +87,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
         <div className="grid grid-cols-7 gap-1.5 justify-items-center">
             {/* Weekday Headers */}
             {WEEKDAYS.map((d, i) => (
-                <div key={i} className={clsx("text-[10px] font-bold mb-1 opacity-70", theme.accent)}>{d}</div>
+                <div key={i} className={clsx("text-[10px] font-bold mb-1 opacity-50 text-slate-500")}>{d}</div>
             ))}
 
             {/* Days */}
@@ -104,30 +104,31 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
                   <div
                     key={i}
                     title={dateStr} // Tooltip
-                    className={`
-                      relative flex flex-col items-center justify-center
-                      aspect-square rounded-lg border transition-all duration-300
-                      w-full
-                      ${
-                        hasLog
-                          ? `${theme.bg} ${theme.border} ${theme.glow}`
-                          : "bg-slate-900/30 border-slate-800/50"
-                      }
-                    `}
+                    className={clsx(
+                      "relative flex flex-col items-center justify-center aspect-square rounded-lg border transition-all duration-300 w-full",
+                      hasLog
+                          ? clsx(theme.bg, theme.border) // Active: Theme BG + Border
+                          : "bg-transparent border-slate-100" // Inactive: Transparent + Light Border
+                    )}
+                    style={hasLog ? { boxShadow: `0 0 10px -2px var(--tw-shadow-color)` } : undefined} // Soft glow simulation if needed, or rely on ring
                   >
                     {/* 1. DATE NUMBER (Always Visible - Top Right) */}
-                    <span className={clsx("absolute top-1 right-1.5 text-[10px] font-bold", theme.accent, hasLog ? "opacity-100" : "opacity-60")}>
+                    <span className={clsx(
+                        "absolute top-1 right-1.5 text-[10px] font-bold transition-opacity",
+                        hasLog ? theme.text : "text-gray-400", // Log: Theme Color, No Log: Gray-400
+                        hasLog ? "opacity-100" : "opacity-60"
+                    )}>
                       {dayDate.getDate()}
                     </span>
 
                     {/* 2. EMOJI CONTENT (Centered) */}
                     {hasLog && matchedLog ? (
-                      <span className="text-xl sm:text-2xl filter drop-shadow-md animate-in zoom-in duration-300">
+                      <span className="text-xl sm:text-2xl filter drop-shadow-sm animate-in zoom-in duration-300">
                         {getEmojiById(matchedLog.seedType).icon}
                       </span>
                     ) : (
                       // Optional: Tiny dot for empty days to keep grid structure visible
-                      <span className="w-1 h-1 rounded-full bg-slate-800" />
+                      <span className="w-1 h-1 rounded-full bg-slate-100" />
                     )}
                   </div>
                 );
