@@ -6,6 +6,8 @@ export const HUB_CONTRACTS: Record<string, `0x${string}`> = {
   monad: "0xaDA5213c387f0679Ed3f6331a00ba2b598FaD5c8",
   hyper: "0xf8BaC9c6902c96CeC31988dfb9ba89A51dd750Fa",
   eth: "0x26ffb261F790511D9077F23D1fEFA0694c478C5D", // Ethereum Mainnet
+  143: "0xaDA5213c387f0679Ed3f6331a00ba2b598FaD5c8", // Monad Mainnet
+  999: "0xf8BaC9c6902c96CeC31988dfb9ba89A51dd750Fa", // HyperEVM Mainnet
 };
 
 export const GARDEN_CONTRACTS: Record<string, `0x${string}`> = {
@@ -16,6 +18,8 @@ export const GARDEN_CONTRACTS: Record<string, `0x${string}`> = {
   monad: "0x10d0c4511341EdAB5AE25919EcC86Bf5c54C28c9",
   hyper: "0xD6b62609ec7B67532A126D6315410b8d6b7dB03e",
   eth: "0x6567Db0507bFF4add7fd065495447001911cbff6", // Ethereum Mainnet
+  143: "0x10d0c4511341EdAB5AE25919EcC86Bf5c54C28c9", // Monad Mainnet
+  999: "0xD6b62609ec7B67532A126D6315410b8d6b7dB03e", // HyperEVM Mainnet
 };
 
 export const GARDEN_ABI = [
