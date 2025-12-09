@@ -9,18 +9,34 @@ interface SuccessModalProps {
     theme: Theme;
     emoji: string | null;
     networkName: string;
-    xpEarned?: string;
+    chainId: number;
+    xp: number;
 }
 
-export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, theme, emoji, networkName, xpEarned }) => {
+const CHAIN_IMAGES: Record<number, string> = {
+    8453: 'base-cover.png',
+    42220: 'celo-cover.png',
+    56: 'bsc-cover.png',
+    42161: 'arb-cover.png',
+    143: 'monad-cover.png',
+    999: 'hyper-cover.png',
+};
+
+export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, theme, emoji, networkName, chainId, xp }) => {
     if (!isOpen) return null;
 
     const handleShare = () => {
-        // "Just planted [Emoji] on [Network]! #FarmCaster"
-        const text = `Just planted ${emoji || '🌱'} on ${networkName}! #FarmCaster`;
-        const encodedText = encodeURIComponent(text);
-        const url = `https://warpcast.com/~/compose?text=${encodedText}`;
-        window.open(url, '_blank');
+        const imageName = CHAIN_IMAGES[chainId] || 'base-cover.png';
+        const imageUrl = `https://tebberen.github.io/FarmCaster/images/${imageName}`;
+
+        // Remove spaces for hashtag
+        const networkHashtag = networkName.replace(/\s+/g, '');
+
+        // Construct the text as requested
+        const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @tebberen`;
+
+        const shareUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(text) + "&embeds[]=" + imageUrl;
+        window.open(shareUrl, '_blank');
     };
 
     return (
@@ -38,15 +54,9 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
                     <div className="text-6xl animate-bounce filter drop-shadow-md">
                         {emoji || "🌱"}
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800">Harvest Successful!</h2>
-                    <p className="text-slate-500">Your crops are growing nicely.</p>
+                    <h2 className="text-2xl font-bold text-slate-800">Planted Successfully!</h2>
+                    <p className={clsx("font-bold text-lg", theme.strongText)}>Reward: +{xp} XP</p>
                 </div>
-
-                {xpEarned && (
-                     <div className={clsx("px-4 py-2 rounded-lg bg-slate-50 border", theme.border)}>
-                        <span className={clsx("font-bold text-lg", theme.text)}>+{xpEarned} XP</span>
-                    </div>
-                )}
 
                 <button
                     onClick={handleShare}
@@ -57,6 +67,13 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
                 >
                     <Share2 size={18} />
                     <span>Share on Warpcast</span>
+                </button>
+
+                <button
+                    onClick={onClose}
+                    className="w-full py-3 px-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+                >
+                    Close
                 </button>
 
             </div>

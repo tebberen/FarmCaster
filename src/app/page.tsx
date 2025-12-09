@@ -9,6 +9,7 @@ import { HUB_CONTRACTS, GARDEN_CONTRACTS, HUB_ABI, GARDEN_ABI } from "../config/
 import { SEED_DATA, getEmojiById } from "../config/emojis";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { LeaderboardModal } from "../components/LeaderboardModal";
+import { SuccessModal } from "../components/SuccessModal";
 
 // --- THEME CONFIG (Pastel Tone-on-Tone) ---
 export interface Theme {
@@ -91,13 +92,14 @@ const CHAIN_IDS: Record<string, number> = {
 export default function FarmCaster() {
   const { address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
-  const { writeContract, isPending, isSuccess } = useWriteContract();
+  const { writeContractAsync, isPending } = useWriteContract();
 
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [successData, setSuccessData] = useState<{ seedId: number, xp: number, hash: string } | null>(null);
 
   // Derive Current Theme
   const currentTheme = React.useMemo(() => {
@@ -153,7 +155,7 @@ export default function FarmCaster() {
   const { days, startDay, monthName, year } = getDaysInMonth(viewDate);
 
   // --- ACTION ---
-  const handlePlant = (id: number) => {
+  const handlePlant = async (id: number) => {
     if (!chain) return alert("Connect Wallet!");
     let func: 'gm' | 'deploy' | 'launch' | 'donate' = 'gm';
     let val = 0n;
@@ -161,21 +163,35 @@ export default function FarmCaster() {
     else if (id >= 20 && id < 30) { func = 'launch'; val = 45000000000000n; }
     else if (id >= 30) { func = 'donate'; val = 60000000000000n; }
 
-    if (func === 'gm') {
-      writeContract({
-        address: gardenAddress,
-        abi: GARDEN_ABI,
-        functionName: 'gm',
-        args: [id]
-      });
-    } else {
-      writeContract({
-        address: gardenAddress,
-        abi: GARDEN_ABI,
-        functionName: func,
-        args: [id],
-        value: val
-      });
+    // XP Logic
+    let xp = 1;
+    if (id >= 10 && id < 20) xp = 2;
+    else if (id >= 20 && id < 30) xp = 3;
+    else if (id >= 30) xp = 5;
+
+    try {
+      let hash;
+      if (func === 'gm') {
+        hash = await writeContractAsync({
+          address: gardenAddress,
+          abi: GARDEN_ABI,
+          functionName: 'gm',
+          args: [id]
+        });
+      } else {
+        hash = await writeContractAsync({
+          address: gardenAddress,
+          abi: GARDEN_ABI,
+          functionName: func,
+          args: [id],
+          value: val
+        });
+      }
+
+      // Optimistic UI Success
+      setSuccessData({ seedId: id, xp, hash });
+    } catch (e) {
+      console.error("Planting failed:", e);
     }
   };
 
@@ -190,6 +206,15 @@ export default function FarmCaster() {
         networkId={currentTheme.id}
         chainId={CHAIN_IDS[currentTheme.id]}
         theme={currentTheme}
+      />
+      <SuccessModal
+        isOpen={!!successData}
+        onClose={() => setSuccessData(null)}
+        theme={currentTheme}
+        emoji={successData ? getEmojiById(successData.seedId).icon : null}
+        networkName={currentTheme.name}
+        chainId={CHAIN_IDS[currentTheme.id]}
+        xp={successData ? successData.xp : 0}
       />
 
       {/* 1. HEADER */}
