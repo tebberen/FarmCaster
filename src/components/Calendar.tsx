@@ -59,7 +59,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
   };
 
   return (
-    <div className={clsx("bg-slate-900 border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300 max-w-lg mx-auto", theme.border)}>
+    <div className={clsx("bg-slate-900 border rounded-2xl overflow-hidden shadow-lg p-4 transition-all duration-300 w-full", theme.border)}>
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
             <h2 className={clsx("text-base font-bold", theme.accent)}>
@@ -84,7 +84,7 @@ export const Calendar: React.FC<CalendarProps> = ({ history, theme, userXP }) =>
         </div>
 
         {/* Month Grid */}
-        <div className="grid grid-cols-7 gap-1 justify-items-center">
+        <div className="grid grid-cols-7 gap-1.5 justify-items-center">
             {/* Weekday Headers */}
             {WEEKDAYS.map((d, i) => (
                 <div key={i} className={clsx("text-[10px] font-bold mb-1 opacity-70", theme.accent)}>{d}</div>
