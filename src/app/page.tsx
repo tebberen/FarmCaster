@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAccount, useReadContract, useWriteContract, useSwitchChain, usePublicClient } from "wagmi";
 import { parseEther } from "viem";
+import sdk from "@farcaster/miniapp-sdk";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Trophy, Droplets, HelpCircle, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { HUB_CONTRACTS, GARDEN_CONTRACTS, HUB_ABI, GARDEN_ABI } from "../config/contracts";
@@ -139,6 +140,7 @@ export default function FarmCaster() {
   // Fix Hydration & Check Onboarding
   useEffect(() => {
       setIsMounted(true);
+      sdk.actions.ready();
       const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
       if (!hasSeen) setShowOnboarding(true);
   }, []);
