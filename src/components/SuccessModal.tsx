@@ -26,8 +26,9 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
     if (!isOpen) return null;
 
     const handleShare = () => {
+        const baseUrl = "https://farmcaster-six.vercel.app/images/";
         const imageName = CHAIN_IMAGES[chainId] || 'base-cover.png';
-        const imageUrl = `https://farmcaster-six.vercel.app/images/${imageName}`;
+        const imageUrl = `${baseUrl}${imageName}`;
 
         // Remove spaces for hashtag
         const networkHashtag = networkName.replace(/\s+/g, '');
