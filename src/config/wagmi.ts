@@ -1,6 +1,7 @@
 import { http, createConfig } from "wagmi";
 import { base, mainnet, arbitrum, celo, bsc } from "wagmi/chains";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
+import { injected, coinbaseWallet } from "wagmi/connectors";
 import { defineChain } from "viem";
 
 export const monadMainnet = defineChain({
@@ -42,5 +43,7 @@ export const config = createConfig({
   },
   connectors: [
     farcasterMiniApp(),
+    injected(),
+    coinbaseWallet({ appName: 'FarmCaster' }),
   ],
 });
