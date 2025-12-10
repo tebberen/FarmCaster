@@ -7,10 +7,10 @@
   "miniapp": {
     "version": "1",
     "name": "FarmCaster",
-    "iconUrl": "https://tebberen.github.io/FarmCaster/images/icon.png",
-    "homeUrl": "https://tebberen.github.io/FarmCaster",
+    "iconUrl": "https://farmcaster-six.vercel.app/images/icon.png",
+    "homeUrl": "https://farmcaster-six.vercel.app",
     "description": "The most vibrant onchain farming game. Plant seeds, earn XP, and climb the leaderboard.",
-    "splashImageUrl": "https://tebberen.github.io/FarmCaster/images/splash.png",
+    "splashImageUrl": "https://farmcaster-six.vercel.app/images/splash.png",
     "splashBackgroundColor": "#0F172A",
     "primaryCategory": "games",
     "tags": ["farming", "game", "social", "onchain"],
