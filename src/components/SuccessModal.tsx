@@ -33,7 +33,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
         const networkHashtag = networkName.replace(/\s+/g, '');
 
         // Construct the text as requested
-        const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @tebberen`;
+        const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
         const shareUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(text) + "&embeds[]=" + imageUrl;
         window.open(shareUrl, '_blank');
@@ -55,7 +55,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
                         {emoji || "🌱"}
                     </div>
                     <h2 className="text-2xl font-bold text-white">Planted Successfully!</h2>
-                    <p className={clsx("font-bold text-lg", theme.strongText)}>Reward: +{xp} XP</p>
+                    <p className={clsx("font-bold text-lg", theme.strongText)}>You earned +{xp} XP!</p>
                 </div>
 
                 <button
