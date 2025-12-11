@@ -167,15 +167,24 @@ export default function Home() {
     if (!hasSeen) setShowOnboarding(true);
   }, [isSDKLoaded]);
 
-  // 2. Auto-Connect Logic (Standard)
+  // 2. Auto-Connect Logic
   useEffect(() => {
-    if (farcasterUser && !isConnected && isSDKLoaded) {
-      const connector = connectors.find((c) => c.id === 'farcaster-mini-app');
-      if (connector) {
-        connect({ connector });
+    const checkAndConnect = async () => {
+      const context = await sdk.context;
+      // 1. Check if we are inside a Farcaster Frame/MiniApp
+      if (context?.user && !isConnected) {
+
+        // 2. Find the correct connector
+        const fcConnector = connectors.find((c) => c.id === 'farcaster-mini-app');
+
+        // 3. Trigger connection automatically
+        if (fcConnector) {
+          connect({ connector: fcConnector });
+        }
       }
-    }
-  }, [isConnected, connectors, isSDKLoaded, connect, farcasterUser]);
+    };
+    checkAndConnect();
+  }, [isConnected, connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
