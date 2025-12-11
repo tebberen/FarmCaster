@@ -283,22 +283,27 @@ export default function FarmCaster() {
       />
 
       {/* 1. HEADER */}
-      <header className="flex items-center justify-between p-4 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50 border-b border-white/5">
-        {/* Profile Section */}
-        <div className="flex items-center gap-2">
-          <img src={profileImage} className={`w-10 h-10 rounded-full border-2 ${currentTheme.border}`} alt="Profile" />
-          <div className="flex flex-col">
-            <span className="font-bold text-sm text-white">Farmer</span>
-            <span className="text-[10px] text-gray-400">{profileHandle}</span>
+      <header className="flex items-center justify-between px-4 py-3 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50 border-b border-white/5">
+        {/* LEFT: Proportional Profile */}
+        <div className="flex items-center gap-2.5">
+          <img
+            src={profileImage}
+            className={`w-10 h-10 rounded-full border-2 ${currentTheme.border}`}
+            alt="Profile"
+          />
+          <div className="flex flex-col justify-center">
+            <span className="font-bold text-sm text-white leading-tight">Farmer</span>
+            <span className="text-[11px] text-gray-400 font-medium">{profileHandle}</span>
           </div>
         </div>
 
-        {/* Action Buttons (Scaled Down) */}
-        <div className="flex gap-2">
-          <button onClick={() => setIsLeaderboardOpen(true)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-1.5 px-3 rounded-xl border border-slate-700 flex items-center gap-1">
+        {/* RIGHT: Stacked Buttons (Clean & Slim) */}
+        <div className="flex flex-col gap-1.5 items-end">
+          <button onClick={() => setIsLeaderboardOpen(true)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-1 px-3 rounded-md border border-slate-600 flex items-center gap-1.5 transition-all">
             <span>🏆</span> Leaderboard
           </button>
-          <button onClick={() => handlePlant(0)} className="bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-1">
+
+          <button onClick={() => handlePlant(0)} className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-3 rounded-md shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all">
             <span>💧</span> WATER FARM
           </button>
         </div>
