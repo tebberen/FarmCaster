@@ -27,24 +27,19 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
     if (!isOpen) return null;
 
     const handleShare = () => {
-        // Points to Vercel deployment for static images
-        const baseUrl = "https://farmcaster-six.vercel.app/images/";
-        const imageName = CHAIN_IMAGES[chainId] || 'cover.png';
-        const imageUrl = `${baseUrl}${imageName}`;
-
         // Remove spaces for hashtag
         const networkHashtag = networkName.replace(/\s+/g, '');
 
         // Construct the text as requested
         const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
-        const encodedText = encodeURIComponent(text);
+        // 1. Define the Robust Deep Link
+        const deepLink = "[https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster](https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster)";
 
-        // CRITICAL: Use the deep link so users open the Mini App directly
-        const deepLink = "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster";
+        const encodedText = encodeURIComponent(text);
         const encodedEmbed = encodeURIComponent(deepLink);
 
-        // Construct the URL
+        // 2. Build the Compose URL
         const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
         window.open(shareUrl, '_blank');
     };
