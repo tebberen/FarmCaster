@@ -38,7 +38,12 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
         // Construct the text as requested
         const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
-        const shareUrl = "https://warpcast.com/~/compose?text=" + encodeURIComponent(text) + "&embeds[]=" + imageUrl;
+        const appUrl = "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster";
+        const encodedText = encodeURIComponent(text);
+        const encodedAppUrl = encodeURIComponent(appUrl);
+        const encodedImageUrl = encodeURIComponent(imageUrl);
+
+        const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedAppUrl}&embeds[]=${encodedImageUrl}`;
         window.open(shareUrl, '_blank');
     };
 
