@@ -26,6 +26,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
     if (!isOpen) return null;
 
     const handleShare = () => {
+        // Points to Vercel deployment for static images
         const baseUrl = "https://farmcaster-six.vercel.app/images/";
         const imageName = CHAIN_IMAGES[chainId] || 'base-cover.png';
         const imageUrl = `${baseUrl}${imageName}`;
