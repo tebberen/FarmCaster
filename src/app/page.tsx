@@ -250,6 +250,10 @@ export default function FarmCaster() {
     }
   };
 
+  // Logic for Profile Image/Text
+  const profileImage = farcasterUser?.pfpUrl ?? "/images/icon.png";
+  const profileHandle = farcasterUser?.username ? `@${farcasterUser.username}` : (address ? `${address.slice(0, 6)}...` : "Connect");
+
   if (!isMounted) return null;
 
   return (
@@ -273,48 +277,29 @@ export default function FarmCaster() {
       />
 
       {/* 1. HEADER */}
-      <header className={`sticky top-0 z-50 backdrop-blur-xl bg-black/30 border-b border-white/5 h-16 flex justify-between items-center px-4`}>
-        <div className="flex items-center gap-3">
-          <img
-            src={farcasterUser?.pfpUrl ?? "/images/icon.png"}
-            alt="Profile"
-            className={`w-10 h-10 rounded-full border-2 ${currentTheme.border}`}
-            onError={(e) => e.currentTarget.src = "/images/icon.png"}
-          />
+      <header className="flex items-center justify-between p-4 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50 border-b border-white/5">
+        {/* Profile Section */}
+        <div className="flex items-center gap-2">
+          <img src={profileImage} className={`w-10 h-10 rounded-full border-2 ${currentTheme.border}`} alt="Profile" />
           <div className="flex flex-col">
             <span className="font-bold text-sm text-white">Farmer</span>
-            <span className="text-xs text-gray-400">
-              {farcasterUser?.username
-                ? `@${farcasterUser.username}`
-                : (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Connect Wallet")}
-            </span>
+            <span className="text-[10px] text-gray-400">{profileHandle}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-           <button
-             onClick={() => setShowOnboarding(true)}
-             className={`p-2 rounded-full hover:bg-white/10 transition-colors ${currentTheme.strongText}`}
-             title="How to Play"
-           >
-             <HelpCircle size={24} />
-           </button>
-           <button
-             onClick={() => setIsLeaderboardOpen(true)}
-             className={`px-3 py-2 rounded-xl font-bold flex items-center gap-2 border ${currentTheme.border} bg-white/5 hover:bg-white/10 transition-colors text-white`}
-           >
-             🏆 Leaderboard
-           </button>
-           <button
-             onClick={() => handlePlant(0)}
-             className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform"
-           >
-             💧 WATER FARM
-           </button>
+
+        {/* Action Buttons (Scaled Down) */}
+        <div className="flex gap-2">
+          <button onClick={() => setIsLeaderboardOpen(true)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-1.5 px-3 rounded-xl border border-slate-700 flex items-center gap-1">
+            <span>🏆</span> Leaderboard
+          </button>
+          <button onClick={() => handlePlant(0)} className="bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-1">
+            <span>💧</span> WATER FARM
+          </button>
         </div>
       </header>
 
       {/* 2. NETWORK TABS */}
-      <div className="max-w-lg mx-auto mt-6 px-4 overflow-x-auto flex gap-2 pb-2 no-scrollbar">
+      <div className="max-w-lg mx-auto mt-6 px-4 flex flex-wrap justify-center gap-2 pb-2">
         {Object.values(THEMES).map((t: any) => (
            <button
              key={t.id}
