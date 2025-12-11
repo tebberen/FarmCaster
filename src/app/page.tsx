@@ -123,7 +123,7 @@ export default function FarmCaster() {
   const { address, chain, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
-  const { connect, connectors } = useConnect();
+  const { connect, connectors, status: connectStatus } = useConnect();
   // removed useDisconnect as it's not used in new logic
 
   const [isMounted, setIsMounted] = useState(false);
@@ -150,13 +150,10 @@ export default function FarmCaster() {
     if (!hasSeen) setShowOnboarding(true);
   }, []);
 
-  // NEW Wallet Logic (Simplified & Stable)
+  // 1. Initialize Farcaster SDK
   useEffect(() => {
-    const init = async () => {
-      // 1. Notify Farcaster
+    const initSdk = async () => {
       sdk.actions.ready();
-
-      // 2. Simple Check: Are we in Farcaster?
       try {
         const context = await sdk.context;
         if (context?.user) {
@@ -166,23 +163,23 @@ export default function FarmCaster() {
           if (context?.client && !context.client.added) {
              setShowFavoriteReminder(true);
           }
-
-          // 3. Gentle Auto-Connect
-          // Only try to connect if we aren't already connected to something
-          if (!isConnected) {
-            const fcConnector = connectors.find(c => c.id === 'farcaster-mini-app');
-            if (fcConnector) {
-              connect({ connector: fcConnector });
-            }
-          }
         }
       } catch (err) {
         console.error("SDK Init Error:", err);
       }
     };
+    initSdk();
+  }, []);
 
-    init();
-  }, [isConnected, connect, connectors]); // Simple dependencies
+  // 2. Auto-Connect Logic (Waits for Connector)
+  useEffect(() => {
+    if (isReady && !isConnected && connectStatus === 'idle') {
+      const fcConnector = connectors.find(c => c.id === 'farcaster-mini-app');
+      if (fcConnector) {
+        connect({ connector: fcConnector });
+      }
+    }
+  }, [isReady, isConnected, connectors, connect, connectStatus]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
