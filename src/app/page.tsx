@@ -154,19 +154,11 @@ export default function FarmCaster() {
         if (context?.user) {
           setFarcasterUser(context.user);
 
-          // Priority Rule: If Farcaster Context exists, FORCE Farcaster Wallet
-
-          // CASE 1: Connected to Metamask (injected) inside Farcaster? -> DISCONNECT IT!
-          if (isConnected && activeConnector?.id !== 'farcaster-mini-app') {
-            console.log("Wrong wallet detected in Farcaster frame. Disconnecting...");
-            disconnect();
-          }
-
-          // CASE 2: Not connected, or just disconnected -> CONNECT FARCASTER
+          // Priority Rule: If Farcaster Context exists, ensure we use Farcaster Wallet
+          // We do NOT disconnect explicitly to avoid race conditions.
           const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
           if (miniAppConnector) {
              connect({ connector: miniAppConnector });
-             console.log("Forcing Farcaster Wallet connection...");
           }
         }
 
@@ -179,7 +171,7 @@ export default function FarmCaster() {
 
       const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
       if (!hasSeen) setShowOnboarding(true);
-  }, [connectors, connect, isConnected, activeConnector, disconnect]);
+  }, [connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -222,13 +214,12 @@ export default function FarmCaster() {
 
   // --- ACTION ---
   const handleConnect = () => {
-    // Filter for "injected" (Metamask/Browser) or "coinbaseWallet"
-    const targetConnector = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
-
-    if (targetConnector) {
-      connect({ connector: targetConnector });
+    // Prefer Injected (Metamask) or Coinbase for web
+    const webConnector = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
+    if (webConnector) {
+      connect({ connector: webConnector });
     } else {
-      // Fallback: try the first available one that isn't the mini-app (if on web)
+      // Fallback: Show all options or pick the first available
       const fallback = connectors.find(c => c.id !== 'farcaster-mini-app');
       if (fallback) connect({ connector: fallback });
     }
