@@ -38,12 +38,14 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
         // Construct the text as requested
         const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
-        const appUrl = "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster";
         const encodedText = encodeURIComponent(text);
-        const encodedAppUrl = encodeURIComponent(appUrl);
-        const encodedImageUrl = encodeURIComponent(imageUrl);
 
-        const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedAppUrl}&embeds[]=${encodedImageUrl}`;
+        // CRITICAL: Use the deep link so users open the Mini App directly
+        const deepLink = "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster";
+        const encodedEmbed = encodeURIComponent(deepLink);
+
+        // Construct the URL
+        const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
         window.open(shareUrl, '_blank');
     };
 
