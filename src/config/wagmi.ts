@@ -42,7 +42,8 @@ export const config = createConfig({
     [hyperEvmMainnet.id]: http(),
   },
   connectors: [
-    farcasterMiniApp(), // Priority: Farcaster Mini App first
+    // Official Farcaster Mini App Config
+    farcasterMiniApp(),
     injected(),
     coinbaseWallet({ appName: 'FarmCaster' }),
   ],

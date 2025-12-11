@@ -120,14 +120,12 @@ const CHAIN_IDS: Record<string, number> = {
 };
 
 export default function Home() {
-  const { address, chain, isConnected, connector: activeConnector } = useAccount();
+  const { address, chain, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
-  const { connect, connectors, status: connectStatus } = useConnect();
+  const { connect, connectors } = useConnect();
 
   const [isMounted, setIsMounted] = useState(false);
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [isFarcasterContext, setIsFarcasterContext] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -143,74 +141,41 @@ export default function Home() {
     return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // Initialize: Check Onboarding & Mount & SDK
+  // 1. Always signal ready immediately on mount
   useEffect(() => {
     setIsMounted(true);
+    sdk.actions.ready();
+
+    // Check onboarding
     const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
     if (!hasSeen) setShowOnboarding(true);
+  }, []);
 
+  // 2. Standard Auto-Connect Effect
+  useEffect(() => {
     const initializeSDK = async () => {
-      sdk.actions.ready();
       try {
         const context = await sdk.context;
         if (context?.user) {
-          setIsFarcasterContext(true);
           setFarcasterUser(context.user);
+
+          if (!isConnected) {
+            const connector = connectors.find((c) => c.id === 'farcaster-mini-app');
+            if (connector) {
+              connect({ connector });
+            }
+          }
+
           if (context.client && !context.client.added) {
              setShowFavoriteReminder(true);
           }
         }
       } catch (e) {
         console.error("SDK Init Error:", e);
-      } finally {
-        setIsSDKLoaded(true);
       }
     };
     initializeSDK();
-  }, []);
-
-  // Poll & Connect Logic (Observer Pattern)
-  useEffect(() => {
-    if (!isSDKLoaded) return;
-    if (!isFarcasterContext) return;
-
-    // IF in Farcaster context, strictly use farcaster-mini-app
-    if (isConnected && activeConnector?.id === 'farcaster-mini-app') return;
-
-    const attemptConnect = () => {
-       // Avoid parallel connection attempts
-       if (connectStatus === 'pending') return false;
-
-       const fcConnector = connectors.find(c => c.id === 'farcaster-mini-app');
-       if (fcConnector) {
-         connect({ connector: fcConnector });
-         return true;
-       }
-       return false;
-    };
-
-    // Initial attempt
-    attemptConnect();
-
-    // Poll for connector availability and success
-    const interval = setInterval(() => {
-       // If connected to the correct connector, stop polling
-       if (isConnected && activeConnector?.id === 'farcaster-mini-app') {
-           clearInterval(interval);
-           return;
-       }
-
-       attemptConnect();
-    }, 1000);
-
-    // Give up after 15 seconds to prevent infinite polling
-    const timeout = setTimeout(() => clearInterval(interval), 15000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [isSDKLoaded, isFarcasterContext, isConnected, activeConnector, connectors, connect, connectStatus]);
+  }, [isConnected, connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -253,10 +218,13 @@ export default function Home() {
 
   // --- ACTION ---
   const handleConnect = () => {
-    if (isFarcasterContext) {
+    // If in Farcaster, we trust the auto-connect logic mostly, but if manually clicked:
+    if (farcasterUser) {
        const fc = connectors.find(c => c.id === 'farcaster-mini-app');
-       if (fc) connect({ connector: fc });
-       return;
+       if (fc) {
+         connect({ connector: fc });
+         return;
+       }
     }
 
     // External Web: Allow Manual Connection
@@ -269,14 +237,14 @@ export default function Home() {
   };
 
   const handlePlant = async (id: number) => {
-    if (!chain) {
+    if (!isConnected) {
       handleConnect();
       return;
     }
 
     // Auto-switch chain if needed (optional but good UX)
     const targetChainId = CHAIN_IDS[currentTheme.id];
-    if (chain.id !== targetChainId) {
+    if (chain && chain.id !== targetChainId) {
         switchChain({ chainId: targetChainId });
         return;
     }
