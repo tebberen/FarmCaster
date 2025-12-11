@@ -46,4 +46,5 @@ export const config = createConfig({
     injected(),
     coinbaseWallet({ appName: 'FarmCaster' }),
   ],
+  ssr: true,
 });
