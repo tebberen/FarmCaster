@@ -126,7 +126,7 @@ export default function Home() {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
 
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
@@ -143,48 +143,51 @@ export default function Home() {
     return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // 1. Initialize SDK
+  // 1. Signal Ready & Set State
   useEffect(() => {
     const init = async () => {
+      // Notify Farcaster
+      sdk.actions.ready();
+
       try {
-        sdk.actions.ready();
         const context = await sdk.context;
         if (context?.user) {
           setFarcasterUser(context.user);
         }
       } catch (error) {
-        console.error("SDK Init Error:", error);
+        console.error("SDK Context Error:", error);
       }
-      setIsSDKLoaded(true);
-    };
 
-    if (!isSDKLoaded) {
-      init();
-    }
+      // Small delay to ensure context is hydrated (optional but helps stability)
+      setTimeout(() => setIsReady(true), 100);
+    };
+    init();
 
     setIsMounted(true);
     const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
     if (!hasSeen) setShowOnboarding(true);
-  }, [isSDKLoaded]);
+  }, []);
 
-  // 2. Auto-Connect Logic
+  // 2. Auto-Connect (Only triggers when isReady is TRUE)
   useEffect(() => {
-    const checkAndConnect = async () => {
-      const context = await sdk.context;
-      // 1. Check if we are inside a Farcaster Frame/MiniApp
-      if (context?.user && !isConnected) {
+    const run = async () => {
+        // Only proceed if:
+        // a) App is marked 'ready'
+        // b) User is NOT connected
+        // c) We are effectively in a Farcaster context
+        const context = await sdk.context;
+        if (isReady && !isConnected && context?.user) {
 
-        // 2. Find the correct connector
-        const fcConnector = connectors.find((c) => c.id === 'farcaster-mini-app');
+          const fcConnector = connectors.find((c) => c.id === 'farcaster-mini-app');
 
-        // 3. Trigger connection automatically
-        if (fcConnector) {
-          connect({ connector: fcConnector });
+          if (fcConnector) {
+            console.log("Auto-connecting to Farcaster Wallet...");
+            connect({ connector: fcConnector });
+          }
         }
-      }
     };
-    checkAndConnect();
-  }, [isConnected, connectors, connect]);
+    run();
+  }, [isReady, isConnected, connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
