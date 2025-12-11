@@ -13,11 +13,15 @@
     "splashImageUrl": "https://farmcaster-six.vercel.app/images/icon.png",
     "splashBackgroundColor": "#0F172A",
     "primaryCategory": "games",
-    "tags": ["farming", "game", "social", "base"],
+    "tags": [
+      "farming",
+      "game",
+      "social",
+      "base"
+    ],
     "requiredChains": [
       "eip155:8453",
       "eip155:42220",
-      "eip155:56",
       "eip155:42161",
       "eip155:1"
     ],
