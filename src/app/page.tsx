@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAccount, useReadContract, useWriteContract, useSwitchChain, usePublicClient, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useSwitchChain, useConnect, useDisconnect } from "wagmi";
 import { parseEther } from "viem";
 import sdk from "@farcaster/miniapp-sdk";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -120,13 +120,14 @@ const CHAIN_IDS: Record<string, number> = {
 };
 
 export default function FarmCaster() {
-  const { address, chain, isConnected, connector: activeConnector } = useAccount();
+  const { address, chain, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
   const { connect, connectors } = useConnect();
-  const { disconnect } = useDisconnect();
+  // removed useDisconnect as it's not used in new logic
 
   const [isMounted, setIsMounted] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -134,7 +135,6 @@ export default function FarmCaster() {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [successData, setSuccessData] = useState<{ seedId: number, xp: number, hash: string } | null>(null);
   const [farcasterUser, setFarcasterUser] = useState<any>(null);
-  const [hasAttemptedAutoConnect, setHasAttemptedAutoConnect] = useState(false);
 
   // Derive Current Theme
   const currentTheme = React.useMemo(() => {
@@ -143,46 +143,46 @@ export default function FarmCaster() {
     return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // 1. Initialize SDK
+  // Initialize: Check Onboarding & Mount
   useEffect(() => {
     setIsMounted(true);
-    const initSdk = async () => {
+    const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
+    if (!hasSeen) setShowOnboarding(true);
+  }, []);
+
+  // NEW Wallet Logic (Simplified & Stable)
+  useEffect(() => {
+    const init = async () => {
+      // 1. Notify Farcaster
       sdk.actions.ready();
+
+      // 2. Simple Check: Are we in Farcaster?
       try {
         const context = await sdk.context;
         if (context?.user) {
-          console.log("Farcaster User detected:", context.user);
+          setIsReady(true); // Flag that we are in Mini App mode
           setFarcasterUser(context.user);
-        }
-        if (context?.client && !context.client.added) {
-          setShowFavoriteReminder(true);
+
+          if (context?.client && !context.client.added) {
+             setShowFavoriteReminder(true);
+          }
+
+          // 3. Gentle Auto-Connect
+          // Only try to connect if we aren't already connected to something
+          if (!isConnected) {
+            const fcConnector = connectors.find(c => c.id === 'farcaster-mini-app');
+            if (fcConnector) {
+              connect({ connector: fcConnector });
+            }
+          }
         }
       } catch (err) {
         console.error("SDK Init Error:", err);
       }
     };
-    initSdk();
 
-    const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
-    if (!hasSeen) setShowOnboarding(true);
-  }, []); // Run once on mount
-
-  // 2. Auto-Connect Logic
-  useEffect(() => {
-    if (isMounted && farcasterUser && connectors.length > 0 && !hasAttemptedAutoConnect) {
-       const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
-
-       if (miniAppConnector) {
-           const isWrongConnector = isConnected && activeConnector?.id !== miniAppConnector.id;
-
-           if (!isConnected || isWrongConnector) {
-               console.log("Attempting auto-connect to Farcaster Wallet");
-               connect({ connector: miniAppConnector });
-               setHasAttemptedAutoConnect(true);
-           }
-       }
-    }
-  }, [isMounted, farcasterUser, connectors, isConnected, activeConnector, hasAttemptedAutoConnect, connect]);
+    init();
+  }, [isConnected, connect, connectors]); // Simple dependencies
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -225,23 +225,19 @@ export default function FarmCaster() {
 
   // --- ACTION ---
   const handleConnect = () => {
-    // If we are in Farcaster context, prefer that
-    if (farcasterUser) {
-        const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
-        if (miniAppConnector) {
-            connect({ connector: miniAppConnector });
-            return;
-        }
+    // If in Farcaster mode, force Farcaster connector
+    if (isReady) {
+       const fc = connectors.find(c => c.id === 'farcaster-mini-app');
+       if (fc) return connect({ connector: fc });
     }
 
-    // Prefer Injected (Metamask) or Coinbase for web
-    const webConnector = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
-    if (webConnector) {
-      connect({ connector: webConnector });
-    } else {
-      // Fallback: Show all options or pick the first available
-      const fallback = connectors.find(c => c.id !== 'farcaster-mini-app');
-      if (fallback) connect({ connector: fallback });
+    // Otherwise (Web mode), try Injected/Metamask first
+    const web = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
+    if (web) connect({ connector: web });
+    else {
+        // Fallback
+        const any = connectors.find(c => c.id !== 'farcaster-mini-app');
+        if (any) connect({ connector: any });
     }
   };
 
