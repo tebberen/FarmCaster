@@ -149,6 +149,12 @@ export default function FarmCaster() {
         const context = await sdk.context;
         if (context?.user) {
           setFarcasterUser(context.user);
+
+          // CRITICAL: Force Farcaster Wallet inside Frame
+          const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
+          if (miniAppConnector) {
+             connect({ connector: miniAppConnector });
+          }
         }
         if (context?.client && !context.client.added) {
           setShowFavoriteReminder(true);
@@ -288,12 +294,12 @@ export default function FarmCaster() {
         <div className="flex items-center gap-2.5">
           <img
             src={profileImage}
-            className={`w-10 h-10 rounded-full border-2 ${currentTheme.border}`}
+            className={`w-12 h-12 rounded-full border-2 ${currentTheme.border}`}
             alt="Profile"
           />
           <div className="flex flex-col justify-center">
-            <span className="font-bold text-sm text-white leading-tight">Farmer</span>
-            <span className="text-[11px] text-gray-400 font-medium">{profileHandle}</span>
+            <span className="font-bold text-base text-white leading-tight">Farmer</span>
+            <span className="text-sm text-gray-400 font-medium">{profileHandle}</span>
           </div>
         </div>
 
@@ -315,7 +321,7 @@ export default function FarmCaster() {
            <button
              key={t.id}
              onClick={() => switchChain({ chainId: CHAIN_IDS[t.id] })}
-             className={`px-4 py-2 rounded-full font-bold whitespace-nowrap transition-all ${currentTheme.id === t.id ? t.accent : 'bg-white/50 border border-transparent'}`}
+             className={`px-3 py-1.5 text-xs rounded-full font-bold whitespace-nowrap transition-all ${currentTheme.id === t.id ? t.accent : 'bg-white/50 border border-transparent'}`}
            >
              {t.name}
            </button>
