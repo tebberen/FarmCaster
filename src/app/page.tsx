@@ -130,6 +130,7 @@ export default function FarmCaster() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [successData, setSuccessData] = useState<{ seedId: number, xp: number, hash: string } | null>(null);
+  const [farcasterUser, setFarcasterUser] = useState<any>(null);
 
   // Derive Current Theme
   const currentTheme = React.useMemo(() => {
@@ -141,7 +142,14 @@ export default function FarmCaster() {
   // Fix Hydration & Check Onboarding
   useEffect(() => {
       setIsMounted(true);
-      sdk.actions.ready();
+      const init = async () => {
+        sdk.actions.ready();
+        const context = await sdk.context;
+        if (context?.user) {
+          setFarcasterUser(context.user);
+        }
+      };
+      init();
       const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
       if (!hasSeen) setShowOnboarding(true);
   }, []);
@@ -266,9 +274,21 @@ export default function FarmCaster() {
 
       {/* 1. HEADER */}
       <header className={`sticky top-0 z-50 backdrop-blur-xl bg-black/30 border-b border-white/5 h-16 flex justify-between items-center px-4`}>
-        <div className="flex items-center gap-2">
-          <div className={`p-2 rounded-full ${currentTheme.accent}`}>🚜</div>
-          <span className="font-bold text-lg text-white">Farmer {address?.slice(0,6)}...</span>
+        <div className="flex items-center gap-3">
+          <img
+            src={farcasterUser?.pfpUrl ?? "/images/icon.png"}
+            alt="Profile"
+            className={`w-10 h-10 rounded-full border-2 ${currentTheme.border}`}
+            onError={(e) => e.currentTarget.src = "/images/icon.png"}
+          />
+          <div className="flex flex-col">
+            <span className="font-bold text-sm text-white">Farmer</span>
+            <span className="text-xs text-gray-400">
+              {farcasterUser?.username
+                ? `@${farcasterUser.username}`
+                : (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Connect Wallet")}
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
            <button
