@@ -20,6 +20,7 @@ const CHAIN_IMAGES: Record<number, string> = {
     42161: 'arb-cover.png',
     143: 'monad-cover.png',
     999: 'hyper-cover.png',
+    1: 'eth-cover.png',
 };
 
 export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, theme, emoji, networkName, chainId, xp }) => {
@@ -28,7 +29,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
     const handleShare = () => {
         // Points to Vercel deployment for static images
         const baseUrl = "https://farmcaster-six.vercel.app/images/";
-        const imageName = CHAIN_IMAGES[chainId] || 'base-cover.png';
+        const imageName = CHAIN_IMAGES[chainId] || 'cover.png';
         const imageUrl = `${baseUrl}${imageName}`;
 
         // Remove spaces for hashtag
