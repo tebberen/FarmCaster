@@ -141,7 +141,7 @@ export default function Home() {
     return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // 1. Always signal ready immediately on mount
+  // 1. Initialize SDK
   useEffect(() => {
     setIsMounted(true);
     sdk.actions.ready();
@@ -151,9 +151,10 @@ export default function Home() {
     if (!hasSeen) setShowOnboarding(true);
   }, []);
 
-  // 2. Standard Auto-Connect Effect
+  // 2. Official Auto-Connect Logic
+  // This relies on Wagmi's internal handling and the connector order set in wagmi.ts
   useEffect(() => {
-    const initializeSDK = async () => {
+    const init = async () => {
       try {
         const context = await sdk.context;
         if (context?.user) {
@@ -166,15 +167,12 @@ export default function Home() {
             }
           }
 
-          if (context.client && !context.client.added) {
-             setShowFavoriteReminder(true);
-          }
         }
-      } catch (e) {
-        console.error("SDK Init Error:", e);
+      } catch (error) {
+        console.error("SDK Error:", error);
       }
     };
-    initializeSDK();
+    init();
   }, [isConnected, connectors, connect]);
 
   // Update localStorage when closing onboarding
