@@ -156,8 +156,9 @@ export default function FarmCaster() {
           // Priority Rule: If Farcaster Context exists, FORCE Farcaster Wallet
           const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
 
-          if (miniAppConnector && !isConnected) {
+          if (miniAppConnector) {
              connect({ connector: miniAppConnector });
+             console.log("Forcing Farcaster Wallet connection...");
           }
         }
 
@@ -170,7 +171,7 @@ export default function FarmCaster() {
 
       const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
       if (!hasSeen) setShowOnboarding(true);
-  }, [connectors, connect, isConnected]);
+  }, [connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
