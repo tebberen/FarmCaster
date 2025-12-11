@@ -134,6 +134,7 @@ export default function FarmCaster() {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [successData, setSuccessData] = useState<{ seedId: number, xp: number, hash: string } | null>(null);
   const [farcasterUser, setFarcasterUser] = useState<any>(null);
+  const [hasAttemptedAutoConnect, setHasAttemptedAutoConnect] = useState(false);
 
   // Derive Current Theme
   const currentTheme = React.useMemo(() => {
@@ -142,36 +143,46 @@ export default function FarmCaster() {
     return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // Fix Hydration & Check Onboarding
+  // 1. Initialize SDK
   useEffect(() => {
-      setIsMounted(true);
-      const init = async () => {
-        sdk.actions.ready();
-
-        // Check if we are running inside Farcaster (Web or Mobile)
+    setIsMounted(true);
+    const initSdk = async () => {
+      sdk.actions.ready();
+      try {
         const context = await sdk.context;
-
         if (context?.user) {
+          console.log("Farcaster User detected:", context.user);
           setFarcasterUser(context.user);
-
-          // Priority Rule: If Farcaster Context exists, ensure we use Farcaster Wallet
-          // We do NOT disconnect explicitly to avoid race conditions.
-          const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
-          if (miniAppConnector) {
-             connect({ connector: miniAppConnector });
-          }
         }
-
         if (context?.client && !context.client.added) {
           setShowFavoriteReminder(true);
         }
-      };
+      } catch (err) {
+        console.error("SDK Init Error:", err);
+      }
+    };
+    initSdk();
 
-      init();
+    const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
+    if (!hasSeen) setShowOnboarding(true);
+  }, []); // Run once on mount
 
-      const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
-      if (!hasSeen) setShowOnboarding(true);
-  }, [connectors, connect]);
+  // 2. Auto-Connect Logic
+  useEffect(() => {
+    if (isMounted && farcasterUser && connectors.length > 0 && !hasAttemptedAutoConnect) {
+       const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
+
+       if (miniAppConnector) {
+           const isWrongConnector = isConnected && activeConnector?.id !== miniAppConnector.id;
+
+           if (!isConnected || isWrongConnector) {
+               console.log("Attempting auto-connect to Farcaster Wallet");
+               connect({ connector: miniAppConnector });
+               setHasAttemptedAutoConnect(true);
+           }
+       }
+    }
+  }, [isMounted, farcasterUser, connectors, isConnected, activeConnector, hasAttemptedAutoConnect, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -214,6 +225,15 @@ export default function FarmCaster() {
 
   // --- ACTION ---
   const handleConnect = () => {
+    // If we are in Farcaster context, prefer that
+    if (farcasterUser) {
+        const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
+        if (miniAppConnector) {
+            connect({ connector: miniAppConnector });
+            return;
+        }
+    }
+
     // Prefer Injected (Metamask) or Coinbase for web
     const webConnector = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
     if (webConnector) {
