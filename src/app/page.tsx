@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAccount, useReadContract, useWriteContract, useSwitchChain, usePublicClient } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useSwitchChain, usePublicClient, useConnect } from "wagmi";
 import { parseEther } from "viem";
 import sdk from "@farcaster/miniapp-sdk";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -122,6 +122,7 @@ export default function FarmCaster() {
   const { address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync, isPending } = useWriteContract();
+  const { connect, connectors } = useConnect();
 
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
@@ -185,8 +186,24 @@ export default function FarmCaster() {
   const { days, startDay, monthName, year } = getDaysInMonth(viewDate);
 
   // --- ACTION ---
+  const handleConnect = () => {
+    // Filter for "injected" (Metamask/Browser) or "coinbaseWallet"
+    const targetConnector = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
+
+    if (targetConnector) {
+      connect({ connector: targetConnector });
+    } else {
+      // Fallback: try the first available one that isn't the mini-app (if on web)
+      const fallback = connectors.find(c => c.id !== 'farcaster-mini-app');
+      if (fallback) connect({ connector: fallback });
+    }
+  };
+
   const handlePlant = async (id: number) => {
-    if (!chain) return alert("Connect Wallet!");
+    if (!chain) {
+      handleConnect();
+      return;
+    }
     let func: 'gm' | 'deploy' | 'launch' | 'donate' = 'gm';
     let val = 0n;
     if (id >= 10 && id < 20) { func = 'deploy'; val = 30000000000000n; }
