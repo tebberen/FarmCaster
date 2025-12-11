@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import sdk, { type Context } from "@farcaster/frame-sdk";
 import { useAccount, useReadContract, useWriteContract, useSwitchChain, useConnect, useDisconnect } from "wagmi";
 import { parseEther } from "viem";
-import sdk from "@farcaster/miniapp-sdk";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Trophy, Droplets, HelpCircle, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { HUB_CONTRACTS, GARDEN_CONTRACTS, HUB_ABI, GARDEN_ABI } from "../config/contracts";
@@ -124,7 +124,9 @@ export default function Home() {
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
 
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
@@ -143,37 +145,37 @@ export default function Home() {
 
   // 1. Initialize SDK
   useEffect(() => {
-    setIsMounted(true);
-    sdk.actions.ready();
-
-    // Check onboarding
-    const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
-    if (!hasSeen) setShowOnboarding(true);
-  }, []);
-
-  // 2. Official Auto-Connect Logic
-  // This relies on Wagmi's internal handling and the connector order set in wagmi.ts
-  useEffect(() => {
     const init = async () => {
       try {
+        sdk.actions.ready();
         const context = await sdk.context;
         if (context?.user) {
           setFarcasterUser(context.user);
-
-          if (!isConnected) {
-            const connector = connectors.find((c) => c.id === 'farcaster-mini-app');
-            if (connector) {
-              connect({ connector });
-            }
-          }
-
         }
       } catch (error) {
-        console.error("SDK Error:", error);
+        console.error("SDK Init Error:", error);
       }
+      setIsSDKLoaded(true);
     };
-    init();
-  }, [isConnected, connectors, connect]);
+
+    if (!isSDKLoaded) {
+      init();
+    }
+
+    setIsMounted(true);
+    const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
+    if (!hasSeen) setShowOnboarding(true);
+  }, [isSDKLoaded]);
+
+  // 2. Auto-Connect Logic (Standard)
+  useEffect(() => {
+    if (farcasterUser && !isConnected && isSDKLoaded) {
+      const connector = connectors.find((c) => c.id === 'farcaster-mini-app');
+      if (connector) {
+        connect({ connector });
+      }
+    }
+  }, [isConnected, connectors, isSDKLoaded, connect, farcasterUser]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -194,7 +196,7 @@ export default function Home() {
   const historyMap = React.useMemo(() => {
     if (!historyData) return {};
     const map: Record<string, number> = {};
-    historyData.forEach((item) => {
+    historyData.forEach((item: any) => {
        const d = new Date(Number(item.timestamp) * 1000);
        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
        const sid = Number(item.seedType);
@@ -216,22 +218,17 @@ export default function Home() {
 
   // --- ACTION ---
   const handleConnect = () => {
-    // If in Farcaster, we trust the auto-connect logic mostly, but if manually clicked:
+    // Priority: Farcaster
     if (farcasterUser) {
-       const fc = connectors.find(c => c.id === 'farcaster-mini-app');
-       if (fc) {
-         connect({ connector: fc });
-         return;
-       }
+        const fc = connectors.find(c => c.id === 'farcaster-mini-app');
+        if (fc) {
+            connect({ connector: fc });
+            return;
+        }
     }
-
-    // External Web: Allow Manual Connection
-    const web = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
-    if (web) connect({ connector: web });
-    else {
-        const any = connectors.find(c => c.id !== 'farcaster-mini-app');
-        if (any) connect({ connector: any });
-    }
+    // Fallback: Others
+    const other = connectors.find(c => c.id !== 'farcaster-mini-app');
+    if (other) connect({ connector: other });
   };
 
   const handlePlant = async (id: number) => {
@@ -240,18 +237,22 @@ export default function Home() {
       return;
     }
 
-    // Auto-switch chain if needed (optional but good UX)
+    // Auto-switch chain if needed
     const targetChainId = CHAIN_IDS[currentTheme.id];
     if (chain && chain.id !== targetChainId) {
-        switchChain({ chainId: targetChainId });
+        try {
+            switchChain({ chainId: targetChainId });
+        } catch (e) {
+            console.error("Switch chain failed", e);
+        }
         return;
     }
 
     let func: 'gm' | 'deploy' | 'launch' | 'donate' = 'gm';
     let val = 0n;
-    if (id >= 10 && id < 20) { func = 'deploy'; val = 30000000000000n; }
-    else if (id >= 20 && id < 30) { func = 'launch'; val = 45000000000000n; }
-    else if (id >= 30) { func = 'donate'; val = 60000000000000n; }
+    if (id >= 10 && id < 20) { func = 'deploy'; val = 30000000000000n; } // 0.00003
+    else if (id >= 20 && id < 30) { func = 'launch'; val = 45000000000000n; } // 0.000045
+    else if (id >= 30) { func = 'donate'; val = 60000000000000n; } // 0.00006
 
     // XP Logic
     let xp = 1;
@@ -278,7 +279,6 @@ export default function Home() {
         });
       }
 
-      // Optimistic UI Success
       setSuccessData({ seedId: id, xp, hash });
     } catch (e) {
       console.error("Planting failed:", e);
@@ -330,8 +330,8 @@ export default function Home() {
             <span>🏆</span> Leaderboard
           </button>
 
-          <button onClick={() => handlePlant(0)} className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-3 rounded-md shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all">
-            <span>💧</span> WATER FARM
+          <button onClick={() => isConnected ? handlePlant(0) : handleConnect()} className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-3 rounded-md shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all">
+            <span>💧</span> {isConnected ? "WATER FARM" : "CONNECT"}
           </button>
         </div>
       </header>
