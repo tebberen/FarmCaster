@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAccount, useReadContract, useWriteContract, useSwitchChain, usePublicClient, useConnect } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useSwitchChain, usePublicClient, useConnect, useDisconnect } from "wagmi";
 import { parseEther } from "viem";
 import sdk from "@farcaster/miniapp-sdk";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -120,10 +120,11 @@ const CHAIN_IDS: Record<string, number> = {
 };
 
 export default function FarmCaster() {
-  const { address, chain, isConnected } = useAccount();
+  const { address, chain, isConnected, connector: activeConnector } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync, isPending } = useWriteContract();
   const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
 
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
@@ -154,8 +155,15 @@ export default function FarmCaster() {
           setFarcasterUser(context.user);
 
           // Priority Rule: If Farcaster Context exists, FORCE Farcaster Wallet
-          const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
 
+          // CASE 1: Connected to Metamask (injected) inside Farcaster? -> DISCONNECT IT!
+          if (isConnected && activeConnector?.id !== 'farcaster-mini-app') {
+            console.log("Wrong wallet detected in Farcaster frame. Disconnecting...");
+            disconnect();
+          }
+
+          // CASE 2: Not connected, or just disconnected -> CONNECT FARCASTER
+          const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
           if (miniAppConnector) {
              connect({ connector: miniAppConnector });
              console.log("Forcing Farcaster Wallet connection...");
@@ -171,7 +179,7 @@ export default function FarmCaster() {
 
       const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
       if (!hasSeen) setShowOnboarding(true);
-  }, [connectors, connect]);
+  }, [connectors, connect, isConnected, activeConnector, disconnect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
