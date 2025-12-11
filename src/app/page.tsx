@@ -120,13 +120,14 @@ const CHAIN_IDS: Record<string, number> = {
 };
 
 export default function Home() {
-  const { address, chain, isConnected } = useAccount();
+  const { address, chain, isConnected, connector: activeConnector } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { connect, connectors, status: connectStatus } = useConnect();
 
   const [isMounted, setIsMounted] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [isFarcasterContext, setIsFarcasterContext] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -142,46 +143,64 @@ export default function Home() {
     return (themeId && THEMES[themeId]) || THEMES.base;
   }, [chain]);
 
-  // Initialize: Check Onboarding & Mount
+  // Initialize: Check Onboarding & Mount & SDK
   useEffect(() => {
     setIsMounted(true);
     const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
     if (!hasSeen) setShowOnboarding(true);
-  }, []);
 
-  // Standard Farcaster Connection Logic
-  useEffect(() => {
-    const initialize = async () => {
+    const initializeSDK = async () => {
       sdk.actions.ready();
-
       try {
-        // Check context (it is a promise in this SDK version)
         const context = await sdk.context;
-
         if (context?.user) {
-          setIsReady(true);
+          setIsFarcasterContext(true);
           setFarcasterUser(context.user);
-
-          // Check favorite status
           if (context.client && !context.client.added) {
              setShowFavoriteReminder(true);
-          }
-
-          // Auto-Connect if not connected
-          if (!isConnected) {
-            const fcConnector = connectors.find((c) => c.id === 'farcaster-mini-app');
-            if (fcConnector) {
-              connect({ connector: fcConnector });
-            }
           }
         }
       } catch (e) {
         console.error("SDK Init Error:", e);
+      } finally {
+        setIsSDKLoaded(true);
       }
     };
+    initializeSDK();
+  }, []);
 
-    initialize();
-  }, [isConnected, connectors, connect]);
+  // Poll & Connect Logic (Observer Pattern)
+  useEffect(() => {
+    if (!isSDKLoaded) return;
+    if (!isFarcasterContext) return;
+
+    // IF in Farcaster context, strictly use farcaster-mini-app
+    if (isConnected && activeConnector?.id === 'farcaster-mini-app') return;
+
+    const attemptConnect = () => {
+       const fcConnector = connectors.find(c => c.id === 'farcaster-mini-app');
+       if (fcConnector) {
+         connect({ connector: fcConnector });
+         return true;
+       }
+       return false;
+    };
+
+    if (attemptConnect()) return;
+
+    // Poll for connector
+    const interval = setInterval(() => {
+       if (attemptConnect()) clearInterval(interval);
+    }, 500);
+
+    // Give up after 5 seconds
+    const timeout = setTimeout(() => clearInterval(interval), 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [isSDKLoaded, isFarcasterContext, isConnected, activeConnector, connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -224,11 +243,13 @@ export default function Home() {
 
   // --- ACTION ---
   const handleConnect = () => {
-    if (isReady) {
+    if (isFarcasterContext) {
        const fc = connectors.find(c => c.id === 'farcaster-mini-app');
-       if (fc) return connect({ connector: fc });
+       if (fc) connect({ connector: fc });
+       return;
     }
 
+    // External Web: Allow Manual Connection
     const web = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
     if (web) connect({ connector: web });
     else {
