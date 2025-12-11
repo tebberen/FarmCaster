@@ -11,6 +11,7 @@ import { SEED_DATA, getEmojiById } from "../config/emojis";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { LeaderboardModal } from "../components/LeaderboardModal";
 import { SuccessModal } from "../components/SuccessModal";
+import { FavoriteReminder } from "../components/FavoriteReminder";
 
 // --- THEME CONFIG (Pastel Tone-on-Tone) ---
 export interface Theme {
@@ -128,6 +129,7 @@ export default function FarmCaster() {
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
   const [viewDate, setViewDate] = useState(new Date());
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showFavoriteReminder, setShowFavoriteReminder] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [successData, setSuccessData] = useState<{ seedId: number, xp: number, hash: string } | null>(null);
   const [farcasterUser, setFarcasterUser] = useState<any>(null);
@@ -147,6 +149,9 @@ export default function FarmCaster() {
         const context = await sdk.context;
         if (context?.user) {
           setFarcasterUser(context.user);
+        }
+        if (context?.client && !context.client.added) {
+          setShowFavoriteReminder(true);
         }
       };
       init();
@@ -258,6 +263,7 @@ export default function FarmCaster() {
 
   return (
     <main className={`min-h-screen transition-colors duration-500 pb-20 ${currentTheme.pageBg} ${currentTheme.text} font-sans`}>
+      <FavoriteReminder isOpen={showFavoriteReminder} onClose={() => setShowFavoriteReminder(false)} />
       <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
       <LeaderboardModal
         isOpen={isLeaderboardOpen}
