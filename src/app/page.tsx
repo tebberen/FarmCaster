@@ -178,6 +178,9 @@ export default function Home() {
     if (isConnected && activeConnector?.id === 'farcaster-mini-app') return;
 
     const attemptConnect = () => {
+       // Avoid parallel connection attempts
+       if (connectStatus === 'pending') return false;
+
        const fcConnector = connectors.find(c => c.id === 'farcaster-mini-app');
        if (fcConnector) {
          connect({ connector: fcConnector });
@@ -186,21 +189,28 @@ export default function Home() {
        return false;
     };
 
-    if (attemptConnect()) return;
+    // Initial attempt
+    attemptConnect();
 
-    // Poll for connector
+    // Poll for connector availability and success
     const interval = setInterval(() => {
-       if (attemptConnect()) clearInterval(interval);
-    }, 500);
+       // If connected to the correct connector, stop polling
+       if (isConnected && activeConnector?.id === 'farcaster-mini-app') {
+           clearInterval(interval);
+           return;
+       }
 
-    // Give up after 5 seconds
-    const timeout = setTimeout(() => clearInterval(interval), 5000);
+       attemptConnect();
+    }, 1000);
+
+    // Give up after 15 seconds to prevent infinite polling
+    const timeout = setTimeout(() => clearInterval(interval), 15000);
 
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [isSDKLoaded, isFarcasterContext, isConnected, activeConnector, connectors, connect]);
+  }, [isSDKLoaded, isFarcasterContext, isConnected, activeConnector, connectors, connect, connectStatus]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
