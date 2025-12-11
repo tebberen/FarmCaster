@@ -120,7 +120,7 @@ const CHAIN_IDS: Record<string, number> = {
 };
 
 export default function FarmCaster() {
-  const { address, chain } = useAccount();
+  const { address, chain, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync, isPending } = useWriteContract();
   const { connect, connectors } = useConnect();
@@ -146,24 +146,31 @@ export default function FarmCaster() {
       setIsMounted(true);
       const init = async () => {
         sdk.actions.ready();
+
+        // Check if we are running inside Farcaster (Web or Mobile)
         const context = await sdk.context;
+
         if (context?.user) {
           setFarcasterUser(context.user);
 
-          // CRITICAL: Force Farcaster Wallet inside Frame
+          // Priority Rule: If Farcaster Context exists, FORCE Farcaster Wallet
           const miniAppConnector = connectors.find(c => c.id === 'farcaster-mini-app');
-          if (miniAppConnector) {
+
+          if (miniAppConnector && !isConnected) {
              connect({ connector: miniAppConnector });
           }
         }
+
         if (context?.client && !context.client.added) {
           setShowFavoriteReminder(true);
         }
       };
+
       init();
+
       const hasSeen = localStorage.getItem('farmcaster_onboarding_v1');
       if (!hasSeen) setShowOnboarding(true);
-  }, []);
+  }, [connectors, connect, isConnected]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
