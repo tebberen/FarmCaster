@@ -119,12 +119,11 @@ const CHAIN_IDS: Record<string, number> = {
   base: 8453, bsc: 56, celo: 42220, arb: 42161, eth: 1, monad: 143, hyper: 999
 };
 
-export default function FarmCaster() {
+export default function Home() {
   const { address, chain, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { connect, connectors, status: connectStatus } = useConnect();
-  // removed useDisconnect as it's not used in new logic
 
   const [isMounted, setIsMounted] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -150,36 +149,39 @@ export default function FarmCaster() {
     if (!hasSeen) setShowOnboarding(true);
   }, []);
 
-  // 1. Initialize Farcaster SDK
+  // Standard Farcaster Connection Logic
   useEffect(() => {
-    const initSdk = async () => {
+    const initialize = async () => {
       sdk.actions.ready();
+
       try {
+        // Check context (it is a promise in this SDK version)
         const context = await sdk.context;
+
         if (context?.user) {
-          setIsReady(true); // Flag that we are in Mini App mode
+          setIsReady(true);
           setFarcasterUser(context.user);
 
-          if (context?.client && !context.client.added) {
+          // Check favorite status
+          if (context.client && !context.client.added) {
              setShowFavoriteReminder(true);
           }
+
+          // Auto-Connect if not connected
+          if (!isConnected) {
+            const fcConnector = connectors.find((c) => c.id === 'farcaster-mini-app');
+            if (fcConnector) {
+              connect({ connector: fcConnector });
+            }
+          }
         }
-      } catch (err) {
-        console.error("SDK Init Error:", err);
+      } catch (e) {
+        console.error("SDK Init Error:", e);
       }
     };
-    initSdk();
-  }, []);
 
-  // 2. Auto-Connect Logic (Waits for Connector)
-  useEffect(() => {
-    if (isReady && !isConnected && connectStatus === 'idle') {
-      const fcConnector = connectors.find(c => c.id === 'farcaster-mini-app');
-      if (fcConnector) {
-        connect({ connector: fcConnector });
-      }
-    }
-  }, [isReady, isConnected, connectors, connect, connectStatus]);
+    initialize();
+  }, [isConnected, connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -222,17 +224,14 @@ export default function FarmCaster() {
 
   // --- ACTION ---
   const handleConnect = () => {
-    // If in Farcaster mode, force Farcaster connector
     if (isReady) {
        const fc = connectors.find(c => c.id === 'farcaster-mini-app');
        if (fc) return connect({ connector: fc });
     }
 
-    // Otherwise (Web mode), try Injected/Metamask first
     const web = connectors.find(c => c.id === 'injected' || c.id === 'coinbaseWalletSDK');
     if (web) connect({ connector: web });
     else {
-        // Fallback
         const any = connectors.find(c => c.id !== 'farcaster-mini-app');
         if (any) connect({ connector: any });
     }
@@ -243,6 +242,14 @@ export default function FarmCaster() {
       handleConnect();
       return;
     }
+
+    // Auto-switch chain if needed (optional but good UX)
+    const targetChainId = CHAIN_IDS[currentTheme.id];
+    if (chain.id !== targetChainId) {
+        switchChain({ chainId: targetChainId });
+        return;
+    }
+
     let func: 'gm' | 'deploy' | 'launch' | 'donate' = 'gm';
     let val = 0n;
     if (id >= 10 && id < 20) { func = 'deploy'; val = 30000000000000n; }
@@ -281,7 +288,6 @@ export default function FarmCaster() {
     }
   };
 
-  // Logic for Profile Image/Text
   const profileImage = farcasterUser?.pfpUrl ?? "/images/icon.png";
   const profileHandle = farcasterUser?.username ? `@${farcasterUser.username}` : (address ? `${address.slice(0, 6)}...` : "Connect");
 
@@ -310,7 +316,6 @@ export default function FarmCaster() {
 
       {/* 1. HEADER */}
       <header className="flex items-center justify-between px-4 py-3 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50 border-b border-white/5">
-        {/* LEFT: Proportional Profile */}
         <div className="flex items-center gap-2.5">
           <img
             src={profileImage}
@@ -323,7 +328,6 @@ export default function FarmCaster() {
           </div>
         </div>
 
-        {/* RIGHT: Stacked Buttons (Clean & Slim) */}
         <div className="flex flex-col gap-1.5 items-end">
           <button onClick={() => setIsLeaderboardOpen(true)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-1 px-3 rounded-md border border-slate-600 flex items-center gap-1.5 transition-all">
             <span>🏆</span> Leaderboard
@@ -360,12 +364,10 @@ export default function FarmCaster() {
               </div>
            </div>
 
-           {/* Grid Header */}
            <div className={`grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold ${currentTheme.strongText}`}>
              {['S','M','T','W','T','F','S'].map(d => <div key={d}>{d}</div>)}
            </div>
 
-           {/* The Grid */}
            <div className="grid grid-cols-7 gap-2">
               {[...Array(startDay)].map((_, i) => <div key={`empty-${i}`} />)}
               {[...Array(days)].map((_, i) => {
@@ -383,7 +385,7 @@ export default function FarmCaster() {
            </div>
         </section>
 
-        {/* 4. SEED MARKET (Big Buttons) */}
+        {/* 4. SEED MARKET */}
         <section>
            <h3 className="font-bold text-lg mb-3 opacity-80">Seed Market</h3>
            <div className="grid grid-cols-2 gap-3 mb-6">
@@ -404,12 +406,8 @@ export default function FarmCaster() {
                 >
                   <div className="flex flex-col items-center">
                     <span className="font-bold text-lg">{cat.label}</span>
-
                     <div className="flex items-center gap-2 mt-1">
-                       {/* Price */}
                        <span className="text-xs opacity-80 font-mono">{cat.price}</span>
-
-                       {/* XP Badge */}
                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold bg-black/40 text-white border border-white/20`}>
                          +{cat.xp}
                        </span>
@@ -419,7 +417,6 @@ export default function FarmCaster() {
               ))}
            </div>
 
-           {/* Emojis Grid */}
            <div className={`grid grid-cols-4 sm:grid-cols-5 gap-3 p-4 rounded-3xl ${currentTheme.cardBg} border ${currentTheme.border}`}>
               {SEED_DATA[activeTab].map((seed) => (
                 <button
