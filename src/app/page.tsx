@@ -1,9 +1,6 @@
 import HomeClient from "@/components/HomeClient";
 import { Metadata, ResolvingMetadata } from "next";
 
-// Force dynamic rendering to allow access to searchParams
-export const dynamic = 'force-dynamic';
-
 // Define the cover image map
 const networkImages: Record<string, string> = {
   arbitrum: "arb-cover.png",
