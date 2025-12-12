@@ -120,7 +120,7 @@ const CHAIN_IDS: Record<string, number> = {
 };
 
 export default function Home() {
-  const { address, chain, isConnected } = useAccount();
+  const { address, chain, isConnected, status } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { connect, connectors } = useConnect();
@@ -168,15 +168,12 @@ export default function Home() {
     if (!hasSeen) setShowOnboarding(true);
   }, []);
 
-  // 2. Auto-Connect (Only triggers when isReady is TRUE)
+  // 2. Auto-Connect
   useEffect(() => {
     const run = async () => {
-        // Only proceed if:
-        // a) App is marked 'ready'
-        // b) User is NOT connected
-        // c) We are effectively in a Farcaster context
+        // Only proceed if we are in Farcaster context and not connected/connecting
         const context = await sdk.context;
-        if (isReady && !isConnected && context?.user) {
+        if (context?.user && status === 'disconnected') {
 
           const fcConnector = connectors.find((c) => c.id === 'farcaster-mini-app');
 
@@ -187,7 +184,7 @@ export default function Home() {
         }
     };
     run();
-  }, [isReady, isConnected, connectors, connect]);
+  }, [status, connectors, connect]);
 
   // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
@@ -342,8 +339,8 @@ export default function Home() {
             <span>🏆</span> Leaderboard
           </button>
 
-          <button onClick={() => isConnected ? handlePlant(0) : handleConnect()} className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-3 rounded-md shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all">
-            <span>💧</span> {isConnected ? "WATER FARM" : "CONNECT"}
+          <button onClick={() => handlePlant(0)} className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-3 rounded-md shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all">
+            <span>💧</span> WATER FARM
           </button>
         </div>
       </header>
