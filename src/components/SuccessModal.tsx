@@ -33,11 +33,11 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
         // Construct the text as requested
         const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
-        // 1. Define the Robust Deep Link
-        const deepLink = "[https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster](https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster)";
+        // 1. Define the Embed URL (Vercel Host for Metadata)
+        const embedUrl = "https://farmcaster-six.vercel.app";
 
         const encodedText = encodeURIComponent(text);
-        const encodedEmbed = encodeURIComponent(deepLink);
+        const encodedEmbed = encodeURIComponent(embedUrl);
 
         // 2. Build the Compose URL
         const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
