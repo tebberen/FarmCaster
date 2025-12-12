@@ -24,21 +24,22 @@ const stringifiedMeta = JSON.stringify(miniappJSON);
 
 export const metadata: Metadata = {
   title: "FarmCaster",
-  description: "Plant seeds, earn XP, and climb the leaderboard. The most vibrant onchain farming game.",
+  description: "Plant seeds, harvest rewards on chain! 🚜",
   openGraph: {
     title: "FarmCaster",
-    description: "Plant seeds, earn XP, and climb the leaderboard. The most vibrant onchain farming game.",
-    images: [imageUrl],
+    description: "Plant seeds, harvest rewards on chain! 🚜",
+    images: ["https://farmcaster-six.vercel.app/images/cover.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "FarmCaster",
-    description: "Plant seeds, earn XP, and climb the leaderboard. The most vibrant onchain farming game.",
-    images: [imageUrl],
+    description: "Plant seeds, harvest rewards on chain! 🚜",
+    images: ["https://farmcaster-six.vercel.app/images/cover.png"],
   },
   other: {
     "fc:miniapp": stringifiedMeta,
     "fc:frame": stringifiedMeta,
+    "fc:frame:image": "https://farmcaster-six.vercel.app/images/cover.png",
   },
 };
 
