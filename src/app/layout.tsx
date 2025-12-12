@@ -37,11 +37,13 @@ export const metadata: Metadata = {
   },
   // Optional: Farcaster Frame Tags for better visibility
   other: {
+    // Standard Mini App Tag (v2)
     "fc:frame": "vNext",
     "fc:frame:image": "https://farmcaster-six.vercel.app/images/icon.png",
     "fc:frame:button:1": "Play FarmCaster",
-    "fc:frame:button:1:action": "link",
-    "fc:frame:button:1:target": "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster", // Deep link to Mini App
+    "fc:frame:button:1:action": "link", // Action type 'link'
+    // TARGET: The Deep Link that opens the app natively
+    "fc:frame:button:1:target": "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster",
   },
 };
 
