@@ -23,24 +23,20 @@ export async function generateMetadata(
   { searchParams }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  // Determine network from search params, default to 'base'
+  // 1. Get Network & Image
   const network = (searchParams.network as string)?.toLowerCase() || "base";
-
-  // Select the appropriate cover image
   const imageFilename = networkImages[network] || "base-cover.png";
-
-  // Construct the full image URL (Vercel)
   const imageUrl = `https://farmcaster-six.vercel.app/images/${imageFilename}`;
 
-  // Construct the Official JSON Object
-  const miniappMetadata = {
+  // 2. Build Official JSON Object
+  const miniappJSON = {
     version: "1",
-    imageUrl: imageUrl, // Dynamic Image
+    imageUrl: imageUrl, // Dynamic Image based on network
     button: {
       title: "Play FarmCaster 🚜",
       action: {
         type: "launch_miniapp",
-        url: "https://farmcaster-six.vercel.app", // App URL
+        url: "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster", // Deep Link
         name: "FarmCaster",
         splashImageUrl: "https://farmcaster-six.vercel.app/images/icon.png",
         splashBackgroundColor: "#0f172a"
@@ -48,20 +44,20 @@ export async function generateMetadata(
     }
   };
 
-  const stringifiedMeta = JSON.stringify(miniappMetadata);
+  const stringifiedMeta = JSON.stringify(miniappJSON);
 
   return {
     title: "FarmCaster",
     description: `Plant seeds on ${network}`,
     openGraph: {
       title: "FarmCaster",
-      description: "Plant seeds and grow your onchain garden!",
       images: [imageUrl],
     },
     other: {
-      // Inject the JSON into the correct tags
+      // 3. Stringify JSON for the meta tag
       "fc:miniapp": stringifiedMeta,
-      "fc:frame": stringifiedMeta, // Backward compatibility
+      // Backward compatibility
+      "fc:frame": stringifiedMeta,
     },
   };
 }
