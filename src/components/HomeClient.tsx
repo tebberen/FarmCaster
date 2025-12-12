@@ -12,6 +12,19 @@ import { SuccessModal } from "./SuccessModal";
 import { FavoriteReminder } from "./FavoriteReminder";
 import { THEMES, CHAIN_IDS } from "../config/theme";
 
+// Define colors for each supported chain
+const chainColors: Record<string, string> = {
+  Base: "from-blue-500 to-blue-600 shadow-blue-500/50",
+  BSC: "from-yellow-400 to-yellow-500 shadow-yellow-500/50",
+  Celo: "from-green-400 to-yellow-300 shadow-green-400/50", // Celo gradient
+  Monad: "from-purple-500 to-indigo-500 shadow-purple-500/50",
+  Hyper: "from-cyan-400 to-pink-500 shadow-cyan-400/50",
+  Arbitrum: "from-blue-600 to-cyan-600 shadow-blue-600/50",
+  Ethereum: "from-slate-500 to-slate-700 shadow-slate-500/50",
+};
+
+const defaultColor = "from-gray-700 to-gray-800";
+
 export default function HomeClient() {
   const { address, chain, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -232,15 +245,22 @@ export default function HomeClient() {
 
       {/* 2. NETWORK TABS */}
       <div className="max-w-lg mx-auto mt-6 px-4 flex flex-wrap justify-center gap-2 pb-2">
-        {Object.values(THEMES).map((t: any) => (
-           <button
-             key={t.id}
-             onClick={() => switchChain({ chainId: CHAIN_IDS[t.id] })}
-             className={`px-3 py-1.5 text-xs rounded-full font-bold whitespace-nowrap transition-all ${currentTheme.id === t.id ? t.accent : 'bg-white/50 border border-transparent'}`}
-           >
-             {t.name}
-           </button>
-        ))}
+        {Object.values(THEMES).map((t: any) => {
+           const isActive = currentTheme.id === t.id;
+           const activeClass = isActive
+             ? `bg-gradient-to-r ${chainColors[t.name] || defaultColor} text-white scale-105 border-transparent`
+             : "bg-slate-800/50 text-gray-400 hover:bg-slate-700 border-slate-700";
+
+           return (
+             <button
+               key={t.id}
+               onClick={() => switchChain({ chainId: CHAIN_IDS[t.id] })}
+               className={`px-3 py-1.5 text-xs rounded-full font-bold whitespace-nowrap transition-all shadow-lg ${activeClass}`}
+             >
+               {t.name}
+             </button>
+           );
+        })}
       </div>
 
       <div className="max-w-lg mx-auto px-4 space-y-6 mt-6">
