@@ -36,8 +36,7 @@ export async function generateMetadata(
       title: "Play FarmCaster 🚜",
       action: {
         type: "launch_miniapp",
-        url: "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster", // Deep Link
-        name: "FarmCaster",
+        url: "https://warpcast.com/~/miniapps/nso1qw0jxEyg/farmcaster",
         splashImageUrl: "https://farmcaster-six.vercel.app/images/icon.png",
         splashBackgroundColor: "#0f172a"
       }

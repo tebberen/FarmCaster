@@ -38,12 +38,10 @@ export default function SuccessModal({
   const handleShare = () => {
     const text = `Just planted a 🌱 in my onchain garden! 🚜\nNetwork: ${chainName}\nReward: +${xpEarned} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${chainName} @farmmcaster`;
 
-    // Normalize network name for the URL parameter
-    let netParam = themeKey;
-    if (themeKey === 'arb') netParam = 'arbitrum';
-    if (themeKey === 'eth') netParam = 'ethereum';
+    // 1. Normalize network parameter
+    const netParam = chainName ? chainName.toLowerCase() : 'base';
 
-    // Share Vercel URL which handles the metadata
+    // 2. Point to Vercel (Where metadata lives)
     const embedUrl = `https://farmcaster-six.vercel.app/?network=${netParam}`;
 
     const encodedText = encodeURIComponent(text);
