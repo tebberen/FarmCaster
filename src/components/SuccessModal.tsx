@@ -30,12 +30,15 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
         // Remove spaces for hashtag
         const networkHashtag = networkName.replace(/\s+/g, '');
 
+        // Normalize the chain name (e.g., "Base" -> "base")
+        const networkParam = networkName ? networkName.toLowerCase() : 'base';
+
         // Construct the text as requested
         const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
-        // 2. THE FIX: Share the Vercel URL
-        // Why: This URL hosts the metadata/images. 'farcaster.xyz' does not.
-        const embedUrl = "https://farmcaster-six.vercel.app";
+        // 2. THE FIX: Share the Vercel URL with network param
+        // This makes the URL unique per network: https://.../?network=base
+        const embedUrl = `https://farmcaster-six.vercel.app/?network=${networkParam}`;
 
         const encodedText = encodeURIComponent(text);
         const encodedEmbed = encodeURIComponent(embedUrl);
