@@ -50,6 +50,7 @@ export default function SuccessModal({
     const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
 
     // USE SDK ACTION FOR NATIVE HANDLING (Mobile Fix)
+    // We check if sdk.actions exists to avoid errors, defaulting to window.open
     if (sdk && sdk.actions) {
         sdk.actions.openUrl(shareUrl);
     } else {
