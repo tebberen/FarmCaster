@@ -39,10 +39,11 @@ export default function SuccessModal({
     const text = `Just planted a 🌱 in my onchain garden! 🚜\nNetwork: ${chainName}\nReward: +${xpEarned} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${chainName} @farmmcaster`;
 
     // 1. Normalize network parameter
-    const netParam = chainName ? chainName.toLowerCase() : 'base';
+    const netParam = themeKey; // Uses the validated themeKey from getThemeKey()
 
     // 2. Point to Vercel (Where metadata lives)
-    const embedUrl = `https://farmcaster-six.vercel.app/?network=${netParam}`;
+    // Use Static Route for correct metadata on GitHub Pages
+    const embedUrl = `https://farmcaster-six.vercel.app/share/${netParam}`;
 
     const encodedText = encodeURIComponent(text);
     const encodedEmbed = encodeURIComponent(embedUrl);
