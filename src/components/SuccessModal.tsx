@@ -33,11 +33,9 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
         // Construct the text as requested
         const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
-        // Convert networkName to lowercase for the parameter
-        const networkParam = networkName.toLowerCase();
-
-        // 1. Define the Embed URL (Vercel Host for Metadata)
-        const embedUrl = `https://farmcaster-six.vercel.app/?network=${networkParam}`;
+        // 2. THE FIX: Share the Vercel URL
+        // Why: This URL hosts the metadata/images. 'farcaster.xyz' does not.
+        const embedUrl = "https://farmcaster-six.vercel.app";
 
         const encodedText = encodeURIComponent(text);
         const encodedEmbed = encodeURIComponent(embedUrl);
