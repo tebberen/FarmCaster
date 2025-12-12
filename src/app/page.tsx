@@ -28,6 +28,9 @@ export async function generateMetadata(
   const imageFilename = networkImages[network] || "base-cover.png";
   const imageUrl = `https://farmcaster-six.vercel.app/images/${imageFilename}`;
 
+  // Placeholder for absolute URL as requested
+  const placeholderImage = "https://farmcaster-six.vercel.app/images/cover.png";
+
   // 2. Build Official JSON Object
   const miniappJSON = {
     version: "1",
@@ -47,10 +50,17 @@ export async function generateMetadata(
 
   return {
     title: "FarmCaster",
-    description: `Plant seeds on ${network}`,
+    description: `Plant seeds on ${network}. The most vibrant onchain farming game.`,
     openGraph: {
       title: "FarmCaster",
-      images: [imageUrl],
+      description: `Plant seeds on ${network}. The most vibrant onchain farming game.`,
+      images: [placeholderImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "FarmCaster",
+      description: `Plant seeds on ${network}. The most vibrant onchain farming game.`,
+      images: [placeholderImage],
     },
     other: {
       // 3. Stringify JSON for the meta tag
