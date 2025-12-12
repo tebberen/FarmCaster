@@ -13,13 +13,30 @@ type Props = {
   params: { network: string };
 };
 
+const NETWORK_FILE_MAPPING: Record<string, string> = {
+  arbitrum: "arb",
+  arb: "arb",
+  binance: "bsc",
+  bsc: "bsc",
+  ethereum: "eth",
+  eth: "eth",
+  hyperliquid: "hyper",
+  hyper: "hyper",
+  base: "base",
+  celo: "celo",
+  monad: "monad",
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const network = params.network;
   const theme = THEMES[network] || THEMES.base;
   const chainName = theme.name;
 
+  const mappedName = NETWORK_FILE_MAPPING[network.toLowerCase()] || network;
+
   // Dynamic Image URL (Absolute)
-  const imageUrl = `https://farmcaster-six.vercel.app/images/cover-${network}.png`;
+  // Fix: Use mapped name and suffix format: name-cover.png
+  const imageUrl = `https://farmcaster-six.vercel.app/images/${mappedName}-cover.png`;
 
   const miniappJSON = {
     version: "1",
