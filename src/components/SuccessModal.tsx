@@ -1,91 +1,142 @@
-import React from 'react';
-import { Theme } from '../config/theme';
-import clsx from 'clsx';
-import { X, Share2 } from 'lucide-react';
+import { X } from "lucide-react";
+import { THEMES } from "@/config/theme";
+import Image from "next/image";
 
 interface SuccessModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    theme: Theme;
-    emoji: string | null;
-    networkName: string;
-    chainId: number;
-    xp: number;
+  isOpen: boolean;
+  onClose: () => void;
+  txHash: string;
+  chainName: string; // e.g., "Base", "Monad"
+  xpEarned: number;
 }
 
-const CHAIN_IMAGES: Record<number, string> = {
-    8453: 'base-cover.png',
-    42220: 'celo-cover.png',
-    56: 'bsc-cover.png',
-    42161: 'arb-cover.png',
-    143: 'monad-cover.png',
-    999: 'hyper-cover.png',
-    1: 'eth-cover.png',
-};
+export default function SuccessModal({
+  isOpen,
+  onClose,
+  txHash,
+  chainName,
+  xpEarned,
+}: SuccessModalProps) {
+  if (!isOpen) return null;
 
-export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, theme, emoji, networkName, chainId, xp }) => {
-    if (!isOpen) return null;
+  // Determine theme based on chainName (fallback to Base if not found)
+  // We need to map the display name back to the key used in THEMES
+  // This is a bit rough, ideally we pass the chainKey or similar.
+  // For now, let's try to match case-insensitive or map known names.
+  // Helper to find theme key from chain name
+  const getThemeKey = (name: string) => {
+    const normalized = name.toLowerCase();
+    if (normalized.includes("base")) return "base";
+    if (normalized.includes("bnb") || normalized.includes("bsc")) return "bsc";
+    if (normalized.includes("arbitrum")) return "arb";
+    if (normalized.includes("celo")) return "celo";
+    if (normalized.includes("eth")) return "eth";
+    if (normalized.includes("monad")) return "monad";
+    if (normalized.includes("hyper")) return "hyper";
+    return "base"; // default
+  };
 
-    const handleShare = () => {
-        // Remove spaces for hashtag
-        const networkHashtag = networkName.replace(/\s+/g, '');
+  const themeKey = getThemeKey(chainName);
+  const theme = THEMES[themeKey] || THEMES["base"];
 
-        // Normalize the chain name (e.g., "Base" -> "base")
-        const networkParam = networkName ? networkName.toLowerCase() : 'base';
+  const handleShare = () => {
+    const text = `Just planted a 🌱 in my onchain garden! 🚜\nNetwork: ${chainName}\nReward: +${xpEarned} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${chainName} @farmmcaster`;
 
-        // Construct the text as requested
-        const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
+    // Normalize network name for the URL parameter
+    // We use the normalized 'themeKey' because it matches the keys in page.tsx (base, bsc, celo, etc)
+    // EXCEPT for Arbitrum where page.tsx uses 'arbitrum' and themeKey is 'arb'.
+    // And Ethereum where page.tsx uses 'ethereum' and themeKey is 'eth'.
 
-        // 2. THE FIX: Share the Vercel URL with network param
-        // This makes the URL unique per network: https://.../?network=base
-        const embedUrl = `https://farmcaster-six.vercel.app/?network=${networkParam}`;
+    let netParam = themeKey;
+    if (themeKey === 'arb') netParam = 'arbitrum';
+    if (themeKey === 'eth') netParam = 'ethereum';
 
-        const encodedText = encodeURIComponent(text);
-        const encodedEmbed = encodeURIComponent(embedUrl);
+    // Share Vercel URL which handles the metadata
+    const embedUrl = `https://farmcaster-six.vercel.app/?network=${netParam}`;
 
-        // 2. Build the Compose URL
-        const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
-        window.open(shareUrl, '_blank');
-    };
+    const encodedText = encodeURIComponent(text);
+    const encodedEmbed = encodeURIComponent(embedUrl);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className={clsx("relative w-full max-w-sm border rounded-2xl shadow-2xl p-6 flex flex-col items-center gap-6", theme.cardBg, theme.border)}>
+    const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
+    window.open(shareUrl, "_blank");
+  };
 
-                <button
-                    onClick={onClose}
-                    className="absolute top-3 right-3 p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
-                >
-                    <X size={20} />
-                </button>
+  const getExplorerUrl = (txHash: string) => {
+    switch(themeKey) {
+        case 'base': return `https://basescan.org/tx/${txHash}`;
+        case 'bsc': return `https://bscscan.com/tx/${txHash}`;
+        case 'celo': return `https://celoscan.io/tx/${txHash}`;
+        case 'arb': return `https://arbiscan.io/tx/${txHash}`;
+        case 'eth': return `https://etherscan.io/tx/${txHash}`;
+        case 'monad': return `https://testnet.monadexplorer.com/tx/${txHash}`; // Monad is testnet usually, or updated mainnet
+        case 'hyper': return `https://explorer.hyperliquid.xyz/tx/${txHash}`;
+        default: return `https://basescan.org/tx/${txHash}`;
+    }
+  };
 
-                <div className="text-center space-y-2 mt-4">
-                    <div className="text-6xl animate-bounce filter drop-shadow-md">
-                        {emoji || "🌱"}
-                    </div>
-                    <h2 className="text-2xl font-bold text-white">Planted Successfully!</h2>
-                    <p className={clsx("font-bold text-lg", theme.strongText)}>You earned +{xp} XP!</p>
-                </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div
+        className={`relative w-full max-w-sm overflow-hidden rounded-2xl border ${theme.border} shadow-2xl`}
+        style={{
+          background: theme.cardBg || "#1e293b", // Fallback if cardBg missing
+          boxShadow: `0 0 40px ${theme.glow}40` // Add colored glow based on network
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-colors z-10"
+        >
+          <X size={20} />
+        </button>
 
-                <button
-                    onClick={handleShare}
-                    className={clsx(
-                        "w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 text-white",
-                        "bg-[#472a91] hover:bg-[#5b37b7] shadow-lg shadow-purple-900/20" // Warpcast brand colorish
-                    )}
-                >
-                    <Share2 size={18} />
-                    <span>Share on Warpcast</span>
-                </button>
-
-                <button
-                    onClick={onClose}
-                    className="w-full py-3 px-4 rounded-xl font-bold text-slate-400 hover:bg-white/10 transition-colors"
-                >
-                    Close
-                </button>
-
+        {/* Content */}
+        <div className="flex flex-col items-center p-8 text-center">
+          {/* Animated Success Icon */}
+          <div className="relative mb-6">
+            <div className={`absolute inset-0 animate-ping rounded-full opacity-20 bg-${theme.primary?.split('-')[1]}-500`} />
+            <div className={`relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br ${theme.bgGradient} border-2 ${theme.border} shadow-[0_0_30px_rgba(255,255,255,0.1)]`}>
+              <span className="text-4xl animate-bounce">🌱</span>
             </div>
+          </div>
+
+          <h2 className={`text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r ${theme.text}`}>
+            Planted!
+          </h2>
+
+          <p className="text-gray-400 mb-6">
+            Your seed is now growing on <span className={theme.strongText}>{chainName}</span>.
+          </p>
+
+          {/* XP Reward Card */}
+          <div className="w-full bg-black/20 rounded-xl p-4 mb-6 border border-white/5">
+            <div className="text-sm text-gray-400 mb-1">XP Earned</div>
+            <div className="text-3xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">
+              +{xpEarned} XP
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col w-full gap-3">
+            <button
+              onClick={handleShare}
+              className={`w-full py-3.5 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r ${theme.primary}`}
+            >
+              Share on Warpcast 📢
+            </button>
+
+            <a
+              href={getExplorerUrl(txHash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              View Transaction ↗
+            </a>
+          </div>
         </div>
-    );
-};
+      </div>
+    </div>
+  );
+}
