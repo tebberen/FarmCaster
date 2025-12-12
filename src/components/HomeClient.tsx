@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import sdk from "@farcaster/frame-sdk";
+import sdk from "@farcaster/miniapp-sdk";
 import { useAccount, useReadContract, useWriteContract, useSwitchChain, useConnect, useDisconnect } from "wagmi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { GARDEN_CONTRACTS, GARDEN_ABI } from "../config/contracts";
