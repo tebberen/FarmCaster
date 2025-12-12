@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { THEMES } from "@/config/theme";
-import Image from "next/image";
+import sdk from "@farcaster/miniapp-sdk";
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -19,11 +19,7 @@ export default function SuccessModal({
 }: SuccessModalProps) {
   if (!isOpen) return null;
 
-  // Determine theme based on chainName (fallback to Base if not found)
-  // We need to map the display name back to the key used in THEMES
-  // This is a bit rough, ideally we pass the chainKey or similar.
-  // For now, let's try to match case-insensitive or map known names.
-  // Helper to find theme key from chain name
+  // Determine theme based on chainName
   const getThemeKey = (name: string) => {
     const normalized = name.toLowerCase();
     if (normalized.includes("base")) return "base";
@@ -43,10 +39,6 @@ export default function SuccessModal({
     const text = `Just planted a 🌱 in my onchain garden! 🚜\nNetwork: ${chainName}\nReward: +${xpEarned} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${chainName} @farmmcaster`;
 
     // Normalize network name for the URL parameter
-    // We use the normalized 'themeKey' because it matches the keys in page.tsx (base, bsc, celo, etc)
-    // EXCEPT for Arbitrum where page.tsx uses 'arbitrum' and themeKey is 'arb'.
-    // And Ethereum where page.tsx uses 'ethereum' and themeKey is 'eth'.
-
     let netParam = themeKey;
     if (themeKey === 'arb') netParam = 'arbitrum';
     if (themeKey === 'eth') netParam = 'ethereum';
@@ -58,7 +50,13 @@ export default function SuccessModal({
     const encodedEmbed = encodeURIComponent(embedUrl);
 
     const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
-    window.open(shareUrl, "_blank");
+
+    // USE SDK ACTION FOR NATIVE HANDLING (Mobile Fix)
+    if (sdk && sdk.actions) {
+        sdk.actions.openUrl(shareUrl);
+    } else {
+        window.open(shareUrl, "_blank");
+    }
   };
 
   const getExplorerUrl = (txHash: string) => {
@@ -68,7 +66,7 @@ export default function SuccessModal({
         case 'celo': return `https://celoscan.io/tx/${txHash}`;
         case 'arb': return `https://arbiscan.io/tx/${txHash}`;
         case 'eth': return `https://etherscan.io/tx/${txHash}`;
-        case 'monad': return `https://testnet.monadexplorer.com/tx/${txHash}`; // Monad is testnet usually, or updated mainnet
+        case 'monad': return `https://testnet.monadexplorer.com/tx/${txHash}`;
         case 'hyper': return `https://explorer.hyperliquid.xyz/tx/${txHash}`;
         default: return `https://basescan.org/tx/${txHash}`;
     }
@@ -79,8 +77,8 @@ export default function SuccessModal({
       <div
         className={`relative w-full max-w-sm overflow-hidden rounded-2xl border ${theme.border} shadow-2xl`}
         style={{
-          background: theme.cardBg || "#1e293b", // Fallback if cardBg missing
-          boxShadow: `0 0 40px ${theme.glow}40` // Add colored glow based on network
+          background: theme.cardBg || "#1e293b",
+          boxShadow: `0 0 40px ${theme.glow}40`
         }}
       >
         {/* Close Button */}
