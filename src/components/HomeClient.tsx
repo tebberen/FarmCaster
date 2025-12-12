@@ -12,17 +12,72 @@ import { SuccessModal } from "./SuccessModal";
 import { FavoriteReminder } from "./FavoriteReminder";
 import { THEMES, CHAIN_IDS } from "../config/theme";
 
-// Define colors for each supported chain
+// --- 1. ROBUST THEME MAP (Global Visuals) ---
+const themeMap: Record<string, { primary: string; glow: string; border: string; text: string; bgGradient: string }> = {
+  Base: {
+    primary: "bg-blue-500",
+    glow: "shadow-blue-500/20",
+    border: "border-blue-500",
+    text: "text-blue-400",
+    bgGradient: "from-blue-500/20"
+  },
+  BSC: {
+    primary: "bg-yellow-500",
+    glow: "shadow-yellow-500/20",
+    border: "border-yellow-500",
+    text: "text-yellow-400",
+    bgGradient: "from-yellow-500/20"
+  },
+  Celo: {
+    primary: "bg-green-500",
+    glow: "shadow-green-500/20",
+    border: "border-green-500",
+    text: "text-green-400",
+    bgGradient: "from-green-500/20"
+  },
+  Monad: {
+    primary: "bg-purple-500",
+    glow: "shadow-purple-500/20",
+    border: "border-purple-500",
+    text: "text-purple-400",
+    bgGradient: "from-purple-500/20"
+  },
+  Hyper: {
+    primary: "bg-pink-500",
+    glow: "shadow-pink-500/20",
+    border: "border-pink-500",
+    text: "text-pink-400",
+    bgGradient: "from-pink-500/20"
+  },
+  Arbitrum: {
+    primary: "bg-cyan-600",
+    glow: "shadow-cyan-600/20",
+    border: "border-cyan-600",
+    text: "text-cyan-400",
+    bgGradient: "from-cyan-600/20"
+  },
+  Ethereum: {
+    primary: "bg-slate-500",
+    glow: "shadow-slate-500/20",
+    border: "border-slate-500",
+    text: "text-slate-400",
+    bgGradient: "from-slate-500/20"
+  },
+};
+
+const defaultThemeVisuals = themeMap['Base'];
+
+// Keep gradient definitions for the tabs if desired, or map them too.
+// Using existing chainColors for tabs to maintain gradient fidelity, or could be replaced by themeMap
 const chainColors: Record<string, string> = {
   Base: "from-blue-500 to-blue-600 shadow-blue-500/50",
   BSC: "from-yellow-400 to-yellow-500 shadow-yellow-500/50",
-  Celo: "from-green-400 to-yellow-300 shadow-green-400/50", // Celo gradient
+  Celo: "from-green-400 to-yellow-300 shadow-green-400/50",
   Monad: "from-purple-500 to-indigo-500 shadow-purple-500/50",
   Hyper: "from-cyan-400 to-pink-500 shadow-cyan-400/50",
   Arbitrum: "from-blue-600 to-cyan-600 shadow-blue-600/50",
   Ethereum: "from-slate-500 to-slate-700 shadow-slate-500/50",
 };
-
 const defaultColor = "from-gray-700 to-gray-800";
 
 export default function HomeClient() {
@@ -30,7 +85,6 @@ export default function HomeClient() {
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
   const { connect, connectors } = useConnect();
-  // const { disconnect } = useDisconnect();
 
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'gm' | 'deploy' | 'launch' | 'donate'>('gm');
@@ -41,11 +95,17 @@ export default function HomeClient() {
   const [successData, setSuccessData] = useState<{ seedId: number, xp: number, hash: string } | null>(null);
   const [farcasterUser, setFarcasterUser] = useState<any>(null);
 
-  // Derive Current Theme
+  // Derive Current Theme (Config + Visuals)
   const currentTheme = React.useMemo(() => {
-    if (!chain) return THEMES.base;
-    const themeId = Object.keys(CHAIN_IDS).find((k) => CHAIN_IDS[k] === chain.id);
-    return (themeId && THEMES[themeId]) || THEMES.base;
+    let themeConfig = THEMES.base;
+    if (chain) {
+      const themeId = Object.keys(CHAIN_IDS).find((k) => CHAIN_IDS[k] === chain.id);
+      if (themeId && THEMES[themeId]) {
+        themeConfig = THEMES[themeId];
+      }
+    }
+    const visuals = themeMap[themeConfig.name] || defaultThemeVisuals;
+    return { ...themeConfig, ...visuals };
   }, [chain]);
 
   // 1. Mount Logic
@@ -58,18 +118,12 @@ export default function HomeClient() {
   // 2. SDK Initialization & Auto-Connect
   useEffect(() => {
     const init = async () => {
-      // 1. Initialize SDK
       sdk.actions.ready();
-
-      // 2. Auto-Connect based on Docs Logic
       try {
         const context = await sdk.context;
-
         if (context?.user) {
           setFarcasterUser(context.user);
         }
-
-        // If NOT connected, and we are in Farcaster (checked via client presence), trigger connection.
         if (!isConnected && context?.client) {
           const connector = connectors.find((c) => c.id === 'farcaster');
           if (connector) {
@@ -80,11 +134,9 @@ export default function HomeClient() {
         console.error("SDK Error:", error);
       }
     };
-
     init();
   }, [isConnected, connectors, connect]);
 
-  // Update localStorage when closing onboarding
   const handleCloseOnboarding = () => {
       setShowOnboarding(false);
       localStorage.setItem('farmcaster_onboarding_v1', 'true');
@@ -123,9 +175,7 @@ export default function HomeClient() {
 
   const { days, startDay, monthName, year } = getDaysInMonth(viewDate);
 
-  // --- ACTION ---
   const handleConnect = () => {
-    // Priority: Farcaster
     if (farcasterUser) {
         const fc = connectors.find(c => c.id === 'farcaster');
         if (fc) {
@@ -133,7 +183,6 @@ export default function HomeClient() {
             return;
         }
     }
-    // Fallback: Others
     const other = connectors.find(c => c.id !== 'farcaster');
     if (other) connect({ connector: other });
   };
@@ -143,8 +192,6 @@ export default function HomeClient() {
       handleConnect();
       return;
     }
-
-    // Auto-switch chain if needed
     const targetChainId = CHAIN_IDS[currentTheme.id];
     if (chain && chain.id !== targetChainId) {
         try {
@@ -157,11 +204,10 @@ export default function HomeClient() {
 
     let func: 'gm' | 'deploy' | 'launch' | 'donate' = 'gm';
     let val = 0n;
-    if (id >= 10 && id < 20) { func = 'deploy'; val = 30000000000000n; } // 0.00003
-    else if (id >= 20 && id < 30) { func = 'launch'; val = 45000000000000n; } // 0.000045
-    else if (id >= 30) { func = 'donate'; val = 60000000000000n; } // 0.00006
+    if (id >= 10 && id < 20) { func = 'deploy'; val = 30000000000000n; }
+    else if (id >= 20 && id < 30) { func = 'launch'; val = 45000000000000n; }
+    else if (id >= 30) { func = 'donate'; val = 60000000000000n; }
 
-    // XP Logic
     let xp = 1;
     if (id >= 10 && id < 20) xp = 2;
     else if (id >= 20 && id < 30) xp = 3;
@@ -185,7 +231,6 @@ export default function HomeClient() {
           value: val
         });
       }
-
       setSuccessData({ seedId: id, xp, hash: hash || '' });
     } catch (e) {
       console.error("Planting failed:", e);
@@ -198,7 +243,10 @@ export default function HomeClient() {
   if (!isMounted) return null;
 
   return (
-    <main className={`min-h-screen transition-colors duration-500 pb-20 ${currentTheme.pageBg} ${currentTheme.text} font-sans`}>
+    <main className={`relative min-h-screen transition-colors duration-500 pb-20 ${currentTheme.pageBg} ${currentTheme.text} font-sans`}>
+      {/* 2. BACKGROUND GLOW */}
+      <div className={`fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] ${currentTheme.bgGradient} via-transparent to-transparent`} />
+
       <FavoriteReminder isOpen={showFavoriteReminder} onClose={() => setShowFavoriteReminder(false)} />
       <OnboardingModal isOpen={showOnboarding} onClose={handleCloseOnboarding} />
       <LeaderboardModal
@@ -219,7 +267,7 @@ export default function HomeClient() {
       />
 
       {/* 1. HEADER */}
-      <header className="flex items-center justify-between px-4 py-3 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50 border-b border-white/5">
+      <header className="relative z-50 flex items-center justify-between px-4 py-3 bg-slate-900/50 backdrop-blur-md sticky top-0 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <img
             src={profileImage}
@@ -244,7 +292,7 @@ export default function HomeClient() {
       </header>
 
       {/* 2. NETWORK TABS */}
-      <div className="max-w-lg mx-auto mt-6 px-4 flex flex-wrap justify-center gap-2 pb-2">
+      <div className="relative z-10 max-w-lg mx-auto mt-6 px-4 flex flex-wrap justify-center gap-2 pb-2">
         {Object.values(THEMES).map((t: any) => {
            const isActive = currentTheme.id === t.id;
            const activeClass = isActive
@@ -263,7 +311,7 @@ export default function HomeClient() {
         })}
       </div>
 
-      <div className="max-w-lg mx-auto px-4 space-y-6 mt-6">
+      <div className="relative z-10 max-w-lg mx-auto px-4 space-y-6 mt-6">
 
         {/* 3. WALL CALENDAR */}
         <section className={`p-6 rounded-3xl ${currentTheme.cardBg} border ${currentTheme.border} shadow-sm`}>
@@ -285,10 +333,11 @@ export default function HomeClient() {
                  const dayNum = i + 1;
                  const currentDateStr = `${year}-${String(viewDate.getMonth()+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
                  const emoji = historyMap[currentDateStr];
+                 const isToday = new Date().toDateString() === new Date(year, viewDate.getMonth(), dayNum).toDateString();
 
                  return (
-                   <div key={dayNum} className={`relative aspect-square rounded-xl border flex items-center justify-center transition-all ${emoji ? currentTheme.activeBox : 'bg-black/20 border-transparent'}`}>
-                      <span className={`absolute top-0.5 right-1 text-[9px] font-bold ${currentTheme.strongText}`}>{dayNum}</span>
+                   <div key={dayNum} className={`relative aspect-square rounded-xl border flex items-center justify-center transition-all ${emoji ? currentTheme.activeBox : (isToday ? `${currentTheme.primary} text-white border-transparent` : 'bg-black/20 border-transparent')}`}>
+                      <span className={`absolute top-0.5 right-1 text-[9px] font-bold ${isToday ? 'text-white' : currentTheme.strongText}`}>{dayNum}</span>
                       {emoji && <span className="text-xl">{emoji}</span>}
                    </div>
                  )
