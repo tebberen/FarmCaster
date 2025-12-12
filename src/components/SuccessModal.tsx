@@ -1,5 +1,5 @@
 import React from 'react';
-import { Theme } from '../app/page';
+import { Theme } from '../config/theme';
 import clsx from 'clsx';
 import { X, Share2 } from 'lucide-react';
 
@@ -33,8 +33,11 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, the
         // Construct the text as requested
         const text = `Just planted a ${emoji || '🌱'} in my onchain garden! 🚜\nNetwork: ${networkName}\nReward: +${xp} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${networkHashtag} @farmmcaster`;
 
+        // Convert networkName to lowercase for the parameter
+        const networkParam = networkName.toLowerCase();
+
         // 1. Define the Embed URL (Vercel Host for Metadata)
-        const embedUrl = "https://farmcaster-six.vercel.app";
+        const embedUrl = `https://farmcaster-six.vercel.app/?network=${networkParam}`;
 
         const encodedText = encodeURIComponent(text);
         const encodedEmbed = encodeURIComponent(embedUrl);
