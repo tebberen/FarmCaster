@@ -11,7 +11,6 @@ import { LeaderboardModal } from "./LeaderboardModal";
 import SuccessModal from "./SuccessModal";
 import { FavoriteReminder } from "./FavoriteReminder";
 import { THEMES, CHAIN_IDS } from "../config/theme";
-import { BaseWallet } from "./BaseWallet";
 
 // --- 1. ROBUST THEME MAP (Global Visuals) ---
 const themeMap: Record<string, { primary: string; glow: string; border: string; text: string; bgGradient: string }> = {
@@ -305,7 +304,6 @@ export default function HomeClient() {
              <button onClick={() => handlePlant(0)} className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-3 rounded-md shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all">
                <span>💧</span> WATER FARM
              </button>
-             <BaseWallet />
           </div>
         </div>
       </header>
