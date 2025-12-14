@@ -10,7 +10,6 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { config } from '../config/wagmi';
 import '@rainbow-me/rainbowkit/styles.css';
-import '@coinbase/onchainkit/styles.css';
 import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { base } from 'viem/chains';
 
