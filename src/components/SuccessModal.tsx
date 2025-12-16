@@ -52,7 +52,17 @@ export default function SuccessModal({
     if (sdk && sdk.actions) {
         sdk.actions.openUrl(frameShareUrl);
     } else {
-        window.location.href = webWarpcastUrl;
+        // FIX: Create a hidden link and simulate a click to force Universal Link handling
+        const link = document.createElement('a');
+        link.href = webWarpcastUrl;
+
+        // Important: target="_blank" often helps trigger external app intents in webviews
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
   };
 
