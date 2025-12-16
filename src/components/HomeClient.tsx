@@ -3,8 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import { useAccount, useReadContract, useWriteContract, useSwitchChain, useConnect, useDisconnect } from "wagmi";
+import { useSendCalls } from "wagmi/experimental";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { GARDEN_CONTRACTS, GARDEN_ABI } from "../config/contracts";
+import { Attribution } from "ox/erc8021";
+import { encodeFunctionData } from "viem";
 import { SEED_DATA, getEmojiById } from "../config/emojis";
 import { OnboardingModal } from "./OnboardingModal";
 import { LeaderboardModal } from "./LeaderboardModal";
@@ -84,6 +87,7 @@ export default function HomeClient() {
   const { address, chain, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
+  const { sendCallsAsync } = useSendCalls();
   const { connect, connectors } = useConnect();
 
   const [isMounted, setIsMounted] = useState(false);
@@ -227,23 +231,44 @@ export default function HomeClient() {
 
     try {
       let hash;
-      if (func === 'gm') {
-        hash = await writeContractAsync({
-          address: gardenAddress,
-          abi: GARDEN_ABI,
-          functionName: 'gm',
-          args: [id]
+      const data = encodeFunctionData({
+        abi: GARDEN_ABI,
+        functionName: func,
+        args: [id]
+      });
+
+      try {
+        const result = await sendCallsAsync({
+          calls: [{
+            to: gardenAddress,
+            data: data,
+            value: val
+          }],
+          capabilities: {
+            dataSuffix: Attribution.toDataSuffix({ codes: ["bc_7wvlvpi3"] }),
+          }
         });
-      } else {
-        hash = await writeContractAsync({
-          address: gardenAddress,
-          abi: GARDEN_ABI,
-          functionName: func,
-          args: [id],
-          value: val
-        });
+        hash = typeof result === 'object' && 'id' in result ? (result as any).id : result;
+      } catch (sendCallsError) {
+        console.warn("sendCalls failed, falling back to writeContract:", sendCallsError);
+        if (func === 'gm') {
+          hash = await writeContractAsync({
+            address: gardenAddress,
+            abi: GARDEN_ABI,
+            functionName: 'gm',
+            args: [id]
+          });
+        } else {
+          hash = await writeContractAsync({
+            address: gardenAddress,
+            abi: GARDEN_ABI,
+            functionName: func,
+            args: [id],
+            value: val
+          });
+        }
       }
-      setSuccessData({ seedId: id, xp, hash: hash || '' });
+      setSuccessData({ seedId: id, xp, hash: (hash as string) || '' });
     } catch (e) {
       console.error("Planting failed:", e);
     }
