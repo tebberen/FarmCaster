@@ -52,7 +52,7 @@ export default function SuccessModal({
     if (sdk && sdk.actions) {
         sdk.actions.openUrl(frameShareUrl);
     } else {
-        window.open(webWarpcastUrl, "_blank");
+        window.location.href = webWarpcastUrl;
     }
   };
 
