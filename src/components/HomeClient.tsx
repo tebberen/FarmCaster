@@ -100,6 +100,11 @@ export default function HomeClient() {
   const [farcasterUser, setFarcasterUser] = useState<any>(null);
 
   const marketRef = useRef<HTMLElement>(null);
+  const emojiSectionRef = useRef<HTMLDivElement>(null);
+
+  const scrollToEmojis = () => {
+    emojiSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Derive Current Theme (Config + Visuals)
   const currentTheme = React.useMemo(() => {
@@ -390,7 +395,11 @@ export default function HomeClient() {
                    const isToday = new Date().toDateString() === new Date(year, viewDate.getMonth(), dayNum).toDateString();
 
                    return (
-                     <div key={dayNum} className={`relative aspect-square rounded-xl border flex items-center justify-center transition-all ${emoji ? currentTheme.activeBox : (isToday ? `${currentTheme.primary} text-white border-transparent` : 'bg-black/20 border-transparent')}`}>
+                     <div
+                       key={dayNum}
+                       onClick={scrollToEmojis}
+                       className={`relative aspect-square rounded-xl border flex items-center justify-center transition-all cursor-pointer ${emoji ? currentTheme.activeBox : (isToday ? `${currentTheme.primary} text-white border-transparent` : 'bg-black/20 border-transparent')}`}
+                     >
                         <span className={`absolute top-0.5 right-1 text-[9px] font-bold ${isToday ? 'text-white' : currentTheme.strongText}`}>{dayNum}</span>
                         {emoji && <span className="text-xl">{emoji}</span>}
                      </div>
@@ -412,7 +421,7 @@ export default function HomeClient() {
               ].map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => setActiveTab(cat.id as any)}
+                  onClick={() => { scrollToEmojis(); setActiveTab(cat.id as any); }}
                   className={`py-4 px-3 rounded-2xl border-2 flex flex-col items-center justify-center transition-all
                     ${activeTab === cat.id
                       ? `${currentTheme.accent} border-transparent scale-[1.02]`
@@ -432,7 +441,7 @@ export default function HomeClient() {
               ))}
            </div>
 
-           <div className={`grid grid-cols-4 sm:grid-cols-5 gap-3 p-4 rounded-3xl ${currentTheme.cardBg} border ${currentTheme.border}`}>
+           <div ref={emojiSectionRef} className={`grid grid-cols-4 sm:grid-cols-5 gap-3 p-4 rounded-3xl ${currentTheme.cardBg} border ${currentTheme.border}`}>
               {SEED_DATA[activeTab].map((seed) => (
                 <button
                   key={seed.id}
