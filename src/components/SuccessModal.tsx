@@ -36,26 +36,23 @@ export default function SuccessModal({
   const theme = THEMES[themeKey] || THEMES["base"];
 
   const handleShare = () => {
-    const text = `Just planted a 🌱 in my onchain garden! 🚜\nNetwork: ${chainName}\nReward: +${xpEarned} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${chainName} @farmmcaster`;
+    // 1. Frame Logic (Dynamic Content via SDK)
+    // If running in a Frame, we use the SDK to share with dynamic context (XP, Network)
+    const frameText = `Just planted a 🌱 in my onchain garden! 🚜\nNetwork: ${chainName}\nReward: +${xpEarned} XP ✨\nCome plant your seeds with me! 👇\n\n#FarmCaster #${chainName} @farmmcaster`;
+    const netParam = themeKey;
+    const frameEmbedUrl = `https://farmcaster-six.vercel.app/share/${netParam}`;
+    const frameShareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(frameText)}&embeds[]=${encodeURIComponent(frameEmbedUrl)}`;
 
-    // 1. Normalize network parameter
-    const netParam = themeKey; // Uses the validated themeKey from getThemeKey()
+    // 2. Web/Base App Fallback (Static Content via Window)
+    // If running in Base App or Browser, we force open a Warpcast Intent with standard text
+    const webText = "I just planted a seed on FarmCaster! 👨‍🌾 #Base #OnchainGame";
+    const webEmbedUrl = "https://farmcaster-six.vercel.app";
+    const webWarpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(webText)}&embeds[]=${encodeURIComponent(webEmbedUrl)}`;
 
-    // 2. Point to Vercel (Where metadata lives)
-    // Use Static Route for correct metadata on GitHub Pages
-    const embedUrl = `https://farmcaster-six.vercel.app/share/${netParam}`;
-
-    const encodedText = encodeURIComponent(text);
-    const encodedEmbed = encodeURIComponent(embedUrl);
-
-    const shareUrl = `https://warpcast.com/~/compose?text=${encodedText}&embeds[]=${encodedEmbed}`;
-
-    // USE SDK ACTION FOR NATIVE HANDLING (Mobile Fix)
-    // We check if sdk.actions exists to avoid errors, defaulting to window.open
     if (sdk && sdk.actions) {
-        sdk.actions.openUrl(shareUrl);
+        sdk.actions.openUrl(frameShareUrl);
     } else {
-        window.open(shareUrl, "_blank");
+        window.open(webWarpcastUrl, "_blank");
     }
   };
 
