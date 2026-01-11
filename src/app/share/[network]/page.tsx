@@ -35,8 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const mappedName = NETWORK_FILE_MAPPING[network.toLowerCase()] || network;
 
   // Dynamic Image URL (Absolute)
-  // Fix: Use mapped name and suffix format: name-cover.png
-  const imageUrl = `https://farmcaster-six.vercel.app/images/${mappedName}-cover.png`;
+  // Construct the dynamic OG image URL
+  const baseUrl = "https://farmcaster-six.vercel.app";
+  // TODO: Replace 'teberen' with the actual user's handle when available
+  const imageUrl = new URL(`${baseUrl}/api/og?username=teberen`).toString();
 
   const miniappJSON = {
     version: "1",
