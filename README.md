@@ -31,7 +31,9 @@ Designed with a "Vibrant Magic" aesthetic, FarmCaster leverages the power of **B
 
 ## 🌍 Supported Networks
 
-FarmCaster runs on 7 major blockchain networks, allowing users to farm on their chain of choice.
+FarmCaster runs on 7 major blockchain networks, allowing users to farm on their chain of choice. Building on Base.
+
+
 
 | Network | Chain ID | Description |
 | :--- | :--- | :--- |
