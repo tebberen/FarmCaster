@@ -34,15 +34,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const mappedName = NETWORK_FILE_MAPPING[network.toLowerCase()] || network;
 
-  // Dynamic Image URL (Absolute)
-  // Construct the dynamic OG image URL
-  const baseUrl = "https://farmcaster-six.vercel.app";
-  // TODO: Replace 'teberen' with the actual user's handle when available
-  const imageUrl = new URL(`${baseUrl}/api/og?username=teberen`).toString();
+  // Official social preview image URL
+  const imageUrl = "https://raw.githubusercontent.com/tebberen/farmcaster/farmcaster-frontend-skeleton/public/images/icon.png";
 
   const miniappJSON = {
     version: "1",
-    imageUrl: imageUrl, // Uses network-specific image
+    imageUrl: imageUrl,
     button: {
       title: "Play FarmCaster 🚜",
       action: {
@@ -63,15 +60,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         type: "launch_frame",
         name: "FarmCaster",
         url: "https://farmcaster-six.vercel.app/",
-        splashImageUrl: "https://farmcaster-six.vercel.app/images/splash.png",
+        splashImageUrl: "https://farmcaster-six.vercel.app/images/icon.png",
         splashBackgroundColor: "#0f172a"
       }
     }
   };
 
   const stringifiedMeta = JSON.stringify(miniappJSON);
-  const title = `FarmCaster on ${chainName}`;
-  const description = `Plant seeds, earn XP, and climb the leaderboard on ${chainName}. The most vibrant onchain farming game.`;
+  const title = "FarmCaster";
+  const description = "Plant seeds onchain and grow rewards.";
 
   return {
     title: title,
