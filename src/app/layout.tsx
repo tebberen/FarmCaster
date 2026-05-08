@@ -10,15 +10,15 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "FarmCaster",
-  description: "Plant seeds, harvest rewards on chain! 🚜",
+  description: "Plant seeds onchain and grow rewards.",
   openGraph: {
     title: "FarmCaster",
-    description: "Plant seeds, harvest rewards on chain! 🚜",
+    description: "Plant seeds onchain and grow rewards.",
     url: "https://farmcaster-six.vercel.app",
     siteName: "FarmCaster",
     images: [
       {
-        url: "https://farmcaster-six.vercel.app/images/cover.png", // MUST be absolute
+        url: "https://raw.githubusercontent.com/tebberen/farmcaster/farmcaster-frontend-skeleton/public/images/icon.png",
         width: 1200,
         height: 630,
         alt: "FarmCaster Preview",
@@ -27,11 +27,17 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "FarmCaster",
+    description: "Plant seeds onchain and grow rewards.",
+    images: ["https://raw.githubusercontent.com/tebberen/farmcaster/farmcaster-frontend-skeleton/public/images/icon.png"],
+  },
   other: {
     "base:app_id": "693df866d77c069a945bde9a",
     "fc:frame": JSON.stringify({
       version: "next",
-      imageUrl: "https://farmcaster-six.vercel.app/images/cover.png",
+      imageUrl: "https://raw.githubusercontent.com/tebberen/farmcaster/farmcaster-frontend-skeleton/public/images/icon.png",
       button: {
         title: "Open FarmCaster",
         action: {
