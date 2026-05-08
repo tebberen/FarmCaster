@@ -1,5 +1,4 @@
 import React from 'react';
-import clsx from 'clsx';
 import { X } from 'lucide-react';
 
 interface OnboardingModalProps {
@@ -47,7 +46,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                         <div>
                             <h3 className="font-bold text-lg text-white">Plant Seeds</h3>
                             <p className="text-slate-400 text-sm leading-relaxed">
-                                Choose a seed from the market or use <b>'Water Farm'</b> for free daily actions. Different seeds have different costs and rarity.
+                                Choose a seed from the market or use <b>&apos;Water Farm&apos;</b> for free daily actions. Different seeds have different costs and rarity.
                             </p>
                         </div>
                     </div>
@@ -72,7 +71,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                         onClick={onClose}
                         className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 shadow-lg shadow-green-900/20 active:scale-95 transition-all"
                     >
-                        Let's Farm! 🚜
+                        Let&apos;s Farm! 🚜
                     </button>
                 </div>
 

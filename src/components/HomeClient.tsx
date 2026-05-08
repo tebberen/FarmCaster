@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import sdk from "@farcaster/miniapp-sdk";
-import { useAccount, useReadContract, useWriteContract, useSwitchChain, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useSwitchChain, useConnect } from "wagmi";
 import { useSendCalls } from "wagmi/experimental";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { GARDEN_CONTRACTS, GARDEN_ABI } from "../config/contracts";
@@ -13,7 +14,19 @@ import { OnboardingModal } from "./OnboardingModal";
 import { LeaderboardModal } from "./LeaderboardModal";
 import SuccessModal from "./SuccessModal";
 import { FavoriteReminder } from "./FavoriteReminder";
-import { THEMES, CHAIN_IDS } from "../config/theme";
+import { THEMES, CHAIN_IDS, Theme } from "../config/theme";
+
+interface FarcasterUser {
+  fid: number;
+  username?: string;
+  displayName?: string;
+  pfpUrl?: string;
+}
+
+interface HistoryItem {
+  readonly timestamp: string | number;
+  readonly seedType: string | number;
+}
 
 // --- 1. ROBUST THEME MAP (Global Visuals) ---
 const themeMap: Record<string, { primary: string; glow: string; border: string; text: string; bgGradient: string }> = {
@@ -97,7 +110,7 @@ export default function HomeClient() {
   const [showFavoriteReminder, setShowFavoriteReminder] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [successData, setSuccessData] = useState<{ seedId: number, xp: number, hash: string } | null>(null);
-  const [farcasterUser, setFarcasterUser] = useState<any>(null);
+  const [farcasterUser, setFarcasterUser] = useState<FarcasterUser | null>(null);
 
   const marketRef = useRef<HTMLElement>(null);
   const emojiSectionRef = useRef<HTMLDivElement>(null);
@@ -165,7 +178,7 @@ export default function HomeClient() {
   const historyMap = React.useMemo(() => {
     if (!historyData) return {};
     const map: Record<string, number> = {};
-    (historyData as any[]).forEach((item: any) => {
+    (historyData as readonly HistoryItem[]).forEach((item: HistoryItem) => {
        const d = new Date(Number(item.timestamp) * 1000);
        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
        const sid = Number(item.seedType);
@@ -181,7 +194,7 @@ export default function HomeClient() {
   const isEmpty = React.useMemo(() => {
      if (!isConnected) return true;
      if (!historyData) return false; // Loading
-     return (historyData as any[]).length === 0;
+     return (historyData as readonly HistoryItem[]).length === 0;
   }, [isConnected, historyData]);
 
   // --- CALENDAR LOGIC ---
@@ -252,7 +265,7 @@ export default function HomeClient() {
             dataSuffix: Attribution.toDataSuffix({ codes: ["bc_7wvlvpi3"] }),
           }
         });
-        hash = typeof result === 'object' && 'id' in result ? (result as any).id : result;
+        hash = typeof result === 'object' && result !== null && 'id' in result ? (result as { id: string }).id : result;
       } catch (sendCallsError) {
         console.warn("sendCalls failed, falling back to writeContract:", sendCallsError);
         if (func === 'gm') {
@@ -308,10 +321,12 @@ export default function HomeClient() {
       {/* 1. HEADER */}
       <header className="relative z-50 flex items-center justify-between px-4 py-3 bg-slate-900/50 backdrop-blur-md sticky top-0 border-b border-white/5">
         <div className="flex items-center gap-2.5">
-          <img
+          <Image
             src={profileImage}
-            className={`w-12 h-12 rounded-full border-2 ${currentTheme.border}`}
+            className={`rounded-full border-2 ${currentTheme.border}`}
             alt="Profile"
+            width={48}
+            height={48}
           />
           <div className="flex flex-col justify-center">
             <span className="font-bold text-base text-white leading-tight">Farmer</span>
@@ -339,7 +354,7 @@ export default function HomeClient() {
 
       {/* 2. NETWORK TABS */}
       <div className="relative z-10 max-w-lg mx-auto mt-6 px-4 flex flex-wrap justify-center gap-2 pb-2">
-        {Object.values(THEMES).map((t: any) => {
+        {Object.values(THEMES).map((t: Theme) => {
            const isActive = currentTheme.id === t.id;
            const activeClass = isActive
              ? `bg-gradient-to-r ${chainColors[t.name] || defaultColor} text-white scale-105 border-transparent`
@@ -420,7 +435,7 @@ export default function HomeClient() {
               ].map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => { scrollToEmojis(); setActiveTab(cat.id as any); }}
+                  onClick={() => { scrollToEmojis(); setActiveTab(cat.id as 'gm' | 'deploy' | 'launch' | 'donate'); }}
                   className={`py-4 px-3 rounded-2xl border-2 flex flex-col items-center justify-center transition-all
                     ${activeTab === cat.id
                       ? `${currentTheme.accent} border-transparent scale-[1.02]`
