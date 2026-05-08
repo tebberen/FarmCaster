@@ -129,7 +129,6 @@ export default function HomeClient() {
   // 2. SDK Initialization & Auto-Connect
   useEffect(() => {
     const init = async () => {
-      sdk.actions.ready();
       try {
         const context = await sdk.context;
         if (context?.user) {
