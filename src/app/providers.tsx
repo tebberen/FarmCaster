@@ -4,16 +4,20 @@ import * as React from 'react';
 import {
   RainbowKitProvider,
   darkTheme,
-  lightTheme,
 } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { config } from '../config/wagmi';
 import '@rainbow-me/rainbowkit/styles.css';
+import sdk from '@farcaster/miniapp-sdk';
 
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  React.useEffect(() => {
+    sdk.actions.ready();
+  }, []);
+
   return (
     <WagmiProvider config={config} reconnectOnMount={false}>
       <QueryClientProvider client={queryClient}>

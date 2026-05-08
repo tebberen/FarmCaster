@@ -30,6 +30,8 @@ export const hyperEvmMainnet = defineChain({
   testnet: false,
 });
 
+const isIframe = typeof window !== 'undefined' && window.parent !== window;
+
 export const config = createConfig({
   chains: [base, celo, bsc, arbitrum, mainnet, optimism, monadMainnet, hyperEvmMainnet],
   transports: {
@@ -42,10 +44,12 @@ export const config = createConfig({
     [monadMainnet.id]: http(),
     [hyperEvmMainnet.id]: http(),
   },
-  connectors: [
-    farcasterMiniApp(), // PRIORITY #1: Farcaster Wallet
-    injected(),         // PRIORITY #2: Browser Extension (Metamask)
-    coinbaseWallet({ appName: 'FarmCaster' }),
-  ],
+  connectors: isIframe
+    ? [farcasterMiniApp()]
+    : [
+        farcasterMiniApp(), // PRIORITY #1: Farcaster Wallet
+        injected(),         // PRIORITY #2: Browser Extension (Metamask)
+        coinbaseWallet({ appName: 'FarmCaster' }),
+      ],
   ssr: true,
 });
