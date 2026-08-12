@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     images: ["https://raw.githubusercontent.com/tebberen/farmcaster/farmcaster-frontend-skeleton/public/images/icon.png"],
   },
   other: {
-    "base:app_id": "693df866d77c069a945bde9a",
+    "base:app_id": "6a12e1bf8305194a0731b8bb",
     "fc:frame": JSON.stringify({
       version: "next",
       imageUrl: "https://raw.githubusercontent.com/tebberen/farmcaster/farmcaster-frontend-skeleton/public/images/icon.png",
