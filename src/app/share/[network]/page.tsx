@@ -13,27 +13,8 @@ type Props = {
   params: { network: string };
 };
 
-const NETWORK_FILE_MAPPING: Record<string, string> = {
-  arbitrum: "arb",
-  arb: "arb",
-  binance: "bsc",
-  bsc: "bsc",
-  ethereum: "eth",
-  eth: "eth",
-  hyperliquid: "hyper",
-  hyper: "hyper",
-  base: "base",
-  celo: "celo",
-  monad: "monad",
-};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const network = params.network;
-  const theme = THEMES[network] || THEMES.base;
-  const chainName = theme.name;
-
-  const mappedName = NETWORK_FILE_MAPPING[network.toLowerCase()] || network;
-
+export async function generateMetadata({ }: Props): Promise<Metadata> {
   // Official social preview image URL
   const imageUrl = "https://raw.githubusercontent.com/tebberen/farmcaster/farmcaster-frontend-skeleton/public/images/icon.png";
 

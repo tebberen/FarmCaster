@@ -85,7 +85,7 @@ export async function GET(request: Request) {
           </div>
           {/* Subtitle */}
           <div style={{ fontSize: 36, color: '#A1887F', marginBottom: 30 }}>
-            @{username}'s Garden Wall
+            @{username}&apos;s Garden Wall
           </div>
 
           {/* Calendar Container */}
@@ -127,8 +127,8 @@ export async function GET(request: Request) {
         height: 630,
       },
     );
-  } catch (e: any) {
-    console.error(`Error generating OG image: ${e.message}`);
+  } catch (e: unknown) {
+    console.error(`Error generating OG image: ${(e as Error).message}`);
     return new Response('Failed to generate OG image', { status: 500 });
   }
 }

@@ -27,7 +27,7 @@ export function FavoriteReminder({ isOpen, onClose }: FavoriteReminderProps) {
             </div>
             <div className="flex-1">
                 <h3 className="font-bold text-white text-lg leading-tight">Add to Favorites</h3>
-                <p className="text-slate-300 text-sm mt-1">Don't lose your farm! Add FarmCaster to favorites for easy access. ⭐</p>
+                <p className="text-slate-300 text-sm mt-1">Don&apos;t lose your farm! Add FarmCaster to favorites for easy access. ⭐</p>
             </div>
              <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
